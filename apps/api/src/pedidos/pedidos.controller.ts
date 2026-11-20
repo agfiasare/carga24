@@ -38,6 +38,7 @@ const esquemaNuevo = z
     medioPago: z.enum(['cuenta_registrada', 'otra_cuenta', 'efectivo'], { error: 'Elegí el medio de pago' }),
     cuentaId: z.uuid().optional(),
     nota: z.string().trim().max(300).optional(),
+    codigoPromo: z.string().trim().max(20).optional(),
   })
   .refine((d) => d.jugadorId || d.telefono, { message: 'Elegí un jugador o escribí un teléfono', path: ['jugadorId'] });
 

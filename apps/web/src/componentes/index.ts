@@ -15,3 +15,4 @@ export * from './organismos/SelectorPermisos/SelectorPermisos';
 export * from './plantillas/PlantillaPanel/PlantillaPanel';
 export * from './organismos/TarjetaPedido/TarjetaPedido';
 export * from './plantillas/PlantillaJugador/PlantillaJugador';
+export * from './moleculas/CuponPromo/CuponPromo';

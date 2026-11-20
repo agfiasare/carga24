@@ -345,3 +345,16 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.codigoPromo {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.cupones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

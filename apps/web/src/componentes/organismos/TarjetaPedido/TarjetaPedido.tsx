@@ -21,6 +21,8 @@ export interface DatosTarjetaPedido {
   comprobantes: number;
   requiereAprobacion?: boolean;
   motivoRechazo?: string | null;
+  /** Código de promo a aplicar al acreditar. */
+  promo?: string | null;
 }
 
 export interface TarjetaPedidoProps {
@@ -74,6 +76,7 @@ export function TarjetaPedido({ pedido, acciones, alAbrir, nuevo = false }: Tarj
             <UserCheck size={12} aria-hidden="true" /> {pedido.tomadoPor}
           </Etiqueta>
         ) : null}
+        {pedido.promo ? <Etiqueta tono="aviso">Promo {pedido.promo}</Etiqueta> : null}
         {pedido.comprobantes > 0 ? (
           <Etiqueta>
             <Paperclip size={12} aria-hidden="true" /> {pedido.comprobantes}

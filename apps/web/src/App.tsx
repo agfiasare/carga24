@@ -18,6 +18,7 @@ import { Jugadores } from './paginas/panel/Jugadores';
 import { Auditoria } from './paginas/panel/Auditoria';
 import { Configuracion } from './paginas/panel/Configuracion';
 import { MiCuenta } from './paginas/panel/MiCuenta';
+import { Promociones } from './paginas/panel/Promociones';
 import { Reportes } from './paginas/panel/Reportes';
 import { NovedadesPanel } from './paginas/panel/NovedadesPanel';
 import { PerfilEditor } from './paginas/panel/PerfilEditor';
@@ -86,6 +87,7 @@ function RutasPanel() {
           <Route path="/panel/perfiles/:id" element={<PerfilEditor />} />
           <Route path="/panel/novedades" element={<NovedadesPanel />} />
           <Route path="/panel/reportes" element={<Reportes />} />
+          <Route path="/panel/promociones" element={<Promociones />} />
           <Route path="/panel/configuracion" element={<Configuracion />} />
           <Route path="/panel/auditoria" element={<Auditoria />} />
           <Route path="/panel/mi-cuenta" element={<MiCuenta />} />

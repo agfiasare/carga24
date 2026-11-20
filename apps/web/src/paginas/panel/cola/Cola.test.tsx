@@ -31,7 +31,7 @@ const base: Pedido = {
   id: 1, tipo: 'carga', estado: 'pendiente', canal: 'manual', medioPago: 'otra_cuenta', monto: 1_000_000, montoPagado: 1_050_000, ganancia: 50_000,
   comisionPb: 500, modoComision: 'recargo', referenciaMovimiento: null, motivoRechazo: null, telefono: '5491144441234',
   jugador: { id: 'j1', nombreUsuario: 'ana', telefono: '5491144441234', usuarioPlataforma: 'ana99' }, plataforma: { id: 'pl', nombre: 'Plataforma principal' },
-  cuenta: null, tomadoPor: null, tomadoEn: null, verificadoPor: null, ejecutadoPor: null, comprobantes: [], requiereAprobacion: false, creadoEn: ahora, actualizadoEn: ahora,
+  cuenta: null, tomadoPor: null, tomadoEn: null, verificadoPor: null, ejecutadoPor: null, comprobantes: [], promo: null, requiereAprobacion: false, creadoEn: ahora, actualizadoEn: ahora,
 };
 
 function montar() {

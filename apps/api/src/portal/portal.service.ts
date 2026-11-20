@@ -21,6 +21,7 @@ export interface DatosPedidoWeb {
   tipo: 'carga' | 'retiro';
   monto: number;
   cuentaId: string;
+  codigoPromo?: string;
 }
 
 type PedidoCompleto = Prisma.PedidoGetPayload<{ include: typeof INCLUIR_PEDIDO }>;
@@ -42,6 +43,7 @@ export function pedidoParaJugador(p: PedidoCompleto) {
     cuenta: p.cuenta ? { id: p.cuenta.id, cbuCvu: p.cuenta.cbuCvu, alias: p.cuenta.alias, estado: p.cuenta.estado } : null,
     plataforma: p.plataforma,
     comprobantes: p.comprobantes,
+    promo: p.promocion,
     creadoEn: p.creadoEn,
     actualizadoEn: p.actualizadoEn,
   };
@@ -132,7 +134,7 @@ export class PortalService {
     const guardado = archivo && datos.tipo === 'carga' ? await this.archivos.guardar(archivo.buffer) : null;
     try {
       const pedido = await this.pedidos.crear(
-        { tipo: datos.tipo, jugadorId: jugador.id, plataformaId: plataforma.id, monto: datos.monto, medioPago: 'cuenta_registrada', cuentaId: datos.cuentaId },
+        { tipo: datos.tipo, jugadorId: jugador.id, plataformaId: plataforma.id, monto: datos.monto, medioPago: 'cuenta_registrada', cuentaId: datos.cuentaId, codigoPromo: datos.codigoPromo },
         jugador,
         ip,
         { canal: 'web', ...(guardado ? { comprobante: { ...guardado, tamanoBytes: archivo!.size } } : {}) },

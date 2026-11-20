@@ -2,8 +2,9 @@ import { Pin } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { authJugador } from '../../../api/auth';
 import { ESTADOS_ABIERTOS, portal } from '../../../api/portal';
+import { promociones, textoVigencia } from '../../../api/promociones';
 import { useConsulta } from '../../../api/useConsulta';
-import { Monto } from '../../../componentes';
+import { CuponPromo, Monto } from '../../../componentes';
 import { usePortalEnVivo } from '../../../sesion/portalEnVivo';
 import { useSesionJugador } from '../../../sesion/sesion';
 import { explicarEstado, FilaPedido, PaginaJugador, PasosPedido } from './comun';
@@ -15,6 +16,7 @@ export function Inicio() {
   const navegar = useNavigate();
   const { datos: recientes } = useConsulta(() => portal.pedidos({ pagina: 1 }), [version]);
   const { datos: novedades } = useConsulta(portal.novedades, []);
+  const { datos: promos } = useConsulta(() => promociones.vigentes('inicio'), []);
   const enCurso = recientes?.pedidos.find((p) => ESTADOS_ABIERTOS.includes(p.estado));
   const fijada = novedades?.find((n) => n.fijada);
 
@@ -47,6 +49,14 @@ export function Inicio() {
           </Link>
         </div>
       )}
+
+      {promos && promos.length > 0 ? (
+        <section className={clases.cupones} aria-label="Promociones">
+          {promos.map((p) => (
+            <CuponPromo key={p.id} titulo={p.titulo} condiciones={p.condiciones} codigo={p.codigo} vigencia={textoVigencia(p.hasta)} />
+          ))}
+        </section>
+      ) : null}
 
       {fijada ? (
         <section className={clases.tarjeta} aria-labelledby="novedad-fijada">

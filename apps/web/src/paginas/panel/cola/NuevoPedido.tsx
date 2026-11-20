@@ -38,6 +38,7 @@ export function NuevoPedido({ alCerrar, alCrear }: { alCerrar: () => void; alCre
   const [cuentas, setCuentas] = useState<CuentaJugador[]>([]);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [nota, setNota] = useState('');
+  const [codigoPromo, setCodigoPromo] = useState('');
   const creacion = useAccion(pedidos.crear);
   const buscarJugadores = tiene('jugadores.ver');
 
@@ -94,6 +95,7 @@ export function NuevoPedido({ alCerrar, alCrear }: { alCerrar: () => void; alCre
       medioPago,
       ...(medioPago === 'cuenta_registrada' && cuentaId ? { cuentaId } : {}),
       ...(nota.trim() ? { nota: nota.trim() } : {}),
+      ...(tipo === 'carga' && codigoPromo.trim() ? { codigoPromo: codigoPromo.trim() } : {}),
     });
     if (!resultado) return;
     let avisoComprobante: string | undefined;
@@ -222,6 +224,9 @@ export function NuevoPedido({ alCerrar, alCrear }: { alCerrar: () => void; alCre
             <span>Comprobante (opcional)</span>
             <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />
           </label>
+        ) : null}
+        {tipo === 'carga' && tiene('promos.aplicar') ? (
+          <CampoFormulario etiqueta="Código de promo (opcional)" value={codigoPromo} onChange={(e) => setCodigoPromo(e.target.value.toUpperCase())} autoCapitalize="characters" />
         ) : null}
         <CampoFormulario etiqueta="Nota (opcional)" value={nota} onChange={(e) => setNota(e.target.value)} maxLength={300} />
       </form>

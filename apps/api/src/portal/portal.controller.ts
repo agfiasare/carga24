@@ -50,6 +50,7 @@ const esquemaPedido = z.object({
   tipo: z.enum(['carga', 'retiro'], { error: 'Elegí carga o retiro' }),
   monto: z.coerce.number({ error: 'Escribí el monto' }).int('El monto va en centavos').positive('El monto tiene que ser mayor a cero').max(100_000_000_000),
   cuentaId: z.uuid('Elegí una cuenta'),
+  codigoPromo: z.string().trim().max(20).optional().transform((v) => v || undefined),
 });
 
 const esquemaListado = z.object({

@@ -188,6 +188,7 @@ export function Cola() {
                     cuando: columna.clave === 'cerrados' ? formatearHora(p.actualizadoEn) : formatearHace(p.creadoEn),
                     tomadoPor: p.tomadoPor ? (p.tomadoPor.id === usuario?.id ? 'Vos' : p.tomadoPor.nombre) : null,
                     comprobantes: p.comprobantes.length,
+                    promo: p.promo?.codigo ?? null,
                   }}
                 />
               ))}

@@ -59,6 +59,12 @@ export function PedidoDetalle() {
                   <dd>{pedido.cuenta.alias ?? `CBU …${pedido.cuenta.cbuCvu.slice(-6)}`}</dd>
                 </>
               ) : null}
+              {pedido.promo ? (
+                <>
+                  <dt>Promo</dt>
+                  <dd>{pedido.promo.codigo}</dd>
+                </>
+              ) : null}
               <dt>Fecha</dt>
               <dd>
                 {formatearFecha(pedido.creadoEn)} {formatearHora(pedido.creadoEn)}
