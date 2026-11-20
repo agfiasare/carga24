@@ -26,9 +26,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://carga24:carga24@localhost:5432/carga24
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -52,6 +52,16 @@ jobs:
 
       - name: Tests
         run: npm test
+
+      - name: Tests de punta a punta (API + PostgreSQL)
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://carga24:carga24@localhost:5432/carga24_test
+          PGPASSWORD: carga24
+        run: |
+          createdb -h localhost -U carga24 carga24_test
+          npx prisma migrate deploy
+          npm run test:e2e
 
       - name: Migraciones y carga inicial sobre PostgreSQL
         working-directory: apps/api

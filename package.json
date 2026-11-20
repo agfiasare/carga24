@@ -19,6 +19,7 @@
     "lint": "eslint .",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run test:e2e -w @carga24/api",
     "db:generate": "npm run prisma:generate -w @carga24/api",
     "db:migrate": "npm run prisma:migrate -w @carga24/api"
   },

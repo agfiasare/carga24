@@ -1,0 +1,63 @@
+.pagina {
+  min-height: 100vh;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 40px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.logo {
+  width: 120px;
+  height: auto;
+}
+
+.tarjeta {
+  width: 100%;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.marca {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primario);
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--fuente-display);
+  font-style: italic;
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.bajada {
+  margin: -6px 0 0;
+  color: var(--color-texto-secundario);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.pie {
+  font-size: 14px;
+  color: var(--color-texto-secundario);
+  text-align: center;
+}
+
+.pie a {
+  color: var(--color-primario);
+  font-weight: 600;
+}

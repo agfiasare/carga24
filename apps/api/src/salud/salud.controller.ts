@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { Publico } from '../auth/acceso.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 export interface EstadoSalud {
@@ -8,6 +9,7 @@ export interface EstadoSalud {
 }
 
 /** GET /api/v1/salud: lo usa Docker y el monitoreo para saber si la API está viva. */
+@Publico()
 @Controller('salud')
 export class SaludController {
   constructor(private readonly prisma: PrismaService) {}

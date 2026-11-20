@@ -16,11 +16,18 @@
 
 (web) {
 	import seguridad
-	root * /srv/web
 	encode zstd gzip
-	# App de una sola página: cualquier ruta que no sea un archivo carga index.html.
-	try_files {path} /index.html
-	file_server
+	# La web llama a la API en su mismo dominio (/api/...): sin CORS y con la cookie
+	# de sesión atada a cada dominio (la del jugador nunca viaja al panel y viceversa).
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+	handle {
+		root * /srv/web
+		# App de una sola página: cualquier ruta que no sea un archivo carga index.html.
+		try_files {path} /index.html
+		file_server
+	}
 }
 
 # Landing y app del jugador
