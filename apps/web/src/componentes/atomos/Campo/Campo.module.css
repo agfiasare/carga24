@@ -12,6 +12,7 @@
 
 .contenedor:focus-within {
   border-color: var(--color-primario);
+  box-shadow: 0 0 0 1px var(--color-primario);
 }
 
 .invalido {
@@ -30,6 +31,11 @@
   color: var(--color-texto);
   font: inherit;
   font-size: 15px;
+  outline: none;
+}
+
+/* El foco lo marca el contenedor (borde), no el input. */
+.campo:focus-visible {
   outline: none;
 }
 

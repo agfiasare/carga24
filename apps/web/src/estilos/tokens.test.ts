@@ -23,4 +23,8 @@ describe('tokens', () => {
   ])('%s coincide con tokens.ts', (variable, valor) => {
     expect(css).toContain(`${variable}: ${valor.toLowerCase()};`);
   });
+
+  it.each(Object.entries(tokens.color.staff))('tema staff: %s está en globales.css', (_nombre, valor) => {
+    expect(css).toContain(`: ${valor.toLowerCase()};`);
+  });
 });

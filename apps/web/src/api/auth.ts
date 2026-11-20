@@ -44,4 +44,5 @@ export const authStaff = {
   verificar2fa: (codigo: string) => api<StaffYo>('POST', '/auth/staff/2fa/verificar', { codigo }),
   salir: () => api<void>('POST', '/auth/staff/salir'),
   yo: () => api<StaffYo>('GET', '/auth/staff/yo'),
+  cambiarContrasena: (actual: string, nueva: string) => api<void>('POST', '/auth/staff/contrasena', { actual, nueva }),
 };

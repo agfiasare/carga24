@@ -1,33 +1,34 @@
-import { LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router';
-import { authStaff } from '../../api/auth';
-import { Boton, PlantillaAcceso } from '../../componentes';
+import { Link } from 'react-router';
+import { Aviso } from '../../componentes';
 import { useSesionStaff } from '../../sesion/sesion';
-import clases from '../formularios.module.css';
+import { PaginaPanel, useSecciones } from './PaginaPanel';
+import clases from './panel.module.css';
 
-/** Inicio provisorio del panel: quién ingresó y qué permisos tiene. La cola de pedidos llega en el Sprint 2. */
+const DESCRIPCIONES: Record<string, string> = {
+  '/panel/jugadores': 'Buscar, crear y editar jugadores. Bloquear y resetear contraseñas.',
+  '/panel/staff': 'Altas del equipo, perfiles asignados y permisos individuales.',
+  '/panel/perfiles': 'Conjuntos de permisos para asignar de una vez.',
+  '/panel/mi-cuenta': 'Cambiar tu contraseña.',
+};
+
+/** Inicio del panel. La cola de pedidos se suma en el Sprint 2. */
 export function InicioPanel() {
-  const { usuario, establecer } = useSesionStaff();
-  const navegar = useNavigate();
-  if (!usuario) return null;
-
-  async function salir() {
-    await authStaff.salir().catch(() => undefined);
-    establecer(null);
-    navegar('/panel/ingresar', { replace: true });
-  }
-
+  const { usuario } = useSesionStaff();
+  const atajos = useSecciones().filter((s) => s.a !== '/panel');
   return (
-    <PlantillaAcceso marca="Panel del staff" titulo={`Hola, ${usuario.nombreVisible ?? usuario.nombreUsuario ?? ''}`} bajada={`Perfil: ${usuario.perfil?.nombre ?? 'sin perfil'}`}>
-      <h2 className={clases.subtitulo}>Tus permisos ({usuario.permisos.length})</h2>
-      <ul className={clases.permisos}>
-        {usuario.permisos.map((p) => (
-          <li key={p}>{p}</li>
+    <PaginaPanel titulo={`Hola, ${usuario?.nombreVisible ?? usuario?.nombreUsuario ?? ''}`}>
+      <Aviso tipo="info">La cola de pedidos llega en la próxima etapa. Mientras tanto, desde acá se administran jugadores, staff y permisos.</Aviso>
+      <div className={clases.atajos}>
+        {atajos.map((s) => (
+          <Link key={s.a} to={s.a} className={clases.atajo}>
+            <strong>
+              <span aria-hidden="true">{s.icono}</span>
+              {s.texto}
+            </strong>
+            <span>{DESCRIPCIONES[s.a]}</span>
+          </Link>
         ))}
-      </ul>
-      <Boton variante="secundario" icono={<LogOut size={18} aria-hidden="true" />} onClick={() => void salir()}>
-        Salir
-      </Boton>
-    </PlantillaAcceso>
+      </div>
+    </PaginaPanel>
   );
 }
