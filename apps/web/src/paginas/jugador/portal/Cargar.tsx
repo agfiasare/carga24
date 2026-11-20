@@ -30,12 +30,14 @@ export function Cargar() {
   const fueraDeRango = monto && parametros ? monto < parametros.montos.cargaMinima || monto > parametros.montos.cargaMaxima : false;
   const usables = (cuentas ?? []).filter((c) => c.estado !== 'rechazada');
   const cuentaElegida = cuentaId || (usables.length === 1 ? usables[0]!.id : '');
-  const listo = Boolean(monto && !fueraDeRango && cuentaElegida && archivo);
+  const cuentaVerificada = usables.find((c) => c.id === cuentaElegida)?.estado === 'verificada';
+  const pideComprobante = !cuentaVerificada;
+  const listo = Boolean(monto && !fueraDeRango && cuentaElegida && (archivo || !pideComprobante));
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
-    if (!monto || !archivo) return;
-    const resultado = await pedido.ejecutar({ tipo: 'carga', monto, cuentaId: cuentaElegida, archivo, ...(promo ? { codigoPromo: promo.codigo } : {}) });
+    if (!monto || (!archivo && pideComprobante)) return;
+    const resultado = await pedido.ejecutar({ tipo: 'carga', monto, cuentaId: cuentaElegida, ...(archivo ? { archivo } : {}), ...(promo ? { codigoPromo: promo.codigo } : {}) });
     if (resultado) navegar(`/pedidos/${resultado.valor.id}`, { replace: true });
   }
 
@@ -133,13 +135,17 @@ export function Cargar() {
           </div>
 
           <label className={clases.archivo}>
-            <span>Comprobante de la transferencia (foto o PDF, hasta 10 MB)</span>
+            <span>
+              {pideComprobante
+                ? 'Comprobante de la transferencia (foto o PDF, hasta 10 MB). Es tu primer pago desde esta cuenta.'
+                : 'Comprobante (opcional): desde esta cuenta verificada lo vemos en el banco.'}
+            </span>
             <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />
           </label>
           <Boton type="submit" tamano="lg" anchoCompleto cargando={pedido.cargando} disabled={!listo}>
             Enviar pedido
           </Boton>
-          {!listo ? <span className={clases.secundario}>Completá el monto, la cuenta y el comprobante.</span> : null}
+          {!listo ? <span className={clases.secundario}>{pideComprobante ? 'Completá el monto, la cuenta y el comprobante.' : 'Completá el monto y la cuenta.'}</span> : null}
         </form>
       ) : null}
     </PaginaJugador>

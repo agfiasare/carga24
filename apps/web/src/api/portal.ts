@@ -38,6 +38,7 @@ export interface ParametrosPortal {
   cuentasPendientesMaximas: number;
   datosPago: { alias: string; titular: string; banco: string };
   horario: string;
+  whatsapp: string;
   plataforma: { id: string; nombre: string } | null;
 }
 

@@ -7,6 +7,7 @@ export interface Configuracion {
   cuentasPendientesMaximas: number;
   pago: { alias: string; titular: string; banco: string };
   horario: string;
+  whatsapp: string;
   actualizadoEn: string | null;
 }
 

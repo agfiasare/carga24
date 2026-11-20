@@ -20,6 +20,7 @@ const esquemaConfiguracion = z
     cuentasPendientesMaximas: z.number().int().min(1).max(10),
     pago: z.object({ alias: texto(40), titular: texto(80), banco: texto(60) }).partial(),
     horario: texto(120),
+    whatsapp: z.string().trim().regex(/^(\d{10,15})?$/, 'El WhatsApp va con código de país, solo números (ej.: 5491155550000)'),
   })
   .partial();
 type CambiosConfiguracion = z.infer<typeof esquemaConfiguracion>;
@@ -43,6 +44,7 @@ const CLAVES = {
   'pago.titular': ['pago', 'titular'],
   'pago.banco': ['pago', 'banco'],
   'atencion.horario': ['horario'],
+  'atencion.whatsapp': ['whatsapp'],
 } as const;
 
 function leer(objeto: unknown, ruta: readonly string[]): unknown {

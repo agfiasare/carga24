@@ -72,6 +72,7 @@ const config: Config = {
   cuentasPendientesMaximas: 3,
   pago: { alias: '', titular: '', banco: '' },
   horario: '',
+  whatsapp: '',
   actualizadoEn: null,
 };
 
