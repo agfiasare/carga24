@@ -24,6 +24,12 @@ const esquemaConfiguracion = z
   .partial();
 type CambiosConfiguracion = z.infer<typeof esquemaConfiguracion>;
 
+const esquemaPlataforma = z.object({ nombre: z.string().trim().min(2, 'El nombre es muy corto').max(60) });
+const esquemaEditarPlataforma = z
+  .object({ nombre: z.string().trim().min(2).max(60).optional(), activa: z.boolean().optional() })
+  .refine((d) => Object.keys(d).length > 0, { message: 'No hay cambios para guardar' });
+type DatosEditarPlataforma = z.infer<typeof esquemaEditarPlataforma>;
+
 /** Clave de la tabla configuracion para cada campo editable. */
 const CLAVES = {
   'comision.modo': ['comision', 'modo'],
@@ -110,11 +116,6 @@ export class AdministracionService {
   }
 }
 
-const esquemaPlataforma = z.object({ nombre: z.string().trim().min(2, 'El nombre es muy corto').max(60) });
-const esquemaEditarPlataforma = z
-  .object({ nombre: z.string().trim().min(2).max(60).optional(), activa: z.boolean().optional() })
-  .refine((d) => Object.keys(d).length > 0, { message: 'No hay cambios para guardar' });
-
 @SoloStaff()
 @Controller()
 export class AdministracionController {
@@ -148,7 +149,7 @@ export class AdministracionController {
   @RequierePermisos('plataformas.gestionar')
   editarPlataforma(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body(new Validar(esquemaEditarPlataforma)) datos: { nombre?: string; activa?: boolean },
+    @Body(new Validar(esquemaEditarPlataforma)) datos: DatosEditarPlataforma,
     @Usuario() actor: UsuarioAutenticado,
     @Req() peticion: Peticion,
   ) {
