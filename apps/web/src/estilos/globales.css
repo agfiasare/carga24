@@ -15,6 +15,12 @@
   --color-error: #e5484d;
   --color-error-fondo: #3d1416;
 
+  /* Colores de marca fijos (no cambian con el tema): menú lateral del panel, logos. */
+  --marca-verde: #0e3326;
+  --marca-texto: #f3f7f2;
+  --marca-texto-secundario: #a9c2b5;
+  --marca-oro: #e9b949;
+
   --fuente-display: 'Archivo', system-ui, sans-serif;
   --fuente-titulos: 'Space Grotesk', system-ui, sans-serif;
   --fuente-texto: 'Inter', system-ui, sans-serif;
@@ -26,6 +32,27 @@
   --tamano-tactil: 44px;
 
   color-scheme: dark;
+}
+
+/* Tema claro del panel del staff (tokens.color.staff). */
+[data-tema='staff'] {
+  --color-fondo: #f4f6f9;
+  --color-superficie: #ffffff;
+  --color-borde: #e3e8ef;
+  --color-texto: #08251b;
+  --color-texto-secundario: #56665f;
+  --color-primario: #0e3326;
+  --color-sobre-primario: #ffffff;
+  --color-ok: #137a48;
+  --color-ok-fondo: #e3f5eb;
+  --color-en-proceso: #8a6300;
+  --color-en-proceso-fondo: #fff4d6;
+  --color-error: #c62f35;
+  --color-error-fondo: #fdecec;
+
+  color-scheme: light;
+  background: var(--color-fondo);
+  color: var(--color-texto);
 }
 
 *,

@@ -5,6 +5,13 @@ import { Inicio } from './paginas/jugador/Inicio';
 import { Registro } from './paginas/jugador/Registro';
 import { IngresoPanel } from './paginas/panel/IngresoPanel';
 import { InicioPanel } from './paginas/panel/InicioPanel';
+import { JugadorDetalle } from './paginas/panel/JugadorDetalle';
+import { Jugadores } from './paginas/panel/Jugadores';
+import { MiCuenta } from './paginas/panel/MiCuenta';
+import { PerfilEditor } from './paginas/panel/PerfilEditor';
+import { Perfiles } from './paginas/panel/Perfiles';
+import { Staff } from './paginas/panel/Staff';
+import { StaffDetalle } from './paginas/panel/StaffDetalle';
 import { ProveedorSesionJugador, ProveedorSesionStaff, RutaJugador, RutaStaff } from './sesion/sesion';
 
 /** El mismo build sirve carga24.com.ar (jugador) y panel.carga24.com.ar (staff). */
@@ -41,6 +48,14 @@ function RutasPanel() {
         <Route path="/panel/ingresar" element={<IngresoPanel />} />
         <Route element={<RutaStaff />}>
           <Route path="/panel" element={<InicioPanel />} />
+          <Route path="/panel/jugadores" element={<Jugadores />} />
+          <Route path="/panel/jugadores/:id" element={<JugadorDetalle />} />
+          <Route path="/panel/staff" element={<Staff />} />
+          <Route path="/panel/staff/:id" element={<StaffDetalle />} />
+          <Route path="/panel/perfiles" element={<Perfiles />} />
+          <Route path="/panel/perfiles/nuevo" element={<PerfilEditor />} />
+          <Route path="/panel/perfiles/:id" element={<PerfilEditor />} />
+          <Route path="/panel/mi-cuenta" element={<MiCuenta />} />
         </Route>
         <Route path="*" element={<Navigate to="/panel" replace />} />
       </Routes>

@@ -1,0 +1,258 @@
+.tarjeta {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tarjeta > h2 {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.explicacion {
+  margin: -8px 0 0;
+  font-size: 14px;
+  color: var(--color-texto-secundario);
+}
+
+.columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(260px, 2fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.pila {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dosCampos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.filaBotones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.buscador {
+  flex: 1;
+  max-width: 420px;
+}
+
+.total {
+  font-size: 14px;
+  color: var(--color-texto-secundario);
+}
+
+.envoltorioTabla {
+  overflow-x: auto;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-texto-secundario);
+  border-bottom: 1px solid var(--color-borde);
+  white-space: nowrap;
+}
+
+.tabla td {
+  padding: 12px 16px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-borde);
+  vertical-align: middle;
+}
+
+.tabla tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabla tbody tr:hover {
+  background: var(--color-fondo);
+}
+
+.tabla a {
+  color: var(--color-texto);
+  font-weight: 700;
+}
+
+.secundario {
+  display: block;
+  font-size: 12px;
+  color: var(--color-texto-secundario);
+}
+
+.etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.vacio {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--color-texto-secundario);
+}
+
+.paginacion {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.areaTexto {
+  width: 100%;
+  min-height: 96px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 15px;
+  resize: vertical;
+}
+
+.areaTexto:focus {
+  outline: none;
+  border-color: var(--color-primario);
+}
+
+.etiquetaCampo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+}
+
+.campoLibre {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 16px;
+  font-size: 14px;
+}
+
+.datos dt {
+  color: var(--color-texto-secundario);
+}
+
+.datos dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.accion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-borde);
+  font-size: 14px;
+}
+
+.accion:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.accion p {
+  margin: 0;
+  max-width: 34ch;
+  color: var(--color-texto-secundario);
+}
+
+.accion strong {
+  display: block;
+  color: var(--color-texto);
+}
+
+.atajos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.atajo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+  color: var(--color-texto);
+  text-decoration: none;
+}
+
+.atajo:hover {
+  border-color: var(--color-primario);
+}
+
+.atajo strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--fuente-titulos);
+  font-size: 16px;
+}
+
+.atajo span {
+  font-size: 13px;
+  color: var(--color-texto-secundario);
+}
+
+@media (max-width: 960px) {
+  .columnas {
+    grid-template-columns: 1fr;
+  }
+}
