@@ -26,7 +26,10 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      NODE_ENV: production
       CORS_ORIGINS: https://${DOMINIO},https://www.${DOMINIO},https://panel.${DOMINIO}
+      # Cifra los secretos de 2FA del staff. Si se pierde, todo el staff tiene que volver a configurar el 2FA.
+      CLAVE_CIFRADO: ${CLAVE_CIFRADO:?Falta CLAVE_CIFRADO en .env}
     depends_on:
       db:
         condition: service_healthy

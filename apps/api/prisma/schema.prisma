@@ -23,6 +23,17 @@ enum EstadoUsuario {
   bloqueado
 }
 
+enum AmbitoSesion {
+  jugador
+  staff
+}
+
+/// pendiente: el staff ingresó la contraseña pero le falta el 2FA (o cambiar la contraseña temporal).
+enum NivelSesion {
+  pendiente
+  completa
+}
+
 enum TipoAjuste {
   agregar
   quitar
@@ -97,6 +108,8 @@ model Usuario {
   perfilId              String?       @map("perfil_id")
   /// Staff: comisión propia en puntos básicos; vacío = la general.
   comisionOperadorPb    Int?          @map("comision_operador_pb")
+  /// Jugador: notas que solo ve el staff.
+  notasInternas         String?       @map("notas_internas")
   creadoEn              DateTime      @default(now()) @map("creado_en")
   actualizadoEn         DateTime      @updatedAt @map("actualizado_en")
 
@@ -152,10 +165,14 @@ model AjustePermiso {
 }
 
 model Sesion {
-  id          String   @id @default(uuid())
-  usuarioId   String   @map("usuario_id")
-  tokenHash   String   @unique @map("token_hash")
-  venceEn     DateTime @map("vence_en")
+  id               String       @id @default(uuid())
+  usuarioId        String       @map("usuario_id")
+  tokenHash        String       @unique @map("token_hash")
+  ambito           AmbitoSesion
+  nivel            NivelSesion  @default(completa)
+  /// Secreto de 2FA mientras el staff lo configura (cifrado). Se mueve al usuario al activarlo.
+  secretoPendiente String?      @map("secreto_pendiente")
+  venceEn          DateTime     @map("vence_en")
   ip          String?
   dispositivo String?
   creadoEn    DateTime @default(now()) @map("creado_en")
