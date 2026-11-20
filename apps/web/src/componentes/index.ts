@@ -13,3 +13,4 @@ export * from './moleculas/ContrasenaTemporal/ContrasenaTemporal';
 export * from './moleculas/Modal/Modal';
 export * from './organismos/SelectorPermisos/SelectorPermisos';
 export * from './plantillas/PlantillaPanel/PlantillaPanel';
+export * from './organismos/TarjetaPedido/TarjetaPedido';

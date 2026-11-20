@@ -18,3 +18,16 @@ export function formatearFecha(iso: string): string {
 export function formatearPorcentaje(pb: number): string {
   return `${(pb / 100).toLocaleString('es-AR', { maximumFractionDigits: 2 })} %`;
 }
+
+/** "recién", "hace 5 min", "hace 2 h", o la fecha si es de otro día. */
+export function formatearHace(iso: string, ahora = Date.now()): string {
+  const minutos = Math.floor((ahora - new Date(iso).getTime()) / 60_000);
+  if (minutos < 1) return 'recién';
+  if (minutos < 60) return `hace ${minutos} min`;
+  if (minutos < 24 * 60) return `hace ${Math.floor(minutos / 60)} h`;
+  return formatearFecha(iso);
+}
+
+export function formatearHora(iso: string): string {
+  return new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(iso));
+}

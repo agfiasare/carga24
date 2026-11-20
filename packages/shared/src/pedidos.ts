@@ -64,3 +64,27 @@ export function siguienteEstado(tipo: TipoPedido, estado: EstadoPedido, accion: 
   if (!t.de.includes(estado)) return null;
   return t.a;
 }
+
+/** Motivos de rechazo: el jugador ve el texto del motivo (y el detalle, si hay). */
+export const MOTIVOS_RECHAZO = {
+  no_llego: 'El pago no llegó',
+  monto_no_coincide: 'El monto no coincide',
+  comprobante_invalido: 'Comprobante inválido',
+  datos_cuenta: 'Datos de la cuenta incorrectos',
+  otro: 'Otro motivo',
+} as const;
+export type MotivoRechazo = keyof typeof MOTIVOS_RECHAZO;
+
+/** Columnas de la cola del panel. "Cerrados hoy" agrupa los finales del día. */
+export type ColumnaCola = 'pendientes' | 'en_proceso' | 'por_completar' | 'cerrados';
+
+export function columnaDe(estado: EstadoPedido): ColumnaCola {
+  if (estado === 'pendiente') return 'pendientes';
+  if (estado === 'en_proceso' || estado === 'espera_aprobacion') return 'en_proceso';
+  if (estado === 'verificado') return 'por_completar';
+  return 'cerrados';
+}
+
+/** Comprobantes: fotos o PDF de hasta 10 MB. */
+export const COMPROBANTE_TAMANO_MAXIMO = 10 * 1024 * 1024;
+export const COMPROBANTE_TIPOS = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const;

@@ -1,0 +1,360 @@
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filtros > * {
+  flex: 1 1 150px;
+  max-width: 220px;
+}
+
+.tablero {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
+  gap: 14px;
+  align-items: start;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  background: color-mix(in srgb, var(--color-borde) 45%, var(--color-fondo));
+  border-radius: var(--radio-lg);
+}
+
+.tituloColumna {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.contador {
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: var(--radio-pill);
+  background: var(--color-superficie);
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vacia {
+  margin: 0;
+  padding: 16px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-texto-secundario);
+}
+
+.resumen {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  padding: 12px 14px;
+  border-radius: var(--radio-md);
+  background: var(--color-fondo);
+  font-size: 14px;
+}
+
+.resumen dt {
+  color: var(--color-texto-secundario);
+}
+
+.resumen dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.importe {
+  font-family: var(--fuente-titulos);
+  font-size: 16px;
+}
+
+.secundario {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--color-texto-secundario);
+}
+
+.despues {
+  font-size: 13px;
+  color: var(--color-texto-secundario);
+}
+
+.campoArchivo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+}
+
+.campoArchivo input {
+  font: inherit;
+  font-weight: 400;
+  color: var(--color-texto);
+}
+
+.filaEstado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seccion h3 {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: 15px;
+}
+
+.comprobantes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.miniatura {
+  width: 88px;
+  height: 88px;
+  padding: 0;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  background: var(--color-fondo);
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pdf,
+.adjuntar {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 88px;
+  height: 88px;
+  padding: 6px;
+  border: 1px dashed var(--color-borde);
+  border-radius: var(--radio-sm);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-texto);
+}
+
+.adjuntar {
+  position: relative;
+  cursor: pointer;
+}
+
+.adjuntar input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.adjuntar:focus-within {
+  outline: 2px solid var(--color-primario);
+}
+
+.ampliado {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.historial {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.historial li {
+  display: flex;
+  gap: 10px;
+}
+
+.hora {
+  flex-shrink: 0;
+  width: 44px;
+  color: var(--color-texto-secundario);
+  font-variant-numeric: tabular-nums;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.etiqueta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+}
+
+.segmentos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.segmentos legend {
+  margin-bottom: 6px;
+}
+
+.segmento,
+.segmentoActivo {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tamano-tactil);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.segmentoActivo {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: var(--color-sobre-primario);
+}
+
+.segmento input,
+.segmentoActivo input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmento:focus-within,
+.segmentoActivo:focus-within {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}
+
+.elegido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 6px 0 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+  background: var(--color-fondo);
+}
+
+.quitar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radio-sm);
+  background: transparent;
+  color: var(--color-texto-secundario);
+  cursor: pointer;
+}
+
+.resultados {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+}
+
+.resultados button {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radio-sm);
+  background: transparent;
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.resultados button:hover:not(:disabled) {
+  background: var(--color-fondo);
+}
+
+.dosCampos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.calculo {
+  margin: -4px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radio-md);
+  background: var(--color-ok-fondo);
+  font-size: 13px;
+}
+
+@media (max-width: 860px) {
+  .tablero {
+    grid-template-columns: repeat(4, minmax(270px, 85vw));
+    scroll-snap-type: x mandatory;
+  }
+
+  .columna {
+    scroll-snap-align: start;
+  }
+}

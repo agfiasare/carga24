@@ -14,6 +14,10 @@ export class FiltroErrores implements ExceptionFilter {
     if (error instanceof HttpException) {
       const cuerpo = error.getResponse();
       const status = error.getStatus();
+      if (status === HttpStatus.PAYLOAD_TOO_LARGE) {
+        respuesta.status(status).json({ mensaje: 'El archivo supera los 10 MB' });
+        return;
+      }
       if (typeof cuerpo === 'object' && cuerpo !== null && 'mensaje' in cuerpo) {
         respuesta.status(status).json(cuerpo);
         return;

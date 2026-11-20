@@ -32,6 +32,9 @@ export function Modal({ titulo, alCerrar, children, acciones }: ModalProps) {
     inicial?.focus();
 
     function teclado(evento: KeyboardEvent) {
+      // Con un modal encima de otro, solo responde el de arriba.
+      const abiertos = document.querySelectorAll('[aria-modal="true"]');
+      if (abiertos[abiertos.length - 1] !== caja.current) return;
       if (evento.key === 'Escape') {
         evento.stopPropagation();
         cerrar.current();
@@ -81,12 +84,14 @@ export interface ModalConfirmacionProps {
   /** "peligro" para acciones como bloquear o borrar. */
   variante?: 'primario' | 'peligro';
   cargando?: boolean;
+  /** Mientras falte completar algo, el botón de confirmar queda deshabilitado. */
+  confirmarDeshabilitado?: boolean;
   alConfirmar: () => void;
   alCerrar: () => void;
 }
 
 /** Confirmación de una acción: cada acción importante del panel pasa por acá. */
-export function ModalConfirmacion({ titulo, children, textoConfirmar, variante = 'primario', cargando, alConfirmar, alCerrar }: ModalConfirmacionProps) {
+export function ModalConfirmacion({ titulo, children, textoConfirmar, variante = 'primario', cargando, confirmarDeshabilitado, alConfirmar, alCerrar }: ModalConfirmacionProps) {
   return (
     <Modal
       titulo={titulo}
@@ -96,7 +101,7 @@ export function ModalConfirmacion({ titulo, children, textoConfirmar, variante =
           <Boton variante="secundario" onClick={alCerrar} disabled={cargando}>
             Cancelar
           </Boton>
-          <Boton variante={variante} onClick={alConfirmar} cargando={cargando}>
+          <Boton variante={variante} onClick={alConfirmar} cargando={cargando} disabled={confirmarDeshabilitado}>
             {textoConfirmar}
           </Boton>
         </>

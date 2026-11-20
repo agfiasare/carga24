@@ -4,7 +4,7 @@ import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { SoloStaff } from '../auth/acceso.decorator.js';
 import { hashear } from '../auth/contrasenas.js';
 import { esquemaTelefono } from '../auth/esquemas.js';
-import { RequierePermisos } from '../auth/permisos.decorator.js';
+import { RequiereAlgunPermiso, RequierePermisos } from '../auth/permisos.decorator.js';
 import { SesionesService } from '../auth/sesiones.service.js';
 import { Usuario } from '../auth/usuario.decorator.js';
 import type { Peticion, UsuarioAutenticado } from '../auth/usuario-autenticado.js';
@@ -84,6 +84,16 @@ export class JugadoresService {
     const jugador = await this.prisma.usuario.findFirst({ where: { id, tipo: 'jugador' }, select: { ...CAMPOS, notasInternas: true } });
     if (!jugador) throw new NotFoundException('No encontramos ese jugador');
     return jugador;
+  }
+
+  /** Cuentas bancarias del jugador (para elegir origen o destino al registrar un pedido). */
+  async cuentas(id: string) {
+    await this.obtener(id);
+    return this.prisma.cuentaBancaria.findMany({
+      where: { usuarioId: id },
+      select: { id: true, cbuCvu: true, alias: true, banco: true, titular: true, estado: true },
+      orderBy: { creadoEn: 'asc' },
+    });
   }
 
   async crear(datos: DatosCrear, actor: UsuarioAutenticado, ip?: string) {
@@ -174,6 +184,12 @@ export class JugadoresController {
   @RequierePermisos('jugadores.ver')
   obtener(@Param('id', ParseUUIDPipe) id: string) {
     return this.jugadores.obtener(id);
+  }
+
+  @Get(':id/cuentas')
+  @RequiereAlgunPermiso('jugadores.ver', 'pedidos.crear')
+  cuentas(@Param('id', ParseUUIDPipe) id: string) {
+    return this.jugadores.cuentas(id);
   }
 
   @Post()

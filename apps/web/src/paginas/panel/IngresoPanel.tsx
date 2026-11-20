@@ -26,10 +26,11 @@ export function IngresoPanel() {
 
   // Si se recarga la página a mitad del ingreso, se retoma donde quedó.
   useEffect(() => {
+    // Si la respuesta llega tarde, no pisa el paso al que ya avanzó la persona.
     authStaff
       .estado()
-      .then((r) => setPaso(r.siguientePaso))
-      .catch(() => setPaso('credenciales'));
+      .then((r) => setPaso((actual) => actual ?? r.siguientePaso))
+      .catch(() => setPaso((actual) => actual ?? 'credenciales'));
   }, []);
 
   if (usuario) return <Navigate to="/panel" replace />;

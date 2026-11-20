@@ -23,6 +23,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app /app
 WORKDIR /app/apps/api
+# Carpeta de comprobantes (volumen): el volumen hereda este dueño al crearse.
+RUN mkdir -p /datos/archivos && chown node:node /datos/archivos
 USER node
 EXPOSE 3000
 # Aplica las migraciones pendientes y arranca la API.

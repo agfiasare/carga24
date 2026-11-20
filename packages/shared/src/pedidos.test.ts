@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { esFinal, siguienteEstado } from './pedidos.js';
+import { columnaDe, esFinal, siguienteEstado } from './pedidos.js';
 import { PERFILES_INICIALES, permisosEfectivos } from './permisos.js';
 
 describe('siguienteEstado', () => {
@@ -35,5 +35,14 @@ describe('permisosEfectivos', () => {
     expect(efectivos.has('pedidos.acreditar')).toBe(true);
     expect(efectivos.has('jugadores.crear')).toBe(false);
     expect(efectivos.has('pedidos.tomar')).toBe(true);
+  });
+});
+
+describe('columnaDe', () => {
+  it('ubica cada estado en su columna de la cola', () => {
+    expect(columnaDe('pendiente')).toBe('pendientes');
+    expect(columnaDe('espera_aprobacion')).toBe('en_proceso');
+    expect(columnaDe('verificado')).toBe('por_completar');
+    expect(columnaDe('rechazado')).toBe('cerrados');
   });
 });

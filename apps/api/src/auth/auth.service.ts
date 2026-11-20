@@ -135,8 +135,19 @@ export class AuthService {
   async configurar2fa(usuario: UsuarioAutenticado): Promise<{ secreto: string; uri: string }> {
     const staff = await this.buscarStaff(usuario.id);
     if (this.siguientePasoStaff(staff) !== 'configurar_2fa') throw new BadRequestException('Este paso no corresponde');
-    const secreto = generarSecreto();
-    await this.prisma.sesion.update({ where: { id: usuario.sesionId }, data: { secretoPendiente: cifrar(secreto) } });
+    // Si ya se generó en esta sesión, se devuelve el mismo: recargar la página o un pedido
+    // repetido no cambian el QR que la persona quizás ya escaneó.
+    const sesion = await this.prisma.sesion.findUniqueOrThrow({ where: { id: usuario.sesionId } });
+    let secreto = sesion.secretoPendiente ? descifrar(sesion.secretoPendiente) : null;
+    if (!secreto) {
+      secreto = generarSecreto();
+      const { count } = await this.prisma.sesion.updateMany({
+        where: { id: usuario.sesionId, secretoPendiente: null },
+        data: { secretoPendiente: cifrar(secreto) },
+      });
+      // Otro pedido simultáneo lo guardó primero: se usa ese.
+      if (count === 0) secreto = descifrar((await this.prisma.sesion.findUniqueOrThrow({ where: { id: usuario.sesionId } })).secretoPendiente!);
+    }
     return { secreto, uri: uriOtpauth(secreto, staff.nombreUsuario ?? staff.id) };
   }
 
