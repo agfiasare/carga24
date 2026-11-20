@@ -47,6 +47,15 @@ export function ResumenPedido({ pedido }: { pedido: Pedido }) {
       ) : null}
       <dt>Plataforma</dt>
       <dd>{pedido.plataforma.nombre}</dd>
+      {pedido.promo ? (
+        <>
+          <dt>Promo</dt>
+          <dd>
+            {pedido.promo.codigo} · {pedido.promo.titulo}
+            <span className={clases.secundario}> — {pedido.promo.condiciones}</span>
+          </dd>
+        </>
+      ) : null}
     </dl>
   );
 }

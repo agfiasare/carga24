@@ -8,6 +8,7 @@ const DESCRIPCIONES: Record<string, string> = {
   '/panel/reportes': 'Ganancia y movimientos por período. Exportar a Excel.',
   '/panel/configuracion': 'Comisión, montos, datos de pago y plataformas.',
   '/panel/auditoria': 'Quién hizo qué y cuándo.',
+  '/panel/promociones': 'Cupones con código, vigencia y dónde se muestran.',
   '/panel/novedades': 'Publicar avisos y novedades para los jugadores.',
   '/panel/staff': 'Altas del equipo, perfiles asignados y permisos individuales.',
   '/panel/perfiles': 'Conjuntos de permisos para asignar de una vez.',

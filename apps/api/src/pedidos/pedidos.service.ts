@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { PromocionesService } from '../promociones/promociones.js';
 import { calcularCarga, formatearPesos, MOTIVOS_RECHAZO, siguienteEstado, type AccionPedido, type MotivoRechazo } from '@carga24/shared';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { UsuarioAutenticado } from '../auth/usuario-autenticado.js';
@@ -19,6 +20,7 @@ export const INCLUIR_PEDIDO = {
   verificadoPor: nombre,
   ejecutadoPor: nombre,
   comprobantes: { select: { id: true, tipo: true, mime: true, tamanoBytes: true, creadoEn: true }, orderBy: { creadoEn: 'asc' } },
+  promocion: { select: { codigo: true, titulo: true, condiciones: true } },
 } as const satisfies Prisma.PedidoInclude;
 
 type PedidoCompleto = Prisma.PedidoGetPayload<{ include: typeof INCLUIR_PEDIDO }>;
@@ -36,6 +38,8 @@ export interface DatosNuevoPedido {
   medioPago: MedioPago;
   cuentaId?: string;
   nota?: string;
+  /** Código de promo (solo cargas). El bono lo aplica el operador al acreditar. */
+  codigoPromo?: string;
 }
 
 export interface OpcionesAlta {
@@ -72,6 +76,7 @@ export class PedidosService {
     private readonly configuracion: ConfiguracionService,
     private readonly eventos: EventosPedidos,
     private readonly archivos: AlmacenArchivos,
+    private readonly promociones: PromocionesService,
   ) {}
 
   async parametros() {
@@ -156,6 +161,13 @@ export class PedidosService {
       throw new BadRequestException('Los retiros van solo a cuentas verificadas del jugador o en efectivo');
     }
 
+    let promo: { id: string; codigo: string } | null = null;
+    if (datos.codigoPromo) {
+      if (datos.tipo !== 'carga') throw new BadRequestException('Los códigos de promo son solo para cargas');
+      if (actor.tipo === 'staff' && !actor.permisos.has('promos.aplicar')) throw new ForbiddenException('Te falta el permiso: promos.aplicar');
+      promo = await this.promociones.validar(datos.codigoPromo);
+    }
+
     const { montos, comision } = parametros;
     let importes: { monto: number; montoPagado: number | null; ganancia: number; comisionPb: number };
     if (datos.tipo === 'carga') {
@@ -182,6 +194,8 @@ export class PedidosService {
           plataformaId: plataforma.id,
           cuentaId,
           modoComision: comision.modo,
+          codigoPromo: promo?.codigo ?? null,
+          promocionId: promo?.id ?? null,
           ...importes,
         },
       });
@@ -363,6 +377,7 @@ export class PedidosService {
       ejecutadoPor: persona(p.ejecutadoPor),
       ejecutadoEn: p.ejecutadoEn,
       comprobantes: p.comprobantes,
+      promo: p.promocion,
       requiereAprobacion: p.tipo === 'retiro' && p.monto >= limiteAprobacion,
       creadoEn: p.creadoEn,
       actualizadoEn: p.actualizadoEn,

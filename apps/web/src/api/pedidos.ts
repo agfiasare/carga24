@@ -36,6 +36,7 @@ export interface Pedido {
   verificadoPor: PersonaBreve | null;
   ejecutadoPor: PersonaBreve | null;
   comprobantes: Comprobante[];
+  promo: { codigo: string; titulo: string; condiciones: string } | null;
   requiereAprobacion: boolean;
   creadoEn: string;
   actualizadoEn: string;
@@ -67,6 +68,7 @@ export interface NuevoPedido {
   medioPago: MedioPago;
   cuentaId?: string;
   nota?: string;
+  codigoPromo?: string;
 }
 
 const accion = (id: number, nombre: string, cuerpo?: unknown) => api<PedidoDetalle>('POST', `/pedidos/${id}/${nombre}`, cuerpo);

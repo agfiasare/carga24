@@ -38,7 +38,7 @@ const parametros: ParametrosPortal = {
 const cuenta = (extra: Partial<CuentaPropia> = {}): CuentaPropia => ({ id: 'c1', cbuCvu: '0000003100012345678901', alias: 'ana.mp', banco: null, titular: null, estado: 'pendiente', creadoEn: '2026-11-20T00:00:00Z', ...extra });
 const pedido = (extra: Partial<PedidoJugador> = {}): PedidoJugador => ({
   id: 7, tipo: 'carga', estado: 'en_proceso', canal: 'web', monto: 1_000_000, montoPagado: 1_050_000, comision: 50_000, comisionPb: 500, modoComision: 'recargo',
-  motivoRechazo: null, cuenta: null, plataforma: { id: 'pl', nombre: 'Plataforma principal' }, comprobantes: [], creadoEn: '2026-11-20T15:00:00Z', actualizadoEn: '2026-11-20T15:00:00Z', ...extra,
+  motivoRechazo: null, cuenta: null, plataforma: { id: 'pl', nombre: 'Plataforma principal' }, comprobantes: [], promo: null, creadoEn: '2026-11-20T15:00:00Z', actualizadoEn: '2026-11-20T15:00:00Z', ...extra,
 });
 
 function montar(ruta: string, elemento: React.ReactNode) {
@@ -82,6 +82,32 @@ describe('Cargar saldo', () => {
     await userEvent.click(enviar);
     expect(await screen.findByText('Detalle del pedido')).toBeInTheDocument();
     expect(api.enviado('POST /yo/pedidos')).toEqual([{ tipo: 'carga', monto: '1000000', cuentaId: 'c1', archivo: 'archivo:pago.png' }]);
+  });
+
+  it('valida el código de promo y lo manda con el pedido', async () => {
+    const api = apiFalsa({
+      ...base,
+      'GET /yo/parametros': respuesta(200, parametros),
+      'GET /yo/cuentas': respuesta(200, [cuenta()]),
+      'GET /promociones/validar/NOVALE': respuesta(400, { mensaje: 'Ese código de promo no existe o ya no está vigente' }),
+      'GET /promociones/validar/FINDE10': respuesta(200, { id: 'p', titulo: 'Finde 10% extra', condiciones: 'De viernes a domingo', codigo: 'FINDE10', hasta: '2026-11-22T02:59:59Z' }),
+      'POST /yo/pedidos': respuesta(201, { ...pedido({ id: 14 }), historial: [] }),
+    });
+    montar('/cargar', <Cargar />);
+    const campo = await screen.findByLabelText('¿Tenés un código de promo?');
+    await userEvent.type(campo, 'novale');
+    expect(campo).toHaveValue('NOVALE');
+    await userEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+    expect(await screen.findByText(/no existe o ya no está vigente/)).toBeInTheDocument();
+    await userEvent.clear(campo);
+    await userEvent.type(campo, 'FINDE10');
+    await userEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+    expect(await screen.findByText('Finde 10% extra')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('¿Cuánto querés cargar?'), '10.000');
+    await userEvent.upload(screen.getByLabelText(/Comprobante de la transferencia/), new File(['x'], 'pago.png', { type: 'image/png' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar pedido' }));
+    await screen.findByText('Detalle del pedido');
+    expect(api.enviado('POST /yo/pedidos')[0]).toMatchObject({ codigoPromo: 'FINDE10' });
   });
 
   it('sin cuentas, pide cargar una primero', async () => {

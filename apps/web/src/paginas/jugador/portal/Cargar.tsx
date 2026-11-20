@@ -3,6 +3,7 @@ import { Check, Copy } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { portal } from '../../../api/portal';
+import { promociones, type PromoPublica } from '../../../api/promociones';
 import { useAccion } from '../../../api/useAccion';
 import { useConsulta } from '../../../api/useConsulta';
 import { leerPesos } from '../../../comun/formato';
@@ -18,6 +19,9 @@ export function Cargar() {
   const [cuentaId, setCuentaId] = useState('');
   const [archivo, setArchivo] = useState<File | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [codigo, setCodigo] = useState('');
+  const [promo, setPromo] = useState<PromoPublica | null>(null);
+  const validacion = useAccion(promociones.validarJugador);
   const pedido = useAccion(portal.pedir);
 
   const monto = leerPesos(montoTexto);
@@ -31,8 +35,13 @@ export function Cargar() {
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
     if (!monto || !archivo) return;
-    const resultado = await pedido.ejecutar({ tipo: 'carga', monto, cuentaId: cuentaElegida, archivo });
+    const resultado = await pedido.ejecutar({ tipo: 'carga', monto, cuentaId: cuentaElegida, archivo, ...(promo ? { codigoPromo: promo.codigo } : {}) });
     if (resultado) navegar(`/pedidos/${resultado.valor.id}`, { replace: true });
+  }
+
+  async function aplicarCodigo() {
+    const resultado = await validacion.ejecutar(codigo);
+    setPromo(resultado ? resultado.valor : null);
   }
 
   async function copiarAlias() {
@@ -99,6 +108,29 @@ export function Cargar() {
           ) : (
             <Aviso tipo="info">Pedinos los datos para transferir por WhatsApp.</Aviso>
           )}
+
+          <div className={clases.formulario} style={{ gap: 6 }}>
+            <div className={clases.codigoPromo}>
+              <CampoFormulario
+                etiqueta="¿Tenés un código de promo?"
+                value={codigo}
+                onChange={(e) => {
+                  setCodigo(e.target.value.toUpperCase());
+                  setPromo(null);
+                }}
+                autoCapitalize="characters"
+                error={validacion.error?.message}
+              />
+              <Boton variante="secundario" onClick={() => void aplicarCodigo()} disabled={codigo.trim().length < 4} cargando={validacion.cargando}>
+                Aplicar
+              </Boton>
+            </div>
+            {promo ? (
+              <Aviso tipo="ok">
+                <strong>{promo.titulo}</strong>: {promo.condiciones}
+              </Aviso>
+            ) : null}
+          </div>
 
           <label className={clases.archivo}>
             <span>Comprobante de la transferencia (foto o PDF, hasta 10 MB)</span>
