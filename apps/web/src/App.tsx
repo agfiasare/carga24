@@ -1,7 +1,14 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
 import { CambiarContrasena } from './paginas/jugador/CambiarContrasena';
 import { Ingresar } from './paginas/jugador/Ingresar';
-import { Inicio } from './paginas/jugador/Inicio';
+import { Avisos } from './paginas/jugador/portal/Avisos';
+import { Cargar } from './paginas/jugador/portal/Cargar';
+import { Cuentas } from './paginas/jugador/portal/Cuentas';
+import { Historial } from './paginas/jugador/portal/Historial';
+import { Inicio } from './paginas/jugador/portal/Inicio';
+import { Novedades } from './paginas/jugador/portal/Novedades';
+import { PedidoDetalle } from './paginas/jugador/portal/PedidoDetalle';
+import { Retirar } from './paginas/jugador/portal/Retirar';
 import { Registro } from './paginas/jugador/Registro';
 import { IngresoPanel } from './paginas/panel/IngresoPanel';
 import { Cola } from './paginas/panel/cola/Cola';
@@ -9,10 +16,12 @@ import { InicioPanel } from './paginas/panel/InicioPanel';
 import { JugadorDetalle } from './paginas/panel/JugadorDetalle';
 import { Jugadores } from './paginas/panel/Jugadores';
 import { MiCuenta } from './paginas/panel/MiCuenta';
+import { NovedadesPanel } from './paginas/panel/NovedadesPanel';
 import { PerfilEditor } from './paginas/panel/PerfilEditor';
 import { Perfiles } from './paginas/panel/Perfiles';
 import { Staff } from './paginas/panel/Staff';
 import { StaffDetalle } from './paginas/panel/StaffDetalle';
+import { ProveedorPortalEnVivo } from './sesion/portalEnVivo';
 import { ProveedorSesionJugador, ProveedorSesionStaff, RutaJugador, RutaStaff } from './sesion/sesion';
 
 /** El mismo build sirve carga24.com.ar (jugador) y panel.carga24.com.ar (staff). */
@@ -32,8 +41,23 @@ function RutasJugador() {
         <Route path="/ingresar" element={<Ingresar />} />
         <Route path="/registro" element={<Registro />} />
         <Route element={<RutaJugador />}>
-          <Route path="/inicio" element={<Inicio />} />
           <Route path="/cambiar-contrasena" element={<CambiarContrasena />} />
+          <Route
+            element={
+              <ProveedorPortalEnVivo>
+                <Outlet />
+              </ProveedorPortalEnVivo>
+            }
+          >
+            <Route path="/inicio" element={<Inicio />} />
+            <Route path="/cargar" element={<Cargar />} />
+            <Route path="/retirar" element={<Retirar />} />
+            <Route path="/historial" element={<Historial />} />
+            <Route path="/pedidos/:id" element={<PedidoDetalle />} />
+            <Route path="/cuentas" element={<Cuentas />} />
+            <Route path="/novedades" element={<Novedades />} />
+            <Route path="/avisos" element={<Avisos />} />
+          </Route>
         </Route>
         {/* La landing se suma en un próximo PR; por ahora la raíz lleva al ingreso. */}
         <Route path="*" element={<Navigate to="/inicio" replace />} />
@@ -57,6 +81,7 @@ function RutasPanel() {
           <Route path="/panel/perfiles" element={<Perfiles />} />
           <Route path="/panel/perfiles/nuevo" element={<PerfilEditor />} />
           <Route path="/panel/perfiles/:id" element={<PerfilEditor />} />
+          <Route path="/panel/novedades" element={<NovedadesPanel />} />
           <Route path="/panel/mi-cuenta" element={<MiCuenta />} />
         </Route>
         <Route path="*" element={<Navigate to="/panel" replace />} />

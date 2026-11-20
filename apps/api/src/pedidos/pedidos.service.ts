@@ -38,6 +38,20 @@ export interface DatosNuevoPedido {
   nota?: string;
 }
 
+export interface OpcionesAlta {
+  canal?: 'manual' | 'web';
+  /** Comprobante ya guardado en disco, que se asocia al pedido en la misma transacción. */
+  comprobante?: { clave: string; mime: string; tamanoBytes: number };
+}
+
+/** Aviso que recibe el jugador cuando su pedido se cierra. */
+export function avisoParaJugador(id: number, tipo: 'carga' | 'retiro', estado: EstadoPedido, monto: number, motivo?: string): { titulo: string; texto: string } | null {
+  if (estado === 'acreditado') return { titulo: `Tu carga #${id} fue acreditada`, texto: `Ya tenés ${formatearPesos(monto)} en tu usuario de la plataforma.` };
+  if (estado === 'pagado') return { titulo: `Tu retiro #${id} fue pagado`, texto: `Te transferimos ${formatearPesos(monto)}.` };
+  if (estado === 'rechazado') return { titulo: `Tu ${tipo} #${id} fue rechazado`, texto: motivo ?? 'Escribinos por WhatsApp si tenés dudas.' };
+  return null;
+}
+
 export interface OpcionesTransicion {
   referenciaMovimiento?: string;
   motivo?: MotivoRechazo;
@@ -110,7 +124,7 @@ export class PedidosService {
 
   // ---------- Alta manual (pedidos que llegan por WhatsApp) ----------
 
-  async crear(datos: DatosNuevoPedido, actor: UsuarioAutenticado, ip?: string) {
+  async crear(datos: DatosNuevoPedido, actor: UsuarioAutenticado, ip?: string, extra: OpcionesAlta = {}) {
     const parametros = await this.configuracion.parametrosPedidos();
     const plataforma = await this.prisma.plataforma.findFirst({ where: { id: datos.plataformaId, activa: true } });
     if (!plataforma) throw new BadRequestException('Elegí una plataforma activa');
@@ -156,11 +170,12 @@ export class PedidosService {
       importes = { monto: datos.monto, montoPagado: null, ganancia: 0, comisionPb: 0 };
     }
 
+    const canal = extra.canal ?? 'manual';
     const pedido = await this.prisma.$transaction(async (tx) => {
       const creado = await tx.pedido.create({
         data: {
           tipo: datos.tipo,
-          canal: 'manual',
+          canal,
           medioPago: datos.medioPago,
           jugadorId: jugador?.id ?? null,
           telefono: jugador?.telefono ?? telefono,
@@ -170,11 +185,17 @@ export class PedidosService {
           ...importes,
         },
       });
-      await tx.eventoPedido.create({ data: { pedidoId: creado.id, a: 'pendiente', actorId: actor.id, nota: datos.nota?.trim() || 'Registrado desde el panel' } });
+      const notaInicial = canal === 'web' ? 'Pedido desde la web' : 'Registrado desde el panel';
+      await tx.eventoPedido.create({ data: { pedidoId: creado.id, a: 'pendiente', actorId: actor.id, nota: datos.nota?.trim() || notaInicial } });
+      if (extra.comprobante) {
+        await tx.comprobante.create({
+          data: { pedidoId: creado.id, tipo: 'pago', claveAlmacenamiento: extra.comprobante.clave, mime: extra.comprobante.mime, tamanoBytes: extra.comprobante.tamanoBytes, subidoPorId: actor.id },
+        });
+      }
       await this.auditoria.registrar({ actorId: actor.id, accion: 'pedido.crear', entidad: 'pedido', entidadId: String(creado.id), datos: { tipo: datos.tipo, monto: importes.monto }, ip }, tx);
       return creado;
     });
-    this.eventos.emitir({ tipo: 'pedido.creado', pedidoId: pedido.id, estado: pedido.estado, actorId: actor.id });
+    this.eventos.emitir({ tipo: 'pedido.creado', pedidoId: pedido.id, estado: pedido.estado, actorId: actor.id, jugadorId: pedido.jugadorId });
     return this.obtener(pedido.id);
   }
 
@@ -261,18 +282,20 @@ export class PedidosService {
         }
 
         await tx.eventoPedido.create({ data: { pedidoId: id, de: pedido.estado, a: destino, actorId: actor.id, nota } });
+        const aviso = avisoParaJugador(pedido.id, pedido.tipo, destino, pedido.monto, datos.motivoRechazo as string | undefined);
+        if (pedido.jugadorId && aviso) await tx.notificacion.create({ data: { usuarioId: pedido.jugadorId, pedidoId: id, ...aviso } });
         await this.auditoria.registrar(
           { actorId: actor.id, accion: `pedido.${accionReal}`, entidad: 'pedido', entidadId: String(id), datos: { de: pedido.estado, a: destino, ...(nota ? { nota } : {}) }, ip },
           tx,
         );
-        return destino;
+        return { destino, jugadorId: pedido.jugadorId };
       })
       .catch((error: unknown) => {
         if ((error as { code?: string }).code === 'P2002') throw new ConflictException('Ese número de operación ya se usó en otro pedido');
         throw error;
       });
     // Se avisa recién con el cambio guardado, así quien recarga la cola ya lo ve.
-    this.eventos.emitir({ tipo: 'pedido.actualizado', pedidoId: id, estado: destinoFinal, actorId: actor.id });
+    this.eventos.emitir({ tipo: 'pedido.actualizado', pedidoId: id, estado: destinoFinal.destino, actorId: actor.id, jugadorId: destinoFinal.jugadorId });
     return this.obtener(id);
   }
 
@@ -303,7 +326,7 @@ export class PedidosService {
       select: { id: true, tipo: true, mime: true, tamanoBytes: true, creadoEn: true },
     });
     await this.auditoria.registrar({ actorId: actor.id, accion: 'pedido.comprobante', entidad: 'pedido', entidadId: String(id), datos: { comprobanteId: comprobante.id, tipo }, ip });
-    this.eventos.emitir({ tipo: 'pedido.actualizado', pedidoId: id, estado: pedido.estado, actorId: actor.id });
+    this.eventos.emitir({ tipo: 'pedido.actualizado', pedidoId: id, estado: pedido.estado, actorId: actor.id, jugadorId: pedido.jugadorId });
     return comprobante;
   }
 

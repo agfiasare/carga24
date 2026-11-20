@@ -7,6 +7,8 @@ export interface EventoCola {
   estado: string;
   /** Quién lo provocó (para no hacer sonar la cola de quien lo creó). */
   actorId: string | null;
+  /** Dueño del pedido: solo a él se le reenvía el aviso en su portal. Nunca viaja al panel. */
+  jugadorId?: string | null;
 }
 
 /**

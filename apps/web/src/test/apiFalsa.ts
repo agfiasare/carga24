@@ -14,7 +14,12 @@ export function apiFalsa(rutas: Record<string, Respuesta>) {
   const llamadas: { clave: string; cuerpo: unknown }[] = [];
   const fetch = vi.fn((url: string, opciones?: RequestInit) => {
     const clave = `${opciones?.method ?? 'GET'} ${url.replace('/api/v1', '')}`;
-    const cuerpo: unknown = opciones?.body ? JSON.parse(String(opciones.body)) : undefined;
+    const cuerpo: unknown =
+      opciones?.body instanceof FormData
+        ? Object.fromEntries([...opciones.body.entries()].map(([k, v]) => [k, typeof v === 'string' ? v : `archivo:${v.name}`]))
+        : opciones?.body
+          ? JSON.parse(String(opciones.body))
+          : undefined;
     llamadas.push({ clave, cuerpo });
     const r = rutas[clave];
     if (!r) return Promise.resolve(respuesta(404, { mensaje: `sin ruta ${clave}` }));

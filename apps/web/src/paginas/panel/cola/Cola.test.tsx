@@ -7,7 +7,7 @@ import type { Pedido } from '../../../api/pedidos';
 import { ProveedorSesionStaff } from '../../../sesion/sesion';
 import { apiFalsa, respuesta } from '../../../test/apiFalsa';
 import { Cola } from './Cola';
-import { leerPesos } from './NuevoPedido';
+import { leerPesos } from '../../../comun/formato';
 
 /** EventSource falso: guarda la instancia para poder "mandar" avisos desde el test. */
 class FuenteFalsa {

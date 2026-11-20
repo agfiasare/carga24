@@ -5,13 +5,15 @@ import { AuthModule } from './auth/auth.module.js';
 import { AutenticacionGuard } from './auth/autenticacion.guard.js';
 import { PermisosGuard } from './auth/permisos.guard.js';
 import { ConfiguracionModule } from './configuracion/configuracion.service.js';
+import { NovedadesModule } from './novedades/novedades.js';
 import { PedidosModule } from './pedidos/pedidos.module.js';
+import { PortalModule } from './portal/portal.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { SaludModule } from './salud/salud.module.js';
 import { UsuariosModule } from './usuarios.module.js';
 
 @Module({
-  imports: [PrismaModule, AuditoriaModule, ConfiguracionModule, AuthModule, UsuariosModule, PedidosModule, SaludModule],
+  imports: [PrismaModule, AuditoriaModule, ConfiguracionModule, AuthModule, UsuariosModule, PedidosModule, PortalModule, NovedadesModule, SaludModule],
   providers: [
     // 1) ¿Quién es? (cookie de sesión) y ¿puede entrar a esta ruta? (@Publico, @SoloJugador, @SoloStaff…)
     { provide: APP_GUARD, useClass: AutenticacionGuard },
