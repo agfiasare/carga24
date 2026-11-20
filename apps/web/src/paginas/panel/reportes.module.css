@@ -1,0 +1,115 @@
+.periodo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.chip,
+.chipActivo {
+  min-height: var(--tamano-tactil);
+  padding: 0 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-pill);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chipActivo {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: var(--color-sobre-primario);
+}
+
+.fecha {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+}
+
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+}
+
+.destacado {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: var(--color-sobre-primario);
+}
+
+.indicadorTitulo {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.indicadorValor {
+  font-family: var(--fuente-titulos);
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.indicadorDetalle {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.numero {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.filtros {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.exportar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tamano-tactil);
+  padding: 0 16px;
+  border-radius: var(--radio-md);
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 860px) {
+  .grilla {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros {
+    grid-template-columns: 1fr 1fr;
+  }
+}

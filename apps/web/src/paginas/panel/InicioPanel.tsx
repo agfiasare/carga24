@@ -5,6 +5,9 @@ import clases from './panel.module.css';
 
 const DESCRIPCIONES: Record<string, string> = {
   '/panel/jugadores': 'Buscar, crear y editar jugadores. Bloquear y resetear contraseñas.',
+  '/panel/reportes': 'Ganancia y movimientos por período. Exportar a Excel.',
+  '/panel/configuracion': 'Comisión, montos, datos de pago y plataformas.',
+  '/panel/auditoria': 'Quién hizo qué y cuándo.',
   '/panel/novedades': 'Publicar avisos y novedades para los jugadores.',
   '/panel/staff': 'Altas del equipo, perfiles asignados y permisos individuales.',
   '/panel/perfiles': 'Conjuntos de permisos para asignar de una vez.',
