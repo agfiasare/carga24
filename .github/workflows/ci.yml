@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    name: Lint, tipos, tests y builds
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: carga24
+          POSTGRES_PASSWORD: carga24
+          POSTGRES_DB: carga24
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U carga24"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://carga24:carga24@localhost:5432/carga24
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: npm 11
+        run: npm install -g npm@11.21.3
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar paquete compartido y generar cliente de Prisma
+        run: |
+          npm run build:shared
+          npm run db:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Migraciones y carga inicial sobre PostgreSQL
+        working-directory: apps/api
+        env:
+          SEED_ADMIN_PASSWORD: ci-solo-para-pruebas
+        run: |
+          npx prisma migrate deploy
+          npm run build
+          npm run prisma:seed
+
+      - name: Build de la web
+        run: npm run build -w @carga24/web
+
+      - name: Build de Storybook
+        run: npm run build-storybook -w @carga24/web

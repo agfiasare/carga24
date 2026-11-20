@@ -1,0 +1,48 @@
+/* Variables CSS generadas a partir de tokens.ts. Mantenerlas sincronizadas. */
+:root {
+  --color-fondo: #08251b;
+  --color-superficie: #0e3326;
+  --color-borde: #1f5440;
+  --color-texto: #f3f7f2;
+  --color-texto-secundario: #a9c2b5;
+  --color-primario: #e9b949;
+  --color-sobre-primario: #1e1503;
+  --color-destacado: #f3ead3;
+  --color-ok: #7ee2a8;
+  --color-ok-fondo: #12432f;
+  --color-en-proceso: #f6d27f;
+  --color-en-proceso-fondo: #3a2f0c;
+  --color-error: #e5484d;
+  --color-error-fondo: #3d1416;
+
+  --fuente-display: 'Archivo', system-ui, sans-serif;
+  --fuente-titulos: 'Space Grotesk', system-ui, sans-serif;
+  --fuente-texto: 'Inter', system-ui, sans-serif;
+
+  --radio-sm: 8px;
+  --radio-md: 10px;
+  --radio-lg: 14px;
+  --radio-pill: 999px;
+  --tamano-tactil: 44px;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--fuente-texto);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}

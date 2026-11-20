@@ -1,0 +1,76 @@
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tamano-tactil);
+  padding: 0 18px;
+  border-radius: var(--radio-md);
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: filter 0.15s, background 0.15s;
+}
+
+.boton:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.md {
+  min-height: var(--tamano-tactil);
+}
+
+.lg {
+  min-height: 52px;
+  font-size: 16px;
+  padding: 0 24px;
+  border-radius: var(--radio-lg);
+}
+
+.anchoCompleto {
+  width: 100%;
+}
+
+.primario {
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
+}
+
+.secundario {
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  border-color: var(--color-borde);
+}
+
+.peligro {
+  background: transparent;
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.fantasma {
+  background: transparent;
+  color: var(--color-primario);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,32 @@
+.monto {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sm {
+  font-size: 14px;
+}
+
+.md {
+  font-size: 18px;
+  font-family: var(--fuente-titulos);
+}
+
+.lg {
+  font-size: 26px;
+  font-family: var(--fuente-titulos);
+}
+
+.entrada {
+  color: var(--color-ok);
+}
+
+.destacado {
+  color: var(--color-primario);
+}
+
+.tachado {
+  color: var(--color-texto-secundario);
+  text-decoration: line-through;
+}

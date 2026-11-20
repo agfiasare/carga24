@@ -1,0 +1,26 @@
+{
+  "name": "@carga24/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tipos, estados, permisos y reglas de dinero compartidos entre la API y la web.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.12"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  }
+}

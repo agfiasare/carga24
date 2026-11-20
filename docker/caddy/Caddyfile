@@ -1,0 +1,41 @@
+# Caddy obtiene y renueva solo los certificados HTTPS (Let's Encrypt).
+# DOMINIO y EMAIL_CERTIFICADOS vienen del archivo .env del servidor.
+{
+	email {$EMAIL_CERTIFICADOS}
+}
+
+(seguridad) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+(web) {
+	import seguridad
+	root * /srv/web
+	encode zstd gzip
+	# App de una sola página: cualquier ruta que no sea un archivo carga index.html.
+	try_files {path} /index.html
+	file_server
+}
+
+# Landing y app del jugador
+{$DOMINIO}, www.{$DOMINIO} {
+	import web
+}
+
+# Panel del staff (mismo build, otro ingreso)
+panel.{$DOMINIO} {
+	import web
+}
+
+# API y WebSockets de la cola
+api.{$DOMINIO} {
+	import seguridad
+	encode zstd gzip
+	reverse_proxy api:3000
+}

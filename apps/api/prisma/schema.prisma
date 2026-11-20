@@ -1,0 +1,381 @@
+// Modelo de datos de Carga24. Ver "Especificación técnica" en el documento del proyecto.
+// Reglas: montos en centavos (Int), porcentajes en puntos básicos (1 % = 100).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Enumeraciones ----------
+
+enum TipoUsuario {
+  jugador
+  staff
+}
+
+enum EstadoUsuario {
+  activo
+  bloqueado
+}
+
+enum TipoAjuste {
+  agregar
+  quitar
+}
+
+enum EstadoCuenta {
+  pendiente
+  verificada
+  rechazada
+}
+
+enum TipoPedido {
+  carga
+  retiro
+}
+
+enum EstadoPedido {
+  pendiente
+  en_proceso
+  espera_aprobacion
+  verificado
+  acreditado
+  pagado
+  rechazado
+}
+
+enum Canal {
+  web
+  manual
+}
+
+enum MedioPago {
+  cuenta_registrada
+  otra_cuenta
+  efectivo
+}
+
+enum ModoComision {
+  recargo
+  descuento
+}
+
+enum TipoComprobante {
+  pago
+  retiro
+}
+
+enum EstadoLiquidacion {
+  abierta
+  cerrada
+  pagada
+}
+
+// ---------- Usuarios, perfiles y permisos ----------
+
+/// Jugadores y staff en una tabla, con cuentas separadas. Debe tener nombreUsuario o telefono (al menos uno).
+model Usuario {
+  id                    String        @id @default(uuid())
+  tipo                  TipoUsuario
+  nombreUsuario         String?       @unique @map("nombre_usuario")
+  telefono              String?       @unique
+  /// Jugador: su usuario en la plataforma de juego (donde se le carga el saldo).
+  usuarioPlataforma     String?       @map("usuario_plataforma")
+  /// Staff: cómo se muestra en el panel (por ejemplo "Laura").
+  nombreVisible         String?       @map("nombre_visible")
+  contrasenaHash        String        @map("contrasena_hash")
+  debeCambiarContrasena Boolean       @default(false) @map("debe_cambiar_contrasena")
+  /// Staff: secreto de 2FA (cifrado).
+  dosFactoresSecreto    String?       @map("dos_factores_secreto")
+  estado                EstadoUsuario @default(activo)
+  creadoPorId           String?       @map("creado_por_id")
+  perfilId              String?       @map("perfil_id")
+  /// Staff: comisión propia en puntos básicos; vacío = la general.
+  comisionOperadorPb    Int?          @map("comision_operador_pb")
+  creadoEn              DateTime      @default(now()) @map("creado_en")
+  actualizadoEn         DateTime      @updatedAt @map("actualizado_en")
+
+  perfil           Perfil?          @relation(fields: [perfilId], references: [id])
+  ajustesPermisos  AjustePermiso[]  @relation("AjustesDelUsuario")
+  cuentas          CuentaBancaria[]
+  pedidos          Pedido[]         @relation("PedidosDelJugador")
+  pedidosTomados   Pedido[]         @relation("PedidosTomados")
+  pedidosVerif     Pedido[]         @relation("PedidosVerificados")
+  pedidosEjecutados Pedido[]        @relation("PedidosEjecutados")
+  notificaciones   Notificacion[]
+  sesiones         Sesion[]
+  liquidaciones    Liquidacion[]
+
+  @@index([tipo])
+  @@map("usuarios")
+}
+
+/// Perfil de permisos (Operador, Pagos, Supervisor, Admin o los que cree el admin).
+model Perfil {
+  id          String          @id @default(uuid())
+  nombre      String          @unique
+  descripcion String?
+  permisos    PerfilPermiso[]
+  usuarios    Usuario[]
+  creadoEn    DateTime        @default(now()) @map("creado_en")
+
+  @@map("perfiles")
+}
+
+model PerfilPermiso {
+  perfilId String @map("perfil_id")
+  /// Clave del catálogo de permisos (packages/shared/src/permisos.ts).
+  permiso  String
+  perfil   Perfil @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+
+  @@id([perfilId, permiso])
+  @@map("perfil_permisos")
+}
+
+/// Ajuste individual sobre el perfil: agrega o quita un permiso a una persona.
+model AjustePermiso {
+  id            String     @id @default(uuid())
+  usuarioId     String     @map("usuario_id")
+  permiso       String
+  tipo          TipoAjuste
+  otorgadoPorId String     @map("otorgado_por_id")
+  creadoEn      DateTime   @default(now()) @map("creado_en")
+  usuario       Usuario    @relation("AjustesDelUsuario", fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, permiso])
+  @@map("ajustes_permisos")
+}
+
+model Sesion {
+  id          String   @id @default(uuid())
+  usuarioId   String   @map("usuario_id")
+  tokenHash   String   @unique @map("token_hash")
+  venceEn     DateTime @map("vence_en")
+  ip          String?
+  dispositivo String?
+  creadoEn    DateTime @default(now()) @map("creado_en")
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("sesiones")
+}
+
+// ---------- Cuentas y plataformas ----------
+
+/// Cuenta desde la que paga el jugador (propia o de un tercero) y destino de sus retiros.
+model CuentaBancaria {
+  id                    String       @id @default(uuid())
+  usuarioId             String       @map("usuario_id")
+  /// Único en todo el sistema: una cuenta, un jugador.
+  cbuCvu                String       @unique @map("cbu_cvu")
+  alias                 String?
+  banco                 String?
+  /// Solo informativo: puede no ser el jugador.
+  titular               String?
+  estado                EstadoCuenta @default(pendiente)
+  /// Pedido cuyo pago confirmado verificó la cuenta.
+  verificadaConPedidoId Int?         @unique @map("verificada_con_pedido_id")
+  creadoEn              DateTime     @default(now()) @map("creado_en")
+  usuario               Usuario      @relation(fields: [usuarioId], references: [id])
+  pedidos               Pedido[]
+
+  @@index([usuarioId, estado])
+  @@map("cuentas_bancarias")
+}
+
+model Plataforma {
+  id      String   @id @default(uuid())
+  nombre  String   @unique
+  activa  Boolean  @default(true)
+  pedidos Pedido[]
+
+  @@map("plataformas")
+}
+
+// ---------- Pedidos ----------
+
+model Pedido {
+  /// Número visible (#1291).
+  id                    Int           @id @default(autoincrement())
+  tipo                  TipoPedido
+  estado                EstadoPedido  @default(pendiente)
+  canal                 Canal
+  medioPago             MedioPago?    @map("medio_pago")
+  /// Puede ser null: un número nuevo de WhatsApp todavía sin cuenta.
+  jugadorId             String?       @map("jugador_id")
+  telefono              String?
+  plataformaId          String        @map("plataforma_id")
+  /// Lo que transfiere el jugador (cargas).
+  montoPagado           Int?          @map("monto_pagado")
+  /// Lo que se acredita (cargas) o se transfiere (retiros).
+  monto                 Int
+  ganancia              Int           @default(0)
+  /// Foto del cálculo: porcentaje y modo con que se calculó.
+  comisionPb            Int           @map("comision_pb")
+  modoComision          ModoComision  @map("modo_comision")
+  comisionOperadorPb    Int?          @map("comision_operador_pb")
+  comisionOperadorMonto Int?          @map("comision_operador_monto")
+  /// Cuenta de origen (cargas) o destino (retiros).
+  cuentaId              String?       @map("cuenta_id")
+  /// Número de operación del banco: un movimiento acredita un solo pedido.
+  referenciaMovimiento  String?       @unique @map("referencia_movimiento")
+  codigoPromo           String?       @map("codigo_promo")
+  promocionId           String?       @map("promocion_id")
+  motivoRechazo         String?       @map("motivo_rechazo")
+  tomadoPorId           String?       @map("tomado_por_id")
+  tomadoEn              DateTime?     @map("tomado_en")
+  verificadoPorId       String?       @map("verificado_por_id")
+  verificadoEn          DateTime?     @map("verificado_en")
+  /// Quien acreditó (carga) o pagó (retiro).
+  ejecutadoPorId        String?       @map("ejecutado_por_id")
+  ejecutadoEn           DateTime?     @map("ejecutado_en")
+  liquidacionId         String?       @map("liquidacion_id")
+  /// Control de concurrencia: "tomar" es atómico.
+  version               Int           @default(0)
+  creadoEn              DateTime      @default(now()) @map("creado_en")
+  actualizadoEn         DateTime      @updatedAt @map("actualizado_en")
+
+  jugador      Usuario?       @relation("PedidosDelJugador", fields: [jugadorId], references: [id])
+  tomadoPor    Usuario?       @relation("PedidosTomados", fields: [tomadoPorId], references: [id])
+  verificadoPor Usuario?      @relation("PedidosVerificados", fields: [verificadoPorId], references: [id])
+  ejecutadoPor Usuario?       @relation("PedidosEjecutados", fields: [ejecutadoPorId], references: [id])
+  plataforma   Plataforma     @relation(fields: [plataformaId], references: [id])
+  cuenta       CuentaBancaria? @relation(fields: [cuentaId], references: [id])
+  promocion    Promocion?     @relation(fields: [promocionId], references: [id])
+  liquidacion  Liquidacion?   @relation(fields: [liquidacionId], references: [id])
+  eventos      EventoPedido[]
+  comprobantes Comprobante[]
+
+  @@index([estado, creadoEn])
+  @@index([jugadorId])
+  @@index([telefono])
+  @@map("pedidos")
+}
+
+/// Historial de cada cambio de estado.
+model EventoPedido {
+  id       String        @id @default(uuid())
+  pedidoId Int           @map("pedido_id")
+  de       EstadoPedido?
+  a        EstadoPedido
+  actorId  String?       @map("actor_id")
+  nota     String?
+  creadoEn DateTime      @default(now()) @map("creado_en")
+  pedido   Pedido        @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId])
+  @@map("eventos_pedido")
+}
+
+model Comprobante {
+  id                  String          @id @default(uuid())
+  pedidoId            Int             @map("pedido_id")
+  tipo                TipoComprobante
+  claveAlmacenamiento String          @map("clave_almacenamiento")
+  mime                String
+  tamanoBytes         Int             @map("tamano_bytes")
+  subidoPorId         String          @map("subido_por_id")
+  creadoEn            DateTime        @default(now()) @map("creado_en")
+  pedido              Pedido          @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@map("comprobantes")
+}
+
+// ---------- Comisiones ----------
+
+model Liquidacion {
+  id               String            @id @default(uuid())
+  operadorId       String            @map("operador_id")
+  /// Período liquidado, por ejemplo "2026-11".
+  periodo          String
+  cantidadPedidos  Int               @default(0) @map("cantidad_pedidos")
+  gananciaGenerada Int               @default(0) @map("ganancia_generada")
+  ajustes          Int               @default(0)
+  totalACobrar     Int               @default(0) @map("total_a_cobrar")
+  estado           EstadoLiquidacion @default(abierta)
+  cerradaPorId     String?           @map("cerrada_por_id")
+  cerradaEn        DateTime?         @map("cerrada_en")
+  pagadaEn         DateTime?         @map("pagada_en")
+  operador         Usuario           @relation(fields: [operadorId], references: [id])
+  pedidos          Pedido[]
+
+  @@unique([operadorId, periodo])
+  @@map("liquidaciones")
+}
+
+// ---------- Contenido ----------
+
+model Promocion {
+  id          String   @id @default(uuid())
+  titulo      String
+  condiciones String
+  codigo      String   @unique
+  desde       DateTime
+  hasta       DateTime
+  activa      Boolean  @default(true)
+  enLanding   Boolean  @default(false) @map("en_landing")
+  enInicio    Boolean  @default(false) @map("en_inicio")
+  enNovedades Boolean  @default(false) @map("en_novedades")
+  creadoEn    DateTime @default(now()) @map("creado_en")
+  pedidos     Pedido[]
+
+  @@map("promociones")
+}
+
+model Novedad {
+  id          String    @id @default(uuid())
+  titulo      String
+  texto       String
+  fijada      Boolean   @default(false)
+  publicadaEn DateTime? @map("publicada_en")
+  autorId     String    @map("autor_id")
+  creadoEn    DateTime  @default(now()) @map("creado_en")
+
+  @@map("novedades")
+}
+
+model Notificacion {
+  id        String    @id @default(uuid())
+  usuarioId String    @map("usuario_id")
+  titulo    String
+  texto     String?
+  leidaEn   DateTime? @map("leida_en")
+  creadoEn  DateTime  @default(now()) @map("creado_en")
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, leidaEn])
+  @@map("notificaciones")
+}
+
+// ---------- Configuración y auditoría ----------
+
+/// Parámetros del negocio: comisión, montos, datos de pago, mensajes.
+model Configuracion {
+  clave            String   @id
+  valor            Json
+  actualizadoPorId String?  @map("actualizado_por_id")
+  actualizadoEn    DateTime @updatedAt @map("actualizado_en")
+
+  @@map("configuracion")
+}
+
+/// Registro de cada acción del staff. Solo se inserta: nunca se edita ni se borra.
+model Auditoria {
+  id        BigInt   @id @default(autoincrement())
+  actorId   String?  @map("actor_id")
+  accion    String
+  entidad   String
+  entidadId String?  @map("entidad_id")
+  datos     Json?
+  ip        String?
+  creadoEn  DateTime @default(now()) @map("creado_en")
+
+  @@index([entidad, entidadId])
+  @@index([actorId, creadoEn])
+  @@map("auditoria")
+}

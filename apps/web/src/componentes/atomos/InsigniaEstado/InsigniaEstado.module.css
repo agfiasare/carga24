@@ -1,0 +1,29 @@
+.insignia {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radio-pill);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.neutro {
+  background: var(--color-borde);
+  color: var(--color-texto);
+}
+
+.proceso {
+  background: var(--color-en-proceso-fondo);
+  color: var(--color-en-proceso);
+}
+
+.ok {
+  background: var(--color-ok-fondo);
+  color: var(--color-ok);
+}
+
+.error {
+  background: var(--color-error-fondo);
+  color: #ff9b9e;
+}

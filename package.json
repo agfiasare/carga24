@@ -1,0 +1,45 @@
+{
+  "name": "carga24",
+  "private": true,
+  "description": "Carga24: pedidos de carga y retiro de saldo, portal del jugador y panel del staff.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=11"
+  },
+  "scripts": {
+    "build": "npm run build -w @carga24/shared && npm run build -w @carga24/api && npm run build -w @carga24/web",
+    "build:shared": "npm run build -w @carga24/shared",
+    "dev:api": "npm run start:dev -w @carga24/api",
+    "dev:web": "npm run dev -w @carga24/web",
+    "storybook": "npm run storybook -w @carga24/web",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:generate": "npm run prisma:generate -w @carga24/api",
+    "db:migrate": "npm run prisma:migrate -w @carga24/api"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "eslint": "^10.15.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^16.0.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.73.0"
+  },
+  "allowScripts": {
+    "prisma": true,
+    "@prisma/engines": true,
+    "@swc/core": true,
+    "@parcel/watcher": false,
+    "esbuild@0.28.2": true,
+    "esbuild": true
+  },
+  "packageManager": "npm@11.21.3",
+  "overrides": {
+    "effect": "^3.22.5"
+  }
+}
