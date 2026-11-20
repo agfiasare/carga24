@@ -80,7 +80,17 @@ export const jugadores = {
   bloquear: (jugadorId: string) => api<JugadorPanel>('POST', `/jugadores/${id(jugadorId)}/bloquear`),
   desbloquear: (jugadorId: string) => api<JugadorPanel>('POST', `/jugadores/${id(jugadorId)}/desbloquear`),
   resetearContrasena: (jugadorId: string) => api<{ contrasenaTemporal: string }>('POST', `/jugadores/${id(jugadorId)}/resetear-contrasena`),
+  cuentas: (jugadorId: string) => api<CuentaJugador[]>('GET', `/jugadores/${id(jugadorId)}/cuentas`),
 };
+
+export interface CuentaJugador {
+  id: string;
+  cbuCvu: string;
+  alias: string | null;
+  banco: string | null;
+  titular: string | null;
+  estado: 'pendiente' | 'verificada' | 'rechazada';
+}
 
 export const staff = {
   listar: () => api<StaffPanel[]>('GET', '/staff'),

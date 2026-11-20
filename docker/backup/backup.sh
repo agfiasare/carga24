@@ -1,6 +1,6 @@
 #!/bin/sh
-# Backup diario de PostgreSQL. Guarda volcados comprimidos en /backups y
-# borra los de más de RETENCION_DIAS días.
+# Backup diario de PostgreSQL y de los comprobantes. Guarda volcados comprimidos
+# en /backups y borra los de más de RETENCION_DIAS días.
 #
 # IMPORTANTE: /backups está en el mismo VPS. Configurá una copia fuera del
 # servidor (por ejemplo, con rclone a un almacenamiento externo) y probá
@@ -19,6 +19,13 @@ while true; do
     echo "[backup] ERROR: falló el volcado" >&2
     rm -f "$archivo"
   fi
-  find /backups -name 'carga24-*.sql.gz' -mtime +"$RETENCION_DIAS" -delete
+  comprobantes="/backups/comprobantes-$(date -u +%Y%m%d-%H%M%S).tar.gz"
+  if tar -czf "$comprobantes" -C /archivos .; then
+    echo "[backup] comprobantes listos"
+  else
+    echo "[backup] ERROR: falló la copia de comprobantes" >&2
+    rm -f "$comprobantes"
+  fi
+  find /backups \( -name 'carga24-*.sql.gz' -o -name 'comprobantes-*.tar.gz' \) -mtime +"$RETENCION_DIAS" -delete
   sleep "$INTERVALO_SEGUNDOS"
 done

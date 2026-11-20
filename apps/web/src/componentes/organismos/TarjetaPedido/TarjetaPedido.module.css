@@ -1,0 +1,131 @@
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-left-width: 4px;
+  border-radius: var(--radio-md);
+}
+
+.carga {
+  border-left-color: var(--color-ok);
+}
+
+.retiro {
+  border-left-color: var(--color-en-proceso);
+}
+
+.nuevo {
+  animation: entrar 1.6s ease-out;
+}
+
+@keyframes entrar {
+  from {
+    background: var(--color-en-proceso-fondo);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nuevo {
+    animation: none;
+    outline: 2px solid var(--color-en-proceso);
+  }
+}
+
+.cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-texto-secundario);
+}
+
+.numero {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-texto);
+  font: inherit;
+  font-family: var(--fuente-titulos);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.numero:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.numero:disabled {
+  cursor: default;
+}
+
+.cuando {
+  font-size: 12px;
+  color: var(--color-texto-secundario);
+  white-space: nowrap;
+}
+
+.cuerpo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.jugador {
+  font-weight: 700;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.detalle {
+  font-size: 12px;
+  color: var(--color-texto-secundario);
+}
+
+.importes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.motivo {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-error);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.acciones > * {
+  flex: 1 1 auto;
+}
+
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

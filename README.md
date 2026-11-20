@@ -71,6 +71,8 @@ La integración continua (`.github/workflows/ci.yml`) corre lint, tipos, tests, 
 - **Dinero:** todos los montos son enteros en **centavos** y los porcentajes en **puntos básicos** (1 % = 100). Usar siempre las funciones de `@carga24/shared` (`calcularCarga`, `comisionOperador`, `formatearPesos`).
 - **Permisos:** cada funcionalidad del panel tiene su permiso en `packages/shared/src/permisos.ts`. Las rutas de la API se protegen con `@RequierePermisos('...')`. Funcionalidad nueva = permiso nuevo en el catálogo.
 - **Acceso a rutas:** cada controlador declara quién lo usa: `@Publico()`, `@SoloJugador()`, `@SoloStaff()` o `@StaffPendiente()`. Si no declara nada, se trata como `@SoloStaff()`.
+- **Pedidos:** los cambios de estado pasan por `PedidosService.accionar`, que actualiza de forma atómica (estado + versión): si dos personas actúan a la vez, una recibe 409. La cola en vivo usa Server-Sent Events (`GET /api/v1/pedidos/eventos`).
+- **Comprobantes:** fotos (JPG, PNG, WEBP) o PDF de hasta 10 MB, reconocidos por su contenido. Se guardan en `DIRECTORIO_ARCHIVOS` (en producción, el volumen `archivos`, que entra en el backup diario).
 - **Sesiones:** cookie httpOnly por ámbito (`c24_jugador`, `c24_staff`); el token se guarda solo como hash. La web llama a `/api` en su mismo dominio (en producción lo enruta Caddy).
 - **Estados del pedido:** las transiciones válidas están en `packages/shared/src/pedidos.ts` (`siguienteEstado`). El backend rechaza cualquier otro paso.
 - **Frontend:** Atomic Design en `apps/web/src/componentes` (átomos, moléculas, organismos). Los átomos no llaman a la API y usan los tokens de `estilos/` (nunca colores escritos a mano). Cada componente tiene su historia de Storybook y sus tests.

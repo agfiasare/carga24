@@ -11,3 +11,4 @@ apps/api/src/generated/
 backups/
 .DS_Store
 *.log
+archivos/

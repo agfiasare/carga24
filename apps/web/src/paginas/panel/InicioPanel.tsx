@@ -1,7 +1,6 @@
-import { Link } from 'react-router';
-import { Aviso } from '../../componentes';
+import { Link, Navigate } from 'react-router';
 import { useSesionStaff } from '../../sesion/sesion';
-import { PaginaPanel, useSecciones } from './PaginaPanel';
+import { PaginaPanel, usePermisos, useSecciones } from './PaginaPanel';
 import clases from './panel.module.css';
 
 const DESCRIPCIONES: Record<string, string> = {
@@ -15,9 +14,10 @@ const DESCRIPCIONES: Record<string, string> = {
 export function InicioPanel() {
   const { usuario } = useSesionStaff();
   const atajos = useSecciones().filter((s) => s.a !== '/panel');
+  const { tiene } = usePermisos();
+  if (tiene('pedidos.ver')) return <Navigate to="/panel/cola" replace />;
   return (
     <PaginaPanel titulo={`Hola, ${usuario?.nombreVisible ?? usuario?.nombreUsuario ?? ''}`}>
-      <Aviso tipo="info">La cola de pedidos llega en la próxima etapa. Mientras tanto, desde acá se administran jugadores, staff y permisos.</Aviso>
       <div className={clases.atajos}>
         {atajos.map((s) => (
           <Link key={s.a} to={s.a} className={clases.atajo}>

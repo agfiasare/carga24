@@ -43,6 +43,9 @@ describe('Staff: ingreso con 2FA, gestión de jugadores, staff y perfiles', () =
 
       await admin.post(`${API}/auth/staff/2fa/activar`).send({ codigo: '123456' }).expect(400); // falta el QR
       const configuracion = await admin.post(`${API}/auth/staff/2fa/configurar`).expect(200);
+      // Pedirlo de nuevo (recarga, doble clic) devuelve el mismo secreto.
+      const [otra, otraMas] = await Promise.all([admin.post(`${API}/auth/staff/2fa/configurar`), admin.post(`${API}/auth/staff/2fa/configurar`)]);
+      expect([otra.body.secreto, otraMas.body.secreto]).toEqual([configuracion.body.secreto, configuracion.body.secreto]);
       expect(configuracion.body.uri).toMatch(/^otpauth:\/\/totp\/Carga24%3Aadmin\?secret=/);
       await admin.post(`${API}/auth/staff/2fa/activar`).send({ codigo: '000000' }).expect(400);
       const activado = await admin
