@@ -33,6 +33,7 @@ const parametros: ParametrosPortal = {
   cuentasPendientesMaximas: 3,
   datosPago: { alias: 'carga24.pagos', titular: 'Carga24 SRL', banco: 'Galicia' },
   horario: '',
+  whatsapp: '',
   plataforma: { id: 'pl', nombre: 'Plataforma principal' },
 };
 const cuenta = (extra: Partial<CuentaPropia> = {}): CuentaPropia => ({ id: 'c1', cbuCvu: '0000003100012345678901', alias: 'ana.mp', banco: null, titular: null, estado: 'pendiente', creadoEn: '2026-11-20T00:00:00Z', ...extra });

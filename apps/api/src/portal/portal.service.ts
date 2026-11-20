@@ -63,7 +63,7 @@ export class PortalService {
   async parametros() {
     const [parametros, pago, plataforma] = await Promise.all([
       this.configuracion.parametrosPedidos(),
-      this.prisma.configuracion.findMany({ where: { clave: { in: ['pago.alias', 'pago.titular', 'pago.banco', 'atencion.horario'] } } }),
+      this.prisma.configuracion.findMany({ where: { clave: { in: ['pago.alias', 'pago.titular', 'pago.banco', 'atencion.horario', 'atencion.whatsapp'] } } }),
       this.prisma.plataforma.findFirst({ where: { activa: true }, orderBy: { nombre: 'asc' }, select: { id: true, nombre: true } }),
     ]);
     const valor = (clave: string) => {
@@ -76,6 +76,7 @@ export class PortalService {
       cuentasPendientesMaximas: parametros.cuentasPendientesMaximas,
       datosPago: { alias: valor('pago.alias'), titular: valor('pago.titular'), banco: valor('pago.banco') },
       horario: valor('atencion.horario'),
+      whatsapp: valor('atencion.whatsapp'),
       plataforma,
     };
   }
@@ -127,7 +128,12 @@ export class PortalService {
   async crearPedido(jugador: UsuarioAutenticado, datos: DatosPedidoWeb, archivo: { buffer: Buffer; size: number } | undefined, ip?: string) {
     const abierto = await this.prisma.pedido.findFirst({ where: { jugadorId: jugador.id, estado: { in: [...ABIERTOS] } }, select: { id: true } });
     if (abierto) throw new ConflictException(`Ya tenés un pedido en curso (#${abierto.id}). Esperá a que termine para hacer otro.`);
-    if (datos.tipo === 'carga' && !archivo) throw new BadRequestException('Adjuntá el comprobante de la transferencia');
+    // Desde una cuenta ya verificada el comprobante es opcional: el pago se busca en el banco.
+    // La primera vez desde una cuenta nueva sí hace falta, porque ese pago es el que la verifica.
+    if (datos.tipo === 'carga' && !archivo) {
+      const cuenta = await this.prisma.cuentaBancaria.findFirst({ where: { id: datos.cuentaId, usuarioId: jugador.id }, select: { estado: true } });
+      if (cuenta?.estado !== 'verificada') throw new BadRequestException('Adjuntá el comprobante: es tu primer pago desde esta cuenta');
+    }
     const plataforma = await this.prisma.plataforma.findFirst({ where: { activa: true }, orderBy: { nombre: 'asc' } });
     if (!plataforma) throw new ConflictException('Por ahora no estamos tomando pedidos. Escribinos por WhatsApp.');
 

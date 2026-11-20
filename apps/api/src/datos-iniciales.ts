@@ -20,6 +20,7 @@ const CONFIGURACION_INICIAL: Record<string, unknown> = {
   'pago.titular': '',
   'pago.banco': '',
   'atencion.horario': '',
+  'atencion.whatsapp': '',
 };
 
 export async function cargarDatosIniciales(prisma: PrismaClient, contrasenaAdmin: string | undefined): Promise<void> {

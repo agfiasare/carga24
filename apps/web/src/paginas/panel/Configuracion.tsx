@@ -40,6 +40,7 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
   const [pendientes, setPendientes] = useState(String(config.cuentasPendientesMaximas));
   const [pago, setPago] = useState(config.pago);
   const [horario, setHorario] = useState(config.horario);
+  const [whatsapp, setWhatsapp] = useState(config.whatsapp ?? '');
   const [confirmar, setConfirmar] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const guardar = useAccion(administracion.guardarConfiguracion);
@@ -59,6 +60,7 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
       cuentasPendientesMaximas: cantidadPendientes,
       pago,
       horario,
+      whatsapp: whatsapp.replace(/\D/g, ''),
     });
     setConfirmar(false);
     if (resultado) {
@@ -131,13 +133,22 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
       </section>
 
       <section className={clases.tarjeta} aria-labelledby="t-pago">
-        <h2 id="t-pago">Datos para transferir</h2>
-        <p className={clases.explicacion}>Los ve el jugador al pedir una carga.</p>
+        <h2 id="t-pago">Datos para transferir y atención</h2>
+        <p className={clases.explicacion}>Los ve el jugador al pedir una carga y en la landing.</p>
         <div className={clases.dosCampos}>
           <CampoFormulario etiqueta="Alias o CBU" value={pago.alias} onChange={(e) => setPago({ ...pago, alias: e.target.value })} />
           <CampoFormulario etiqueta="Titular" value={pago.titular} onChange={(e) => setPago({ ...pago, titular: e.target.value })} />
           <CampoFormulario etiqueta="Banco" value={pago.banco} onChange={(e) => setPago({ ...pago, banco: e.target.value })} />
           <CampoFormulario etiqueta="Horario de atención" value={horario} onChange={(e) => setHorario(e.target.value)} placeholder="Todos los días de 10 a 2" />
+          <CampoFormulario
+            etiqueta="WhatsApp de atención"
+            inputMode="tel"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            placeholder="5491155550000"
+            ayuda="Con código de país, solo números. Lo usa el botón de la landing."
+            error={guardar.error?.delCampo('whatsapp')}
+          />
         </div>
       </section>
 

@@ -56,6 +56,9 @@ describe('Promociones', () => {
     expect(landing.map((p: { codigo: string }) => p.codigo)).toEqual(['FINDE10']);
     expect(landing[0]).not.toHaveProperty('activa');
     expect((await request(app.getHttpServer()).get(`${API}/promociones/vigentes?lugar=novedades`)).body).toEqual([]);
+    await prisma.configuracion.update({ where: { clave: 'atencion.horario' }, data: { valor: 'Todos los días de 10 a 2' } });
+    const datos = (await request(app.getHttpServer()).get(`${API}/publico/landing`).expect(200)).body;
+    expect(datos).toMatchObject({ horario: 'Todos los días de 10 a 2', whatsapp: '', plataforma: 'Plataforma principal', promo: { codigo: 'FINDE10' } });
   });
 
   it('el jugador valida el código y lo usa en su carga; el operador lo ve en la cola', async () => {

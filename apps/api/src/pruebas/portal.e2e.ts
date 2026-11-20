@@ -69,8 +69,9 @@ describe('Portal del jugador', () => {
   describe('pedir una carga', () => {
     let id: number;
 
-    it('exige el comprobante y una cuenta propia', async () => {
-      await ana.post(`${API}/yo/pedidos`).field('tipo', 'carga').field('monto', '1000000').field('cuentaId', cuentaId).expect(400);
+    it('exige el comprobante en el primer pago desde una cuenta, y una cuenta propia', async () => {
+      const sin = await ana.post(`${API}/yo/pedidos`).field('tipo', 'carga').field('monto', '1000000').field('cuentaId', cuentaId).expect(400);
+      expect(sin.body.mensaje).toMatch(/primer pago desde esta cuenta/);
       const ajena = await otro.post(`${API}/yo/pedidos`).field('tipo', 'carga').field('monto', '1000000').field('cuentaId', cuentaId).attach('archivo', PNG, 'pago.png').expect(400);
       expect(ajena.body.mensaje).toBe('Esa cuenta no es del jugador');
       expect(await prisma.comprobante.count()).toBe(0); // no quedan archivos sueltos
@@ -115,6 +116,14 @@ describe('Portal del jugador', () => {
     });
   });
 
+  describe('carga desde una cuenta ya verificada', () => {
+    it('no pide comprobante: el pago se busca en el banco', async () => {
+      const { body } = await ana.post(`${API}/yo/pedidos`).field('tipo', 'carga').field('monto', '500000').field('cuentaId', cuentaId).expect(201);
+      expect(body.comprobantes).toEqual([]);
+      await operador.post(`${API}/pedidos/${body.id}/rechazar`).send({ motivo: 'otro' }).expect(200);
+    });
+  });
+
   describe('retiros e historial', () => {
     it('solo a cuentas verificadas; los rechazos avisan con el motivo', async () => {
       const pendiente = (await ana.get(`${API}/yo/cuentas`)).body.find((c: { estado: string }) => c.estado === 'pendiente');
@@ -128,8 +137,9 @@ describe('Portal del jugador', () => {
 
     it('filtra el historial', async () => {
       const todos = (await ana.get(`${API}/yo/pedidos`).expect(200)).body;
-      expect(todos.total).toBe(2);
+      expect(todos.total).toBe(3);
       expect((await ana.get(`${API}/yo/pedidos?tipo=retiro`)).body.pedidos.map((p: { tipo: string }) => p.tipo)).toEqual(['retiro']);
+      expect((await ana.get(`${API}/yo/pedidos?estado=cerrados`)).body.total).toBe(3);
       expect((await ana.get(`${API}/yo/pedidos?estado=en_curso`)).body.total).toBe(0);
       expect((await otro.get(`${API}/yo/pedidos`)).body.total).toBe(0);
     });

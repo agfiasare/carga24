@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
 import { CambiarContrasena } from './paginas/jugador/CambiarContrasena';
+import { Landing } from './paginas/Landing';
 import { Ingresar } from './paginas/jugador/Ingresar';
 import { Avisos } from './paginas/jugador/portal/Avisos';
 import { Cargar } from './paginas/jugador/portal/Cargar';
@@ -42,6 +43,7 @@ function RutasJugador() {
   return (
     <ProveedorSesionJugador>
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/ingresar" element={<Ingresar />} />
         <Route path="/registro" element={<Registro />} />
         <Route element={<RutaJugador />}>
@@ -63,8 +65,7 @@ function RutasJugador() {
             <Route path="/avisos" element={<Avisos />} />
           </Route>
         </Route>
-        {/* La landing se suma en un próximo PR; por ahora la raíz lleva al ingreso. */}
-        <Route path="*" element={<Navigate to="/inicio" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ProveedorSesionJugador>
   );
