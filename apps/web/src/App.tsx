@@ -1,30 +1,57 @@
-import { Send } from 'lucide-react';
-import { Boton, InsigniaEstado, Monto } from './componentes';
-import clases from './App.module.css';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { CambiarContrasena } from './paginas/jugador/CambiarContrasena';
+import { Ingresar } from './paginas/jugador/Ingresar';
+import { Inicio } from './paginas/jugador/Inicio';
+import { Registro } from './paginas/jugador/Registro';
+import { IngresoPanel } from './paginas/panel/IngresoPanel';
+import { InicioPanel } from './paginas/panel/InicioPanel';
+import { ProveedorSesionJugador, ProveedorSesionStaff, RutaJugador, RutaStaff } from './sesion/sesion';
 
-/**
- * Pantalla provisoria del Sprint 0: confirma que la app, los tokens y los
- * átomos funcionan. En los próximos sprints se reemplaza por las rutas reales
- * (landing, app del jugador y panel del staff).
- */
+/** El mismo build sirve carga24.com.ar (jugador) y panel.carga24.com.ar (staff). */
+export function esDominioPanel(host = window.location.hostname): boolean {
+  return host.startsWith('panel.');
+}
+
+/** En desarrollo (localhost) el panel también se abre en /panel. */
+function usarPanel(): boolean {
+  return esDominioPanel() || (import.meta.env.DEV && window.location.pathname.startsWith('/panel'));
+}
+
+function RutasJugador() {
+  return (
+    <ProveedorSesionJugador>
+      <Routes>
+        <Route path="/ingresar" element={<Ingresar />} />
+        <Route path="/registro" element={<Registro />} />
+        <Route element={<RutaJugador />}>
+          <Route path="/inicio" element={<Inicio />} />
+          <Route path="/cambiar-contrasena" element={<CambiarContrasena />} />
+        </Route>
+        {/* La landing se suma en un próximo PR; por ahora la raíz lleva al ingreso. */}
+        <Route path="*" element={<Navigate to="/inicio" replace />} />
+      </Routes>
+    </ProveedorSesionJugador>
+  );
+}
+
+function RutasPanel() {
+  return (
+    <ProveedorSesionStaff>
+      <Routes>
+        <Route path="/panel/ingresar" element={<IngresoPanel />} />
+        <Route element={<RutaStaff />}>
+          <Route path="/panel" element={<InicioPanel />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/panel" replace />} />
+      </Routes>
+    </ProveedorSesionStaff>
+  );
+}
+
 export function App() {
   return (
-    <main className={clases.pagina}>
-      <img src="/marca/carga24-logo-oro.png" alt="Carga24" className={clases.logo} />
-      <h1 className={clases.titulo}>
-        Cargá saldo y cobrá tus premios, <span className={clases.acento}>sin vueltas.</span>
-      </h1>
-      <p className={clases.texto}>Base del proyecto lista. Próximo paso: ingreso, usuarios y permisos.</p>
-      <section className={clases.tarjeta} aria-label="Ejemplo de pedido">
-        <div className={clases.fila}>
-          <span>Carga #1291</span>
-          <InsigniaEstado estado="en_proceso" tipo="carga" />
-        </div>
-        <Monto centavos={1_000_000} tamano="lg" destacado />
-      </section>
-      <Boton tamano="lg" icono={<Send size={18} aria-hidden="true" />}>
-        Pedir carga
-      </Boton>
-    </main>
+    <BrowserRouter>
+      {usarPanel() ? <RutasPanel /> : <RutasJugador />}
+    </BrowserRouter>
   );
 }
