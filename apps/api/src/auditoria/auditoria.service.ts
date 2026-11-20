@@ -1,5 +1,6 @@
 import { Global, Injectable, Module } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { AuditoriaController } from './auditoria.controller.js';
 import type { Prisma } from '../generated/prisma/client.js';
 
 export interface RegistroAuditoria {
@@ -31,5 +32,5 @@ export class AuditoriaService {
 }
 
 @Global()
-@Module({ providers: [AuditoriaService], exports: [AuditoriaService] })
+@Module({ controllers: [AuditoriaController], providers: [AuditoriaService], exports: [AuditoriaService] })
 export class AuditoriaModule {}

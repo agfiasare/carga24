@@ -1,6 +1,7 @@
 import { Global, Injectable, Module } from '@nestjs/common';
 import type { ModoComision } from '@carga24/shared';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { AdministracionController, AdministracionService } from './configuracion.controller.js';
 
 export interface ParametrosPedidos {
   comision: { modo: ModoComision; porcentajePb: number };
@@ -39,5 +40,5 @@ export class ConfiguracionService {
 }
 
 @Global()
-@Module({ providers: [ConfiguracionService], exports: [ConfiguracionService] })
+@Module({ controllers: [AdministracionController], providers: [ConfiguracionService, AdministracionService], exports: [ConfiguracionService] })
 export class ConfiguracionModule {}
