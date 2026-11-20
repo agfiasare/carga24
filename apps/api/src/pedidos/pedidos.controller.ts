@@ -75,7 +75,7 @@ export class PedidosController {
   @Sse('pedidos/eventos')
   @RequierePermisos('pedidos.ver')
   eventosEnVivo(): Observable<MessageEvent> {
-    const avisos = this.eventos.flujo().pipe(map((e): MessageEvent => ({ type: e.tipo, data: e })));
+    const avisos = this.eventos.flujo().pipe(map(({ jugadorId: _jugadorId, ...e }): MessageEvent => ({ type: e.tipo, data: e })));
     // Un latido cada 25 s mantiene viva la conexión a través de proxies.
     const latido = interval(25_000).pipe(map((): MessageEvent => ({ type: 'latido', data: {} })));
     return merge(avisos, latido);

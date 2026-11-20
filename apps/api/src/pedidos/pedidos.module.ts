@@ -7,6 +7,6 @@ import { PedidosService } from './pedidos.service.js';
 @Module({
   controllers: [PedidosController],
   providers: [PedidosService, EventosPedidos, AlmacenArchivos],
-  exports: [PedidosService, EventosPedidos],
+  exports: [PedidosService, EventosPedidos, AlmacenArchivos],
 })
 export class PedidosModule {}

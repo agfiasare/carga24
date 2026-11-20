@@ -31,3 +31,10 @@ export function formatearHace(iso: string, ahora = Date.now()): string {
 export function formatearHora(iso: string): string {
   return new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(iso));
 }
+
+/** "10.500,50" → 1050050 centavos. Devuelve null si no es un monto válido. */
+export function leerPesos(texto: string): number | null {
+  const limpio = texto.replace(/\s|\$/g, '').replace(/\./g, '').replace(',', '.');
+  if (!/^\d+(\.\d{1,2})?$/.test(limpio)) return null;
+  return Math.round(Number(limpio) * 100);
+}

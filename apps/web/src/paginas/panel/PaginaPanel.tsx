@@ -1,5 +1,5 @@
 import type { Permiso } from '@carga24/shared';
-import { House, KeyRound, ListTodo, Shield, UserCog, Users } from 'lucide-react';
+import { House, KeyRound, ListTodo, Megaphone, Shield, UserCog, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { authStaff } from '../../api/auth';
@@ -21,6 +21,7 @@ const SECCIONES: (ItemMenu & { permisos?: Permiso[]; sinPermisos?: Permiso[] })[
   { a: '/panel', texto: 'Inicio', icono: <House size={18} />, sinPermisos: ['pedidos.ver'] },
   { a: '/panel/cola', texto: 'Cola', icono: <ListTodo size={18} />, permisos: ['pedidos.ver'] },
   { a: '/panel/jugadores', texto: 'Jugadores', icono: <Users size={18} />, permisos: ['jugadores.ver'] },
+  { a: '/panel/novedades', texto: 'Novedades', icono: <Megaphone size={18} />, permisos: ['novedades.publicar'] },
   { a: '/panel/staff', texto: 'Staff', icono: <UserCog size={18} />, permisos: ['staff.gestionar'] },
   { a: '/panel/perfiles', texto: 'Perfiles', icono: <Shield size={18} />, permisos: ['perfiles.gestionar'] },
   { a: '/panel/mi-cuenta', texto: 'Mi cuenta', icono: <KeyRound size={18} /> },

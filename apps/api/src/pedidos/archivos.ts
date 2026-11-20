@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { createReadStream, type ReadStream } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 /** Tipos aceptados, reconocidos por sus primeros bytes (no por la extensión ni lo que dice el navegador). */
@@ -28,6 +28,11 @@ export class AlmacenArchivos {
     await mkdir(join(this.directorio, 'comprobantes'), { recursive: true });
     await writeFile(join(this.directorio, clave), datos, { flag: 'wx' });
     return { clave, mime };
+  }
+
+  /** Borra un archivo que quedó huérfano (por ejemplo, si falló el alta del pedido). */
+  async borrar(clave: string): Promise<void> {
+    await rm(join(this.directorio, clave), { force: true });
   }
 
   leer(clave: string): ReadStream {

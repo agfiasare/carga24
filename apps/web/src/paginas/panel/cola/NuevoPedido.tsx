@@ -5,17 +5,10 @@ import { jugadores, type CuentaJugador, type JugadorPanel } from '../../../api/g
 import { pedidos, type Pedido } from '../../../api/pedidos';
 import { useAccion } from '../../../api/useAccion';
 import { useConsulta } from '../../../api/useConsulta';
-import { formatearTelefono } from '../../../comun/formato';
+import { formatearTelefono, leerPesos } from '../../../comun/formato';
 import { Aviso, Boton, Campo, CampoFormulario, Modal, SelectorFormulario } from '../../../componentes';
 import { usePermisos } from '../PaginaPanel';
 import clases from './cola.module.css';
-
-/** "10.500,50" → 1050050 centavos. Devuelve null si no es un monto válido. */
-export function leerPesos(texto: string): number | null {
-  const limpio = texto.replace(/\s|\$/g, '').replace(/\./g, '').replace(',', '.');
-  if (!/^\d+(\.\d{1,2})?$/.test(limpio)) return null;
-  return Math.round(Number(limpio) * 100);
-}
 
 const MEDIOS: Record<TipoPedido, { valor: MedioPago; texto: string }[]> = {
   carga: [

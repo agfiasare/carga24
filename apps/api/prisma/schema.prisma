@@ -361,6 +361,8 @@ model Notificacion {
   usuarioId String    @map("usuario_id")
   titulo    String
   texto     String?
+  /// Pedido al que se refiere el aviso (para abrirlo desde la campana).
+  pedidoId  Int?      @map("pedido_id")
   leidaEn   DateTime? @map("leida_en")
   creadoEn  DateTime  @default(now()) @map("creado_en")
   usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)

@@ -50,7 +50,7 @@ npm run dev:web        # http://localhost:5173
 npm run storybook      # http://localhost:6006
 ```
 
-- App del jugador: http://localhost:5173/ingresar y `/registro`.
+- App del jugador: http://localhost:5173/ingresar y `/registro`. Adentro: inicio, cargar, retirar, pedidos, cuentas, novedades y avisos.
 - Panel del staff: http://localhost:5173/panel (en producción es `panel.<dominio>`). El primer ingreso de `admin` pide cambiar la contraseña y activar el 2FA con una app de autenticación.
 
 ## Scripts
@@ -72,6 +72,7 @@ La integración continua (`.github/workflows/ci.yml`) corre lint, tipos, tests, 
 - **Permisos:** cada funcionalidad del panel tiene su permiso en `packages/shared/src/permisos.ts`. Las rutas de la API se protegen con `@RequierePermisos('...')`. Funcionalidad nueva = permiso nuevo en el catálogo.
 - **Acceso a rutas:** cada controlador declara quién lo usa: `@Publico()`, `@SoloJugador()`, `@SoloStaff()` o `@StaffPendiente()`. Si no declara nada, se trata como `@SoloStaff()`.
 - **Pedidos:** los cambios de estado pasan por `PedidosService.accionar`, que actualiza de forma atómica (estado + versión): si dos personas actúan a la vez, una recibe 409. La cola en vivo usa Server-Sent Events (`GET /api/v1/pedidos/eventos`).
+- **Portal del jugador:** todo bajo `/api/v1/yo/...` y siempre limitado a lo suyo. Un pedido abierto por vez; la carga web exige el comprobante en el mismo envío. Los avisos (`notificaciones`) se crean al acreditar, pagar o rechazar, y llegan en vivo por `/api/v1/yo/eventos`.
 - **Comprobantes:** fotos (JPG, PNG, WEBP) o PDF de hasta 10 MB, reconocidos por su contenido. Se guardan en `DIRECTORIO_ARCHIVOS` (en producción, el volumen `archivos`, que entra en el backup diario).
 - **Sesiones:** cookie httpOnly por ámbito (`c24_jugador`, `c24_staff`); el token se guarda solo como hash. La web llama a `/api` en su mismo dominio (en producción lo enruta Caddy).
 - **Estados del pedido:** las transiciones válidas están en `packages/shared/src/pedidos.ts` (`siguienteEstado`). El backend rechaza cualquier otro paso.
