@@ -80,21 +80,15 @@ La integración continua (`.github/workflows/ci.yml`) corre lint, tipos, tests, 
 - **Módulos ES** en todo el monorepo: los imports relativos del backend y de shared llevan extensión `.js`.
 - **Ramas:** `main` siempre estable. Cada historia del backlog va en su propia rama y se une por pull request.
 
-## Producción (VPS de Hostinger)
+## Producción (VPS de Hostinger + Cloudflare)
 
-1. Instalar Docker en el VPS y clonar el repositorio.
-2. Apuntar el dominio, `panel.` y `api.` a la IP del VPS (registros A).
-3. `cp .env.example .env` y completar dominio, email, una contraseña larga para la base y `CLAVE_CIFRADO` (`openssl rand -base64 32`; guardarla también fuera del servidor: si se pierde, todo el staff tiene que volver a configurar el 2FA).
-4. `docker compose up -d --build`
+Todo el paso a paso está en [`deploy/README.md`](deploy/README.md):
 
-Caddy obtiene los certificados HTTPS solo. La API aplica las migraciones pendientes al arrancar. Para la carga inicial:
+1. Preparar el servidor con `deploy/preparar-servidor.sh`.
+2. Crear el túnel de Cloudflare.
+3. Instalar con `./deploy/carga24.sh instalar`.
+4. Configurar los backups fuera del servidor (Cloudflare R2).
 
-```bash
-docker compose exec -e SEED_ADMIN_PASSWORD='...' api node dist/seed.js
-```
+Para el día a día se usa el mismo script: `actualizar`, `estado`, `logs`, `backup` y `restaurar`.
 
-**Pendiente de configurar en el servidor:**
-
-- Copia de `./backups` fuera del VPS (por ejemplo, con rclone a un almacenamiento externo) y una prueba de restauración mensual.
-- Firewall con solo los puertos 80, 443 y SSH; SSH con clave.
-- Actualizaciones automáticas de seguridad del sistema.
+La CI levanta en cada PR el `docker-compose.yml` de producción y prueba Caddy, la API, la base, el backup y la restauración.

@@ -77,3 +77,72 @@ jobs:
 
       - name: Build de Storybook
         run: npm run build-storybook -w @carga24/web
+
+  infraestructura:
+    name: Docker Compose de producción (Caddy, API, base y backups)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Configuración de prueba
+        run: |
+          cat > .env <<'ENV'
+          DOMINIO=carga24.test
+          MODO=directo
+          ESQUEMA=http://
+          POSTGRES_USER=carga24
+          POSTGRES_DB=carga24
+          POSTGRES_PASSWORD=ci-clave-de-prueba
+          CLAVE_CIFRADO=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          ENV
+
+      - name: Validar el Caddyfile
+        run: |
+          docker compose build caddy
+          docker compose run --rm --no-deps -e DOMINIO=carga24.test -e ESQUEMA=http:// caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      - name: Construir y levantar
+        run: docker compose -f docker-compose.yml -f docker-compose.directo.yml up -d --build --wait --wait-timeout 300
+
+      - name: Caddy sirve la web y la API en cada dominio
+        run: |
+          set -eux
+          web() { curl -fsS -H "Host: $1" "http://localhost$2"; }
+          web carga24.test /api/v1/salud | grep '"baseDeDatos":"ok"'
+          web carga24.test / | grep '<div id="root">'
+          web panel.carga24.test /panel/ingresar | grep '<div id="root">'
+          web www.carga24.test /historial | grep '<div id="root">'
+          web carga24.test /api/v1/publico/landing | grep '"horario"'
+          encabezados=$(curl -fsS -o /dev/null -D - -H "Host: carga24.test" http://localhost/)
+          echo "$encabezados" | grep -i 'x-frame-options: DENY'
+          echo "$encabezados" | grep -i 'strict-transport-security'
+          echo "$encabezados" | grep -i 'cache-control: no-cache'
+          if echo "$encabezados" | grep -qi '^server:'; then echo 'Caddy expone el encabezado Server' >&2; exit 1; fi
+          activo=$(web carga24.test / | grep -o '/assets/[^"]*\.js' | head -1)
+          curl -fsS -o /dev/null -D - -H "Host: carga24.test" "http://localhost$activo" | grep -i 'immutable'
+
+      - name: Carga inicial e ingreso del admin
+        run: |
+          set -eux
+          docker compose exec -T -e SEED_ADMIN_PASSWORD=admin-de-ci-12345 api node dist/seed.js
+          curl -fsS -H "Host: panel.carga24.test" -H 'Content-Type: application/json' \
+            -d '{"identificador":"admin","contrasena":"admin-de-ci-12345"}' \
+            http://localhost/api/v1/auth/staff/ingreso | grep cambiar_contrasena
+
+      - name: Backup y restauración
+        run: |
+          set -eux
+          docker compose run --rm -e UNA_VEZ=1 backup
+          test -f backups/ULTIMO_OK
+          volcado=$(ls -t backups/carga24-*.sql.gz | head -1)  # el más nuevo: el servicio ya hizo uno al arrancar
+          gzip -t "$volcado"
+          docker compose exec -T db psql -U carga24 -d carga24 -c "UPDATE usuarios SET nombre_visible='Cambiado' WHERE nombre_usuario='admin'"
+          gunzip -c "$volcado" | docker compose exec -T db psql -v ON_ERROR_STOP=1 -q -U carga24 -d carga24
+          docker compose exec -T db psql -U carga24 -d carga24 -tAc "SELECT nombre_visible FROM usuarios WHERE nombre_usuario='admin'" | grep -x Admin
+          docker compose restart api
+          docker compose -f docker-compose.yml -f docker-compose.directo.yml up -d --wait --wait-timeout 120
+          curl -fsS -H "Host: carga24.test" http://localhost/api/v1/salud | grep '"baseDeDatos":"ok"'
+
+      - name: Logs si algo falló
+        if: failure()
+        run: docker compose logs --tail 200

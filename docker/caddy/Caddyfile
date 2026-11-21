@@ -1,7 +1,16 @@
-# Caddy obtiene y renueva solo los certificados HTTPS (Let's Encrypt).
-# DOMINIO y EMAIL_CERTIFICADOS vienen del archivo .env del servidor.
+# Entrada de Carga24. Dos modos (MODO en .env, lo aplica deploy/carga24.sh):
+#   - tunel:   Cloudflare Tunnel. Cloudflare pone el HTTPS y el túnel le entrega a Caddy
+#              HTTP plano dentro de la red de Docker. El servidor no abre los puertos 80/443.
+#              ESQUEMA=http://
+#   - directo: sin Cloudflare. Caddy publica 80/443 y saca solo los certificados
+#              de Let's Encrypt. ESQUEMA vacío.
 {
-	email {$EMAIL_CERTIFICADOS}
+	servers {
+		# La IP real del jugador: el túnel (red privada de Docker) la manda en Cf-Connecting-Ip.
+		# Ese encabezado solo se acepta si llega desde una red privada; desde internet se ignora.
+		trusted_proxies static private_ranges
+		client_ip_headers Cf-Connecting-Ip X-Forwarded-For
+	}
 }
 
 (seguridad) {
@@ -10,6 +19,7 @@
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 		-Server
 	}
 }
@@ -20,29 +30,37 @@
 	# La web llama a la API en su mismo dominio (/api/...): sin CORS y con la cookie
 	# de sesión atada a cada dominio (la del jugador nunca viaja al panel y viceversa).
 	handle /api/* {
-		reverse_proxy api:3000
+		reverse_proxy api:3000 {
+			# Una sola IP, la real: la API confía en un único salto (Caddy).
+			header_up X-Forwarded-For {client_ip}
+			# La cola en vivo (Server-Sent Events) se envía sin esperar a llenar buffers.
+			flush_interval -1
+		}
 	}
 	handle {
 		root * /srv/web
+		# Los archivos con hash en el nombre no cambian nunca: caché larga.
+		@estaticos path /assets/*
+		header @estaticos Cache-Control "public, max-age=31536000, immutable"
+		# index.html siempre fresco, para que una actualización se vea al instante.
+		@html not path /assets/* /marca/*
+		header @html Cache-Control "no-cache"
 		# App de una sola página: cualquier ruta que no sea un archivo carga index.html.
 		try_files {path} /index.html
 		file_server
 	}
+	log {
+		output stdout
+		format json
+	}
 }
 
 # Landing y app del jugador
-{$DOMINIO}, www.{$DOMINIO} {
+{$ESQUEMA}{$DOMINIO}, {$ESQUEMA}www.{$DOMINIO} {
 	import web
 }
 
 # Panel del staff (mismo build, otro ingreso)
-panel.{$DOMINIO} {
+{$ESQUEMA}panel.{$DOMINIO} {
 	import web
-}
-
-# API y WebSockets de la cola
-api.{$DOMINIO} {
-	import seguridad
-	encode zstd gzip
-	reverse_proxy api:3000
 }
