@@ -5,7 +5,6 @@
 #   - directo: sin Cloudflare. Caddy publica 80/443 y saca solo los certificados
 #              de Let's Encrypt. ESQUEMA vacío.
 {
-	email {$EMAIL_CERTIFICADOS:certificados@{$DOMINIO}}
 	servers {
 		# La IP real del jugador: el túnel (red privada de Docker) la manda en Cf-Connecting-Ip.
 		# Ese encabezado solo se acepta si llega desde una red privada; desde internet se ignora.

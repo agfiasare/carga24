@@ -96,6 +96,11 @@ jobs:
           CLAVE_CIFRADO=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           ENV
 
+      - name: Validar el Caddyfile
+        run: |
+          docker compose build caddy
+          docker compose run --rm --no-deps -e DOMINIO=carga24.test -e ESQUEMA=http:// caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
       - name: Construir y levantar
         run: docker compose -f docker-compose.yml -f docker-compose.directo.yml up -d --build --wait --wait-timeout 300
 

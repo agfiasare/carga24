@@ -48,7 +48,6 @@ completar_env() {
     [ "${ESQUEMA:-}" = "http://" ] || error "En modo tunel, ESQUEMA tiene que ser http://"
   else
     [ -z "${ESQUEMA:-}" ] || error "En modo directo, ESQUEMA tiene que quedar vacío"
-    [ -n "${EMAIL_CERTIFICADOS:-}" ] || error "En modo directo falta EMAIL_CERTIFICADOS"
   fi
 }
 

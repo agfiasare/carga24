@@ -20,7 +20,6 @@ services:
     environment:
       DOMINIO: ${DOMINIO:?Falta DOMINIO en .env}
       ESQUEMA: ${ESQUEMA:-}
-      EMAIL_CERTIFICADOS: ${EMAIL_CERTIFICADOS:-}
     volumes:
       - caddy_data:/data
       - caddy_config:/config
