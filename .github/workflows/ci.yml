@@ -134,7 +134,7 @@ jobs:
           set -eux
           docker compose run --rm -e UNA_VEZ=1 backup
           test -f backups/ULTIMO_OK
-          volcado=$(ls backups/carga24-*.sql.gz | head -1)
+          volcado=$(ls -t backups/carga24-*.sql.gz | head -1)  # el más nuevo: el servicio ya hizo uno al arrancar
           gzip -t "$volcado"
           docker compose exec -T db psql -U carga24 -d carga24 -c "UPDATE usuarios SET nombre_visible='Cambiado' WHERE nombre_usuario='admin'"
           gunzip -c "$volcado" | docker compose exec -T db psql -v ON_ERROR_STOP=1 -q -U carga24 -d carga24
