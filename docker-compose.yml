@@ -1,24 +1,48 @@
-# Producción en el VPS: docker compose up -d --build
-# Antes, copiá .env.example a .env y completá los valores.
+# Producción en el VPS. No se usa a mano: ver deploy/carga24.sh y deploy/README.md.
+#   Con Cloudflare Tunnel (recomendado): docker compose --profile tunel up -d
+#   Sin Cloudflare:                       docker compose -f docker-compose.yml -f docker-compose.directo.yml up -d
+
+x-registros: &registros
+  # Los logs de Docker rotan solos: sin esto pueden llenar el disco del VPS.
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
 services:
   caddy:
+    <<: *registros
     build:
       context: .
       dockerfile: docker/caddy/Dockerfile
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
     environment:
-      DOMINIO: ${DOMINIO}
-      EMAIL_CERTIFICADOS: ${EMAIL_CERTIFICADOS}
+      DOMINIO: ${DOMINIO:?Falta DOMINIO en .env}
+      ESQUEMA: ${ESQUEMA:-}
+      EMAIL_CERTIFICADOS: ${EMAIL_CERTIFICADOS:-}
     volumes:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+
+  # Cloudflare Tunnel: conecta el servidor con Cloudflare desde adentro (sin puertos abiertos).
+  cloudflared:
+    <<: *registros
+    image: cloudflare/cloudflared:2026.10.7
+    profiles: [tunel]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      # Lo valida deploy/carga24.sh: acá no se exige para no romper el modo directo.
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on:
+      - caddy
 
   api:
+    <<: *registros
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -27,7 +51,7 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       NODE_ENV: production
-      CORS_ORIGINS: https://${DOMINIO},https://www.${DOMINIO},https://panel.${DOMINIO}
+      CORS_ORIGINS: https://${DOMINIO},https://www.${DOMINIO},https://panel.${DOMINIO}${ORIGENES_EXTRA:-}
       # Cifra los secretos de 2FA del staff. Si se pierde, todo el staff tiene que volver a configurar el 2FA.
       CLAVE_CIFRADO: ${CLAVE_CIFRADO:?Falta CLAVE_CIFRADO en .env}
       DIRECTORIO_ARCHIVOS: /datos/archivos
@@ -42,13 +66,15 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 40s
 
   db:
+    <<: *registros
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
@@ -59,16 +85,24 @@ services:
       retries: 5
 
   backup:
-    image: postgres:16-alpine
+    <<: *registros
+    build:
+      context: docker/backup
     restart: unless-stopped
-    entrypoint: ["sh", "/backup.sh"]
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
       RETENCION_DIAS: ${RETENCION_DIAS:-14}
+      # Copia fuera del servidor (opcional pero muy recomendada), por ejemplo Cloudflare R2.
+      COPIA_EXTERNA: ${COPIA_EXTERNA:-}
+      RCLONE_CONFIG_EXTERNA_TYPE: s3
+      RCLONE_CONFIG_EXTERNA_PROVIDER: ${COPIA_PROVEEDOR:-Cloudflare}
+      RCLONE_CONFIG_EXTERNA_ACCESS_KEY_ID: ${COPIA_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_EXTERNA_SECRET_ACCESS_KEY: ${COPIA_SECRET_ACCESS_KEY:-}
+      RCLONE_CONFIG_EXTERNA_ENDPOINT: ${COPIA_ENDPOINT:-}
+      RCLONE_CONFIG_EXTERNA_NO_CHECK_BUCKET: "true"
     volumes:
-      - ./docker/backup/backup.sh:/backup.sh:ro
       - ./backups:/backups
       - archivos:/archivos:ro
     depends_on:
