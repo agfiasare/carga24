@@ -51,6 +51,13 @@ completar_env() {
   fi
 }
 
+construir() {
+  # De a una imagen: en un VPS de 4 GB, construir la web y la API a la vez puede quedarse sin memoria.
+  for servicio in api caddy backup; do
+    compose build "$servicio"
+  done
+}
+
 esperar_api() {
   paso "Esperando que la API esté sana"
   for _ in $(seq 1 60); do
@@ -76,7 +83,7 @@ case "${1:-}" in
   instalar)
     completar_env
     paso "Construyendo las imágenes (la primera vez tarda unos minutos)"
-    compose build
+    construir
     paso "Levantando los servicios"
     compose up -d
     esperar_api
@@ -97,7 +104,7 @@ case "${1:-}" in
     paso "Bajando la última versión"
     git pull --ff-only
     paso "Construyendo"
-    compose build
+    construir
     paso "Reemplazando los contenedores (las migraciones corren solas al arrancar la API)"
     compose up -d --remove-orphans
     esperar_api
