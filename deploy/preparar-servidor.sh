@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# Prepara un VPS nuevo con Ubuntu 24.04 para Carga24. Se corre UNA vez, como root:
-#   curl -fsSL https://raw.githubusercontent.com/agfiasare/carga24/main/deploy/preparar-servidor.sh -o preparar.sh
-#   less preparar.sh            # leelo antes de correrlo
-#   MODO=tunel bash preparar.sh # o MODO=directo si no usás Cloudflare
+# Prepara un VPS nuevo con Ubuntu 24.04 para Carga24. Se corre UNA vez, como root,
+# desde la copia del repositorio en /opt/carga24 (ver deploy/README.md, paso 4):
+#   MODO=tunel bash /opt/carga24/deploy/preparar-servidor.sh   # o MODO=directo sin Cloudflare
 #
 # Qué hace: actualiza el sistema, instala Docker, crea el usuario "carga24" (con tu
 # clave SSH), cierra el ingreso por contraseña y de root, activa el firewall, fail2ban,
@@ -98,6 +97,22 @@ if ! swapon --show | grep -q .; then
   mkswap /swapfile
   swapon /swapfile
   grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
+paso "Repositorio en /opt/carga24 para $USUARIO"
+if [ -d /opt/carga24/.git ]; then
+  chown -R "$USUARIO:$USUARIO" /opt/carga24
+  # La clave de solo lectura de GitHub pasa al usuario, para que pueda actualizar.
+  if [ -f /root/.ssh/github_carga24 ]; then
+    install -m 600 -o "$USUARIO" -g "$USUARIO" /root/.ssh/github_carga24 "/home/$USUARIO/.ssh/github_carga24"
+    install -m 644 -o "$USUARIO" -g "$USUARIO" /root/.ssh/github_carga24.pub "/home/$USUARIO/.ssh/github_carga24.pub"
+    if ! grep -q github_carga24 "/home/$USUARIO/.ssh/config" 2>/dev/null; then
+      printf 'Host github.com\n  IdentityFile ~/.ssh/github_carga24\n  StrictHostKeyChecking accept-new\n' >> "/home/$USUARIO/.ssh/config"
+      chown "$USUARIO:$USUARIO" "/home/$USUARIO/.ssh/config"
+      chmod 600 "/home/$USUARIO/.ssh/config"
+    fi
+  fi
+  ln -sfn /opt/carga24 "/home/$USUARIO/carga24"
 fi
 
 paso "Listo"

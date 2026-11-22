@@ -63,28 +63,26 @@ Opcional, para más seguridad del panel: **Zero Trust → Access → Application
 
 ## 4. Preparar el servidor (una sola vez)
 
-Desde tu computadora:
+Se puede hacer desde la computadora (`ssh -i ~/.ssh/carga24_vps root@IP_DEL_VPS`) o desde el celular, con la terminal del navegador de Hostinger: **hPanel → VPS → Terminal del navegador**. Cada bloque se copia y se pega entero.
+
+**4.1 Clave de solo lectura para bajar el código.** El repositorio es privado: el servidor necesita su propia clave.
 
 ```bash
-ssh root@IP_DEL_VPS
+ssh-keygen -t ed25519 -N "" -f /root/.ssh/github_carga24 -C "vps carga24" && cat /root/.ssh/github_carga24.pub
 ```
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/agfiasare/carga24/main/deploy/preparar-servidor.sh -o preparar.sh
-```
+Copiá la línea que empieza con `ssh-ed25519` y pegala en GitHub: **repositorio → Settings → Deploy keys → Add deploy key**. Ponele de título "VPS" y **no** marques "Allow write access".
+
+**4.2 Bajar el código y preparar el servidor:**
 
 ```bash
-less preparar.sh
-```
-
-```bash
-MODO=tunel bash preparar.sh
+GIT_SSH_COMMAND="ssh -i /root/.ssh/github_carga24 -o StrictHostKeyChecking=accept-new" git clone git@github.com:agfiasare/carga24.git /opt/carga24 && MODO=tunel bash /opt/carga24/deploy/preparar-servidor.sh
 ```
 
 El script:
 
 - Actualiza Ubuntu e instala Docker.
-- Crea el usuario `carga24` con tu clave SSH.
+- Crea el usuario `carga24` con tu clave SSH y le pasa el repositorio (queda en `~/carga24`).
 - Desactiva el ingreso con contraseña y el de root.
 - Activa el firewall (solo SSH), fail2ban, las actualizaciones de seguridad automáticas y 2 GB de swap.
 - Pone la hora de Argentina.
@@ -92,38 +90,18 @@ El script:
 A partir de ahora, entrá siempre como `carga24`:
 
 ```bash
-ssh carga24@IP_DEL_VPS
+ssh -i ~/.ssh/carga24_vps carga24@IP_DEL_VPS
 ```
+
+> En la terminal del navegador de Hostinger se entra como root. Para pasar al usuario: `su - carga24`.
 
 ## 5. Instalar Carga24
 
-**Acceso al repositorio.** Es privado, así que el servidor necesita una clave de solo lectura:
-
 ```bash
-ssh-keygen -t ed25519 -N "" -f ~/.ssh/github_carga24 -C "vps carga24"
+cd ~/carga24 && cp .env.example .env && nano .env
 ```
 
-```bash
-cat ~/.ssh/github_carga24.pub
-```
-
-Pegá esa clave en GitHub: **repositorio → Settings → Deploy keys → Add deploy key**, sin permiso de escritura. Después:
-
-```bash
-printf 'Host github.com\n  IdentityFile ~/.ssh/github_carga24\n' >> ~/.ssh/config
-```
-
-```bash
-git clone git@github.com:agfiasare/carga24.git && cd carga24
-```
-
-**Configuración:**
-
-```bash
-cp .env.example .env && nano .env
-```
-
-Completá `DOMINIO` y `TUNNEL_TOKEN`. Las contraseñas de la base y `CLAVE_CIFRADO` se generan solas si las dejás vacías. Después:
+Completá `DOMINIO` y `TUNNEL_TOKEN`. Las contraseñas de la base y `CLAVE_CIFRADO` se generan solas si las dejás vacías. Guardá con **Ctrl+O**, Enter, y salí con **Ctrl+X**. Después:
 
 ```bash
 ./deploy/carga24.sh instalar
