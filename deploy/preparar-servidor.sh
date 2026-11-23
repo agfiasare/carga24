@@ -2,6 +2,7 @@
 # Prepara un VPS nuevo con Ubuntu 24.04 para Carga24. Se corre UNA vez, como root,
 # desde la copia del repositorio en /opt/carga24 (ver deploy/README.md, paso 4):
 #   MODO=tunel bash /opt/carga24/deploy/preparar-servidor.sh   # o MODO=directo sin Cloudflare
+#   ENDURECER_SSH=no ...  deja el SSH sin tocar (para seguir usando la terminal del navegador de Hostinger)
 #
 # Qué hace: actualiza el sistema, instala Docker, crea el usuario "carga24" (con tu
 # clave SSH), cierra el ingreso por contraseña y de root, activa el firewall, fail2ban,
@@ -53,7 +54,10 @@ if [ -s /root/.ssh/authorized_keys ]; then
 fi
 
 paso "SSH: solo con clave, sin root"
-if [ -s "/home/$USUARIO/.ssh/authorized_keys" ]; then
+if [ "${ENDURECER_SSH:-si}" = no ]; then
+  echo "AVISO: ENDURECER_SSH=no: dejo el SSH como está (root y contraseña siguen habilitados)."
+  echo "       Cuando tengas acceso con clave desde tu computadora, volvé a correr este script sin esa opción."
+elif [ -s "/home/$USUARIO/.ssh/authorized_keys" ]; then
   cat > /etc/ssh/sshd_config.d/90-carga24.conf <<'CONF'
 PermitRootLogin no
 PasswordAuthentication no
