@@ -1,4 +1,4 @@
-import { Pin } from 'lucide-react';
+import { ChevronRight, Pin } from 'lucide-react';
 import { Link } from 'react-router';
 import { ESTADOS_ABIERTOS, portal } from '../../../api/portal';
 import { promociones, textoVigencia } from '../../../api/promociones';
@@ -45,15 +45,18 @@ export function Inicio() {
           )}
           {recientes && recientes.pedidos.length > 0 ? (
             <section aria-labelledby="ultimos" className={clases.lista}>
-              <h2 id="ultimos" className={clases.secundario}>
-                Últimos pedidos
-              </h2>
+              <div className={clases.encabezadoSeccion}>
+                <h2 id="ultimos" className={clases.tituloSeccion}>
+                  Últimos pedidos
+                </h2>
+                <Link to="/historial" className={clases.verTodos}>
+                  Ver todos
+                  <ChevronRight size={16} aria-hidden="true" />
+                </Link>
+              </div>
               {recientes.pedidos.slice(0, 3).map((p) => (
                 <FilaPedido key={p.id} pedido={p} />
               ))}
-              <Link to="/historial" className={clases.secundario}>
-                Ver todos →
-              </Link>
             </section>
           ) : null}
         </div>

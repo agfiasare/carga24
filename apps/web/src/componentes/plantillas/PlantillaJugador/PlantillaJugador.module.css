@@ -215,45 +215,59 @@
   }
 }
 
-/* ---------- Escritorio: menú arriba, al lado del logo; contenido más ancho ---------- */
+/* ---------- Escritorio ----------
+   El encabezado va de borde a borde. El contenido es una "hoja" centrada de hasta 1200 px
+   sobre el fondo de la marca; los laterales, más oscuros, dejan clara esa intención. */
 @media (min-width: 900px) {
   .app {
-    max-width: 1080px;
+    max-width: none;
+    min-height: 100vh;
     display: grid;
-    grid-template-columns: auto 1fr auto;
-    /* El encabezado ocupa solo su altura; el contenido, el resto. */
+    grid-template-columns: 1fr minmax(0, 1200px) 1fr;
     grid-template-rows: auto 1fr;
-    align-content: start;
-    grid-template-areas:
-      'marca menu campana'
-      'contenido contenido contenido';
-    align-items: center;
+    background: var(--color-fondo-lateral);
   }
 
-  /* El encabezado se "abre" para que logo, menú y campana compartan una fila. */
+  /* Fondo del encabezado, de punta a punta. */
+  .app::before {
+    content: '';
+    grid-column: 1 / -1;
+    grid-row: 1;
+    background: var(--color-superficie);
+    border-bottom: 1px solid var(--color-borde);
+  }
+
+  /* Logo, menú y herramientas comparten la fila del encabezado, dentro del ancho del contenido. */
   .barra {
     display: contents;
   }
 
+  .marca,
+  .menu,
+  .herramientas {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+
   .marca {
-    grid-area: marca;
-    padding: 16px 0 16px 24px;
+    justify-self: start;
+    padding: 14px 0 14px 24px;
   }
 
   .herramientas {
-    grid-area: campana;
+    justify-self: end;
     margin-right: 24px;
   }
 
   .menu {
-    grid-area: menu;
+    justify-self: center;
     position: static;
     transform: none;
     width: auto;
     display: flex;
-    justify-content: center;
     gap: 4px;
-    padding: 16px;
+    padding: 0;
     background: transparent;
     border-top: 0;
   }
@@ -271,14 +285,16 @@
   }
 
   .activo {
-    background: var(--color-superficie);
+    background: var(--color-fondo);
   }
 
   .contenido {
-    grid-area: contenido;
-    align-self: stretch;
-    padding: 24px 24px 64px;
-    border-top: 1px solid var(--color-borde);
+    grid-column: 2;
+    grid-row: 2;
+    padding: 32px 32px 64px;
+    background: var(--color-fondo);
+    border-left: 1px solid var(--color-borde);
+    border-right: 1px solid var(--color-borde);
   }
 
   .titulo {
