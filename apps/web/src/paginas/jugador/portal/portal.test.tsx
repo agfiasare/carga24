@@ -34,6 +34,7 @@ const parametros: ParametrosPortal = {
   datosPago: { alias: 'carga24.pagos', titular: 'Carga24 SRL', banco: 'Galicia' },
   horario: '',
   whatsapp: '',
+  plataformas: [{ id: 'pl', nombre: 'Plataforma principal' }],
   plataforma: { id: 'pl', nombre: 'Plataforma principal' },
 };
 const cuenta = (extra: Partial<CuentaPropia> = {}): CuentaPropia => ({ id: 'c1', cbuCvu: '0000003100012345678901', alias: 'ana.mp', banco: null, titular: null, estado: 'pendiente', creadoEn: '2026-11-20T00:00:00Z', ...extra });
@@ -82,7 +83,7 @@ describe('Cargar saldo', () => {
     await userEvent.upload(screen.getByLabelText(/Comprobante de la transferencia/), new File(['x'], 'pago.png', { type: 'image/png' }));
     await userEvent.click(enviar);
     expect(await screen.findByText('Detalle del pedido')).toBeInTheDocument();
-    expect(api.enviado('POST /yo/pedidos')).toEqual([{ tipo: 'carga', monto: '1000000', cuentaId: 'c1', archivo: 'archivo:pago.png' }]);
+    expect(api.enviado('POST /yo/pedidos')).toEqual([{ tipo: 'carga', monto: '1000000', cuentaId: 'c1', plataformaId: 'pl', archivo: 'archivo:pago.png' }]);
   });
 
   it('valida el código de promo y lo manda con el pedido', async () => {
@@ -109,6 +110,22 @@ describe('Cargar saldo', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Enviar pedido' }));
     await screen.findByText('Detalle del pedido');
     expect(api.enviado('POST /yo/pedidos')[0]).toMatchObject({ codigoPromo: 'FINDE10' });
+  });
+
+  it('con varias plataformas, hay que elegir en cuál cargar', async () => {
+    const api = apiFalsa({
+      ...base,
+      'GET /yo/parametros': respuesta(200, { ...parametros, plataformas: [{ id: 'p1', nombre: 'Casino Uno' }, { id: 'p2', nombre: 'Casino Dos' }] }),
+      'GET /yo/cuentas': respuesta(200, [cuenta({ estado: 'verificada' })]),
+      'POST /yo/pedidos': respuesta(201, { ...pedido({ id: 15 }), historial: [] }),
+    });
+    montar('/cargar', <Cargar />);
+    await userEvent.type(await screen.findByLabelText('¿Cuánto querés cargar?'), '10.000');
+    expect(screen.getByRole('button', { name: 'Enviar pedido' })).toBeDisabled();
+    await userEvent.selectOptions(screen.getByLabelText('¿En qué plataforma cargamos?'), 'p2');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar pedido' }));
+    await screen.findByText('Detalle del pedido');
+    expect(api.enviado('POST /yo/pedidos')[0]).toMatchObject({ plataformaId: 'p2' });
   });
 
   it('sin cuentas, pide cargar una primero', async () => {
@@ -141,7 +158,7 @@ describe('Retirar', () => {
     expect(screen.getByText(/un supervisor tiene que aprobarlo/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Pedir retiro' }));
     expect(await screen.findByText('Detalle del pedido')).toBeInTheDocument();
-    expect(api.enviado('POST /yo/pedidos')).toEqual([{ tipo: 'retiro', monto: '15000000', cuentaId: 'c2' }]);
+    expect(api.enviado('POST /yo/pedidos')).toEqual([{ tipo: 'retiro', monto: '15000000', cuentaId: 'c2', plataformaId: 'pl' }]);
   });
 });
 
@@ -163,6 +180,29 @@ describe('Inicio', () => {
     estado = 'acreditado';
     act(() => FuenteFalsa.ultima!.emitir('pedido.actualizado'));
     expect(await screen.findByRole('link', { name: /Cargar/ })).toBeInTheDocument();
+  });
+});
+
+describe('Menú de la cuenta', () => {
+  it('despliega cambiar contraseña y salir; se cierra con Escape', async () => {
+    const api = apiFalsa({
+      ...base,
+      'GET /yo/pedidos?pagina=1': respuesta(200, { total: 0, pagina: 1, porPagina: 20, pedidos: [] }),
+      'GET /yo/novedades': respuesta(200, []),
+      'POST /auth/jugador/salir': respuesta(204),
+    });
+    montar('/inicio', <Inicio />);
+    const boton = await screen.findByRole('button', { name: 'Tu cuenta: ana' });
+    expect(screen.queryByRole('link', { name: 'Cambiar contraseña' })).not.toBeInTheDocument();
+    await userEvent.click(boton);
+    expect(boton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: 'Cambiar contraseña' })).toHaveAttribute('href', '/cambiar-contrasena');
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('link', { name: 'Cambiar contraseña' })).not.toBeInTheDocument();
+    await userEvent.click(boton);
+    await userEvent.click(screen.getByRole('button', { name: 'Salir' }));
+    expect(await screen.findByText('Otra página')).toBeInTheDocument();
+    expect(api.llamadas.some((l) => l.clave === 'POST /auth/jugador/salir')).toBe(true);
   });
 });
 

@@ -1,6 +1,5 @@
 import { Pin } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
-import { authJugador } from '../../../api/auth';
+import { Link } from 'react-router';
 import { ESTADOS_ABIERTOS, portal } from '../../../api/portal';
 import { promociones, textoVigencia } from '../../../api/promociones';
 import { useConsulta } from '../../../api/useConsulta';
@@ -11,20 +10,13 @@ import { explicarEstado, FilaPedido, PaginaJugador, PasosPedido } from './comun'
 import clases from './portal.module.css';
 
 export function Inicio() {
-  const { usuario, establecer } = useSesionJugador();
+  const { usuario } = useSesionJugador();
   const { version } = usePortalEnVivo();
-  const navegar = useNavigate();
   const { datos: recientes } = useConsulta(() => portal.pedidos({ pagina: 1 }), [version]);
   const { datos: novedades } = useConsulta(portal.novedades, []);
   const { datos: promos } = useConsulta(() => promociones.vigentes('inicio'), []);
   const enCurso = recientes?.pedidos.find((p) => ESTADOS_ABIERTOS.includes(p.estado));
   const fijada = novedades?.find((n) => n.fijada);
-
-  async function salir() {
-    await authJugador.salir().catch(() => undefined);
-    establecer(null);
-    navegar('/ingresar', { replace: true });
-  }
 
   return (
     <PaginaJugador titulo={`Hola${usuario?.nombreUsuario ? `, ${usuario.nombreUsuario}` : ''}`}>
@@ -82,12 +74,6 @@ export function Inicio() {
               <p className={clases.novedad}>{fijada.texto}</p>
             </section>
           ) : null}
-          <div className={clases.enlaces}>
-            <Link to="/cambiar-contrasena">Cambiar contraseña</Link>
-            <button type="button" onClick={() => void salir()}>
-              Salir
-            </button>
-          </div>
         </aside>
       </div>
     </PaginaJugador>

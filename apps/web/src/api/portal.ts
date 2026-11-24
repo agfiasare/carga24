@@ -39,6 +39,7 @@ export interface ParametrosPortal {
   datosPago: { alias: string; titular: string; banco: string };
   horario: string;
   whatsapp: string;
+  plataformas: { id: string; nombre: string }[];
   plataforma: { id: string; nombre: string } | null;
 }
 
@@ -78,12 +79,13 @@ export const portal = {
     return api<{ total: number; pagina: number; porPagina: number; pedidos: PedidoJugador[] }>('GET', `/yo/pedidos?${q.toString()}`);
   },
   pedido: (id: number) => api<PedidoJugadorDetalle>('GET', `/yo/pedidos/${id}`),
-  pedir: (datos: { tipo: TipoPedido; monto: number; cuentaId: string; archivo?: File; codigoPromo?: string }) => {
+  pedir: (datos: { tipo: TipoPedido; monto: number; cuentaId: string; archivo?: File; codigoPromo?: string; plataformaId?: string }) => {
     const f = new FormData();
     f.append('tipo', datos.tipo);
     f.append('monto', String(datos.monto));
     f.append('cuentaId', datos.cuentaId);
     if (datos.codigoPromo) f.append('codigoPromo', datos.codigoPromo);
+    if (datos.plataformaId) f.append('plataformaId', datos.plataformaId);
     if (datos.archivo) f.append('archivo', datos.archivo);
     return enviarFormulario<PedidoJugadorDetalle>('/yo/pedidos', f);
   },

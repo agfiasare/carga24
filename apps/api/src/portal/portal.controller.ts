@@ -51,6 +51,7 @@ const esquemaPedido = z.object({
   monto: z.coerce.number({ error: 'Escribí el monto' }).int('El monto va en centavos').positive('El monto tiene que ser mayor a cero').max(100_000_000_000),
   cuentaId: z.uuid('Elegí una cuenta'),
   codigoPromo: z.string().trim().max(20).optional().transform((v) => v || undefined),
+  plataformaId: z.uuid('Elegí una plataforma').optional().or(z.literal('').transform(() => undefined)),
 });
 
 const esquemaListado = z.object({
