@@ -1,4 +1,5 @@
 import type { EstadoPedido, ModoComision, TipoPedido } from '@carga24/shared';
+import { seguirPeticion } from './actividad';
 import { api, ErrorApi } from './cliente';
 
 export interface CuentaPropia {
@@ -60,7 +61,7 @@ export interface Novedad {
 async function enviarFormulario<T>(ruta: string, formulario: FormData): Promise<T> {
   let respuesta: Response;
   try {
-    respuesta = await fetch(`/api/v1${ruta}`, { method: 'POST', credentials: 'same-origin', body: formulario });
+    respuesta = await seguirPeticion(fetch(`/api/v1${ruta}`, { method: 'POST', credentials: 'same-origin', body: formulario }));
   } catch {
     throw new ErrorApi(0, 'No pudimos conectarnos. Revisá tu conexión y probá de nuevo.');
   }

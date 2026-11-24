@@ -16,3 +16,4 @@ export * from './plantillas/PlantillaPanel/PlantillaPanel';
 export * from './organismos/TarjetaPedido/TarjetaPedido';
 export * from './plantillas/PlantillaJugador/PlantillaJugador';
 export * from './moleculas/CuponPromo/CuponPromo';
+export * from './atomos/LogoCargando/LogoCargando';
