@@ -118,3 +118,74 @@
 .activo {
   color: var(--color-primario);
 }
+
+/* ---------- Escritorio: menú arriba, al lado del logo; contenido más ancho ---------- */
+@media (min-width: 900px) {
+  .app {
+    max-width: 1080px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    /* El encabezado ocupa solo su altura; el contenido, el resto. */
+    grid-template-rows: auto 1fr;
+    align-content: start;
+    grid-template-areas:
+      'marca menu campana'
+      'contenido contenido contenido';
+    align-items: center;
+  }
+
+  /* El encabezado se "abre" para que logo, menú y campana compartan una fila. */
+  .barra {
+    display: contents;
+  }
+
+  .marca {
+    grid-area: marca;
+    padding: 16px 0 16px 24px;
+  }
+
+  .campana {
+    grid-area: campana;
+    margin-right: 24px;
+  }
+
+  .menu {
+    grid-area: menu;
+    position: static;
+    transform: none;
+    width: auto;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding: 16px;
+    background: transparent;
+    border-top: 0;
+  }
+
+  .item {
+    flex-direction: row;
+    gap: 8px;
+    min-height: var(--tamano-tactil);
+    padding: 0 14px;
+    font-size: 15px;
+  }
+
+  .item:hover {
+    color: var(--color-texto);
+  }
+
+  .activo {
+    background: var(--color-superficie);
+  }
+
+  .contenido {
+    grid-area: contenido;
+    align-self: stretch;
+    padding: 24px 24px 64px;
+    border-top: 1px solid var(--color-borde);
+  }
+
+  .titulo {
+    font-size: 36px;
+  }
+}

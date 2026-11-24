@@ -28,65 +28,67 @@ export function Inicio() {
 
   return (
     <PaginaJugador titulo={`Hola${usuario?.nombreUsuario ? `, ${usuario.nombreUsuario}` : ''}`}>
-      {enCurso ? (
-        <Link to={`/pedidos/${enCurso.id}`} className={`${clases.tarjeta} ${clases.destacada}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <span className={clases.secundario}>
-            {enCurso.tipo === 'carga' ? 'Carga' : 'Retiro'} #{enCurso.id} en curso
-          </span>
-          <Monto centavos={enCurso.monto} tamano="lg" destacado />
-          <PasosPedido pedido={enCurso} />
-          <span className={clases.secundario}>{explicarEstado(enCurso)}</span>
-        </Link>
-      ) : (
-        <div className={clases.acciones}>
-          <Link to="/cargar" className={`${clases.botonGrande} ${clases.cargar}`}>
-            Cargar
-            <small>Saldo en tu usuario</small>
-          </Link>
-          <Link to="/retirar" className={`${clases.botonGrande} ${clases.retirar}`}>
-            Retirar
-            <small>A tu cuenta</small>
-          </Link>
+      <div className={clases.inicio}>
+        <div className={clases.principal}>
+          {enCurso ? (
+            <Link to={`/pedidos/${enCurso.id}`} className={`${clases.tarjeta} ${clases.destacada}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <span className={clases.secundario}>
+                {enCurso.tipo === 'carga' ? 'Carga' : 'Retiro'} #{enCurso.id} en curso
+              </span>
+              <Monto centavos={enCurso.monto} tamano="lg" destacado />
+              <PasosPedido pedido={enCurso} />
+              <span className={clases.secundario}>{explicarEstado(enCurso)}</span>
+            </Link>
+          ) : (
+            <div className={clases.acciones}>
+              <Link to="/cargar" className={`${clases.botonGrande} ${clases.cargar}`}>
+                Cargar
+                <small>Saldo en tu usuario</small>
+              </Link>
+              <Link to="/retirar" className={`${clases.botonGrande} ${clases.retirar}`}>
+                Retirar
+                <small>A tu cuenta</small>
+              </Link>
+            </div>
+          )}
+          {recientes && recientes.pedidos.length > 0 ? (
+            <section aria-labelledby="ultimos" className={clases.lista}>
+              <h2 id="ultimos" className={clases.secundario}>
+                Últimos pedidos
+              </h2>
+              {recientes.pedidos.slice(0, 3).map((p) => (
+                <FilaPedido key={p.id} pedido={p} />
+              ))}
+              <Link to="/historial" className={clases.secundario}>
+                Ver todos →
+              </Link>
+            </section>
+          ) : null}
         </div>
-      )}
-
-      {promos && promos.length > 0 ? (
-        <section className={clases.cupones} aria-label="Promociones">
-          {promos.map((p) => (
-            <CuponPromo key={p.id} titulo={p.titulo} condiciones={p.condiciones} codigo={p.codigo} vigencia={textoVigencia(p.hasta)} />
-          ))}
-        </section>
-      ) : null}
-
-      {fijada ? (
-        <section className={clases.tarjeta} aria-labelledby="novedad-fijada">
-          <span className={clases.secundario}>
-            <Pin size={14} aria-hidden="true" /> Novedad
-          </span>
-          <h2 id="novedad-fijada">{fijada.titulo}</h2>
-          <p className={clases.novedad}>{fijada.texto}</p>
-        </section>
-      ) : null}
-
-      {recientes && recientes.pedidos.length > 0 ? (
-        <section aria-labelledby="ultimos" className={clases.lista}>
-          <h2 id="ultimos" className={clases.secundario}>
-            Últimos pedidos
-          </h2>
-          {recientes.pedidos.slice(0, 3).map((p) => (
-            <FilaPedido key={p.id} pedido={p} />
-          ))}
-          <Link to="/historial" className={clases.secundario}>
-            Ver todos →
-          </Link>
-        </section>
-      ) : null}
-
-      <div className={clases.enlaces}>
-        <Link to="/cambiar-contrasena">Cambiar contraseña</Link>
-        <button type="button" onClick={() => void salir()}>
-          Salir
-        </button>
+        <aside className={clases.lateral} aria-label="Promociones y novedades">
+          {promos && promos.length > 0 ? (
+            <section className={clases.cupones} aria-label="Promociones">
+              {promos.map((p) => (
+                <CuponPromo key={p.id} titulo={p.titulo} condiciones={p.condiciones} codigo={p.codigo} vigencia={textoVigencia(p.hasta)} />
+              ))}
+            </section>
+          ) : null}
+          {fijada ? (
+            <section className={clases.tarjeta} aria-labelledby="novedad-fijada">
+              <span className={clases.secundario}>
+                <Pin size={14} aria-hidden="true" /> Novedad
+              </span>
+              <h2 id="novedad-fijada">{fijada.titulo}</h2>
+              <p className={clases.novedad}>{fijada.texto}</p>
+            </section>
+          ) : null}
+          <div className={clases.enlaces}>
+            <Link to="/cambiar-contrasena">Cambiar contraseña</Link>
+            <button type="button" onClick={() => void salir()}>
+              Salir
+            </button>
+          </div>
+        </aside>
       </div>
     </PaginaJugador>
   );

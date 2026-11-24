@@ -358,3 +358,28 @@
   flex-direction: column;
   gap: 10px;
 }
+
+/* ---------- Inicio en dos columnas (escritorio) ---------- */
+
+.inicio,
+.principal,
+.lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .inicio {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+    align-items: start;
+    gap: 24px;
+  }
+
+  /* Formularios con un ancho cómodo: no se estiran de punta a punta. */
+  .formulario {
+    max-width: 560px;
+  }
+}
