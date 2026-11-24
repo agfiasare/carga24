@@ -1,14 +1,15 @@
 import { columnaDe, type ColumnaCola } from '@carga24/shared';
-import { Bell, BellOff, Plus } from 'lucide-react';
+import { Bell, BellOff, Plus, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { pedidos, type Pedido } from '../../../api/pedidos';
 import { useAccion } from '../../../api/useAccion';
 import { useColaEnVivo, sonarAviso, type AvisoCola } from '../../../api/useColaEnVivo';
 import { useConsulta } from '../../../api/useConsulta';
 import { formatearHace, formatearHora } from '../../../comun/formato';
-import { Aviso, Boton, Selector, TarjetaPedido } from '../../../componentes';
+import { Aviso, Boton, Campo, Selector, TarjetaPedido } from '../../../componentes';
 import { useSesionStaff } from '../../../sesion/sesion';
 import { PaginaPanel, usePermisos } from '../PaginaPanel';
+import { coincide } from './busqueda';
 import { nombreJugador } from './comun';
 import { DetallePedido } from './DetallePedido';
 import { ModalAccion, type AccionModal } from './ModalesPedido';
@@ -39,6 +40,8 @@ export function Cola() {
   const { datos, error, recargar } = useConsulta(pedidos.cola, []);
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroCanal, setFiltroCanal] = useState('');
+  const [busqueda, setBusqueda] = useState('');
+  const campoBusqueda = useRef<HTMLInputElement>(null);
   const [sonido, setSonido] = useState(leerSonido);
   const [nuevos, setNuevos] = useState<Set<number>>(new Set());
   const [modal, setModal] = useState<{ accion: AccionModal; pedido: Pedido } | null>(null);
@@ -75,8 +78,8 @@ export function Cola() {
   }, []);
 
   const visibles = useMemo(
-    () => (datos ?? []).filter((p) => (!filtroTipo || p.tipo === filtroTipo) && (!filtroCanal || p.canal === filtroCanal)),
-    [datos, filtroTipo, filtroCanal],
+    () => (datos ?? []).filter((p) => (!filtroTipo || p.tipo === filtroTipo) && (!filtroCanal || p.canal === filtroCanal) && coincide(p, busqueda)),
+    [datos, filtroTipo, filtroCanal, busqueda],
   );
   const porColumna = useMemo(() => {
     const grupos: Record<ColumnaCola, Pedido[]> = { pendientes: [], en_proceso: [], por_completar: [], cerrados: [] };
@@ -93,6 +96,19 @@ export function Cola() {
       document.title = anterior;
     };
   }, [pendientes]);
+
+  // Atajo: "/" lleva a la búsqueda (si no se está escribiendo en otro campo).
+  useEffect(() => {
+    function atajo(e: KeyboardEvent) {
+      const enCampo = e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+      if (e.key === '/' && !enCampo && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        campoBusqueda.current?.focus();
+      }
+    }
+    document.addEventListener('keydown', atajo);
+    return () => document.removeEventListener('keydown', atajo);
+  }, []);
 
   function alternarSonido() {
     const nuevo = !sonido;
@@ -161,9 +177,37 @@ export function Cola() {
       }
     >
       <div className={clases.filtros}>
+        <div className={clases.buscador}>
+          <Campo
+            ref={campoBusqueda}
+            type="text"
+            enterKeyHint="search"
+            autoComplete="off"
+            icono={<Search size={18} />}
+            placeholder="Buscar: número, jugador, teléfono, monto, cuenta, operación…  ( / )"
+            aria-label="Buscar en la cola"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setBusqueda('');
+            }}
+          />
+          {busqueda ? (
+            <button type="button" className={clases.limpiar} onClick={() => setBusqueda('')} aria-label="Borrar búsqueda">
+              <X size={16} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
         <Selector aria-label="Tipo" vacio="Cargas y retiros" opciones={[{ valor: 'carga', texto: 'Solo cargas' }, { valor: 'retiro', texto: 'Solo retiros' }]} value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)} />
         <Selector aria-label="Canal" vacio="Web y WhatsApp" opciones={[{ valor: 'web', texto: 'Solo web' }, { valor: 'manual', texto: 'Solo WhatsApp' }]} value={filtroCanal} onChange={(e) => setFiltroCanal(e.target.value)} />
       </div>
+      {busqueda.trim() && datos ? (
+        <p className={clases.conteoBusqueda} aria-live="polite">
+          {visibles.length === 0
+            ? `Nada coincide con “${busqueda.trim()}” en la cola de hoy. Los pedidos más viejos se buscan en Reportes.`
+            : `${visibles.length} ${visibles.length === 1 ? 'pedido coincide' : 'pedidos coinciden'} con “${busqueda.trim()}”.`}
+        </p>
+      ) : null}
       {error ? <Aviso tipo="error">{error.message}</Aviso> : null}
       {liberacion.error ? <Aviso tipo="error">{liberacion.error.message}</Aviso> : null}
       {aviso ? <Aviso tipo={aviso.tipo}>{aviso.texto}</Aviso> : null}
@@ -192,7 +236,7 @@ export function Cola() {
                   }}
                 />
               ))}
-              {datos && porColumna[columna.clave].length === 0 ? <p className={clases.vacia}>Nada por acá.</p> : null}
+              {datos && porColumna[columna.clave].length === 0 ? <p className={clases.vacia}>{busqueda.trim() ? 'Sin coincidencias.' : 'Nada por acá.'}</p> : null}
             </div>
           </section>
         ))}
