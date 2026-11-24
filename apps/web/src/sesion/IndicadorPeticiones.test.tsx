@@ -25,18 +25,25 @@ describe('IndicadorPeticiones', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
-  it('no se duplica con la pantalla de carga completa', () => {
+  it('no se duplica con la pantalla de carga completa', async () => {
     render(
       <>
         <div data-carga-pantalla-completa="" />
         <IndicadorPeticiones />
       </>,
     );
+    let resolver!: () => void;
+    let peticion!: Promise<void>;
     act(() => {
-      void seguirPeticion(new Promise<void>(() => undefined));
+      peticion = seguirPeticion(new Promise<void>((r) => (resolver = r)));
     });
     act(() => vi.advanceTimersByTime(DEMORA_INDICADOR_MS * 2));
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    // Cada test deja el contador en cero para el siguiente.
+    await act(async () => {
+      resolver();
+      await peticion;
+    });
   });
 
   it('una petición rápida no lo muestra', async () => {
