@@ -5,6 +5,9 @@
 #   - directo: sin Cloudflare. Caddy publica 80/443 y saca solo los certificados
 #              de Let's Encrypt. ESQUEMA vacío.
 {
+	# El dominio "anterior.localhost" (cuando no hay DOMINIO_ANTERIOR) usa la CA interna de Caddy:
+	# no hace falta instalarla en el sistema.
+	skip_install_trust
 	servers {
 		# La IP real del jugador: el túnel (red privada de Docker) la manda en Cf-Connecting-Ip.
 		# Ese encabezado solo se acepta si llega desde una red privada; desde internet se ignora.
@@ -63,4 +66,15 @@
 # Panel del staff (mismo build, otro ingreso)
 {$ESQUEMA}panel.{$DOMINIO} {
 	import web
+}
+
+# Dominio anterior (DOMINIO_ANTERIOR en .env): todo se redirige al dominio actual,
+# conservando la ruta. Sin DOMINIO_ANTERIOR queda en "anterior.localhost", que no
+# llega desde internet ni pide certificados públicos.
+{$ESQUEMA}{$DOMINIO_ANTERIOR:anterior.localhost}, {$ESQUEMA}www.{$DOMINIO_ANTERIOR:anterior.localhost} {
+	redir https://{$DOMINIO}{uri} permanent
+}
+
+{$ESQUEMA}panel.{$DOMINIO_ANTERIOR:anterior.localhost} {
+	redir https://panel.{$DOMINIO}{uri} permanent
 }

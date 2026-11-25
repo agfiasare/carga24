@@ -20,6 +20,7 @@ services:
     environment:
       DOMINIO: ${DOMINIO:?Falta DOMINIO en .env}
       ESQUEMA: ${ESQUEMA:-}
+      DOMINIO_ANTERIOR: ${DOMINIO_ANTERIOR:-anterior.localhost}
     volumes:
       - caddy_data:/data
       - caddy_config:/config

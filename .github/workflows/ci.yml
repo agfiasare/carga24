@@ -88,6 +88,7 @@ jobs:
         run: |
           cat > .env <<'ENV'
           DOMINIO=carga24.test
+          DOMINIO_ANTERIOR=viejo.test
           MODO=directo
           ESQUEMA=http://
           POSTGRES_USER=carga24
@@ -99,7 +100,7 @@ jobs:
       - name: Validar el Caddyfile
         run: |
           docker compose build caddy
-          docker compose run --rm --no-deps -e DOMINIO=carga24.test -e ESQUEMA=http:// caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+          docker compose run --rm --no-deps -e DOMINIO=carga24.test -e DOMINIO_ANTERIOR=viejo.test -e ESQUEMA=http:// caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
       - name: Construir y levantar
         run: docker compose -f docker-compose.yml -f docker-compose.directo.yml up -d --build --wait --wait-timeout 300
@@ -120,6 +121,10 @@ jobs:
           if echo "$encabezados" | grep -qi '^server:'; then echo 'Caddy expone el encabezado Server' >&2; exit 1; fi
           activo=$(web carga24.test / | grep -o '/assets/[^"]*\.js' | head -1)
           curl -fsS -o /dev/null -D - -H "Host: carga24.test" "http://localhost$activo" | grep -i 'immutable'
+          # El dominio anterior redirige al actual, conservando la ruta.
+          curl -sS -o /dev/null -D - -H "Host: viejo.test" http://localhost/historial | grep -i 'location: https://carga24.test/historial'
+          curl -sS -o /dev/null -D - -H "Host: www.viejo.test" http://localhost/ | grep -i 'location: https://carga24.test/'
+          curl -sS -o /dev/null -D - -H "Host: panel.viejo.test" http://localhost/panel/ingresar | grep -i 'location: https://panel.carga24.test/panel/ingresar'
 
       - name: Carga inicial e ingreso del admin
         run: |

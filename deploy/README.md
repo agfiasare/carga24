@@ -175,6 +175,14 @@ Los volcados de la base se suben completos. Los comprobantes se suben de forma i
 
 **Si un backup está en R2 y no en el VPS:** bajalo desde el panel de R2 a la carpeta `backups/` y restauralo igual.
 
+### Cambiar de dominio
+
+1. En el DNS del dominio nuevo, apuntá `@`, `www` y `panel` al servidor (o, con túnel, agregalos como *Public hostnames*).
+2. En `.env`, poné el nuevo en `DOMINIO` y el viejo en `DOMINIO_ANTERIOR`. Todo lo que entre por el viejo (también `www.` y `panel.`) se redirige al nuevo, conservando la ruta. El DNS del viejo tiene que seguir apuntando al servidor.
+3. `./deploy/carga24.sh actualizar`.
+
+Las sesiones abiertas no pasan de un dominio al otro: hay que volver a ingresar.
+
 ## 9. Si algo falla
 
 | Síntoma | Qué mirar |
