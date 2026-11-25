@@ -1,4 +1,5 @@
 import type { EstadoPedido, MedioPago, ModoComision, MotivoRechazo, TipoPedido } from '@carga24/shared';
+import { seguirPeticion } from './actividad';
 import { api, ErrorApi } from './cliente';
 
 export interface PersonaBreve {
@@ -92,7 +93,7 @@ export const pedidos = {
     formulario.append('archivo', archivo);
     let respuesta: Response;
     try {
-      respuesta = await fetch(`/api/v1/pedidos/${id}/comprobantes`, { method: 'POST', credentials: 'same-origin', body: formulario });
+      respuesta = await seguirPeticion(fetch(`/api/v1/pedidos/${id}/comprobantes`, { method: 'POST', credentials: 'same-origin', body: formulario }));
     } catch {
       throw new ErrorApi(0, 'No pudimos subir el archivo. Revisá tu conexión.');
     }

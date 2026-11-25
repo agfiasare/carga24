@@ -6,6 +6,8 @@
 export const tokens = {
   color: {
     fondo: '#08251B',
+    /** Laterales de la app del jugador en pantallas anchas: más oscuro que el fondo. */
+    fondoLateral: '#04150F',
     superficie: '#0E3326',
     borde: '#1F5440',
     texto: '#F3F7F2',

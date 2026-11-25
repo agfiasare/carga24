@@ -22,6 +22,8 @@ export interface DatosPedidoWeb {
   monto: number;
   cuentaId: string;
   codigoPromo?: string;
+  /** Si hay varias plataformas, la que elige el jugador; si no, la única activa. */
+  plataformaId?: string;
 }
 
 type PedidoCompleto = Prisma.PedidoGetPayload<{ include: typeof INCLUIR_PEDIDO }>;
@@ -61,10 +63,10 @@ export class PortalService {
   ) {}
 
   async parametros() {
-    const [parametros, pago, plataforma] = await Promise.all([
+    const [parametros, pago, plataformas] = await Promise.all([
       this.configuracion.parametrosPedidos(),
       this.prisma.configuracion.findMany({ where: { clave: { in: ['pago.alias', 'pago.titular', 'pago.banco', 'atencion.horario', 'atencion.whatsapp'] } } }),
-      this.prisma.plataforma.findFirst({ where: { activa: true }, orderBy: { nombre: 'asc' }, select: { id: true, nombre: true } }),
+      this.prisma.plataforma.findMany({ where: { activa: true }, orderBy: { nombre: 'asc' }, select: { id: true, nombre: true } }),
     ]);
     const valor = (clave: string) => {
       const v = pago.find((f) => f.clave === clave)?.valor;
@@ -77,7 +79,9 @@ export class PortalService {
       datosPago: { alias: valor('pago.alias'), titular: valor('pago.titular'), banco: valor('pago.banco') },
       horario: valor('atencion.horario'),
       whatsapp: valor('atencion.whatsapp'),
-      plataforma,
+      plataformas,
+      // La primera, para pantallas que muestran una sola.
+      plataforma: plataformas[0] ?? null,
     };
   }
 
@@ -134,7 +138,10 @@ export class PortalService {
       const cuenta = await this.prisma.cuentaBancaria.findFirst({ where: { id: datos.cuentaId, usuarioId: jugador.id }, select: { estado: true } });
       if (cuenta?.estado !== 'verificada') throw new BadRequestException('Adjuntá el comprobante: es tu primer pago desde esta cuenta');
     }
-    const plataforma = await this.prisma.plataforma.findFirst({ where: { activa: true }, orderBy: { nombre: 'asc' } });
+    const plataforma = datos.plataformaId
+      ? await this.prisma.plataforma.findFirst({ where: { id: datos.plataformaId, activa: true } })
+      : await this.prisma.plataforma.findFirst({ where: { activa: true }, orderBy: { nombre: 'asc' } });
+    if (datos.plataformaId && !plataforma) throw new BadRequestException('Esa plataforma no está disponible');
     if (!plataforma) throw new ConflictException('Por ahora no estamos tomando pedidos. Escribinos por WhatsApp.');
 
     const guardado = archivo && datos.tipo === 'carga' ? await this.archivos.guardar(archivo.buffer) : null;

@@ -128,7 +128,10 @@
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 56px 24px 96px;
+  padding: 40px 24px 72px;
+  /* La primera vista ocupa la pantalla entera (menos el encabezado). */
+  min-height: calc(100svh - 84px);
+  box-sizing: border-box;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -860,15 +863,37 @@
 
 .marquesina {
   padding: 28px 0 0;
-  white-space: nowrap;
+  overflow: hidden;
   font-family: var(--fuente-display);
   font-style: italic;
   font-weight: 900;
   font-size: clamp(48px, 9vw, 120px);
-  line-height: 1;
+  line-height: 1.05;
   text-transform: uppercase;
   color: transparent;
   -webkit-text-stroke: 1.5px var(--borde-fuerte);
+}
+
+/* La pista mide dos copias; moverla la mitad hace que el texto pase sin cortes. */
+.marquesinaPista {
+  display: flex;
+  width: max-content;
+  animation: desplazar 28s linear infinite;
+}
+
+.marquesinaTexto {
+  white-space: nowrap;
+  padding-right: 0.3em;
+}
+
+@keyframes desplazar {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .cierreContenido {
@@ -955,5 +980,10 @@
 @media (prefers-reduced-motion: reduce) {
   .mas {
     transition: none;
+  }
+
+  /* Quien pide menos movimiento ve la franja quieta. */
+  .marquesinaPista {
+    animation: none;
   }
 }

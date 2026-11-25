@@ -32,8 +32,9 @@
 }
 
 .logo {
-  width: 32px;
-  height: 32px;
+  /* El logo no es cuadrado (600×445): alto fijo y ancho proporcional, sin deformarlo. */
+  height: 30px;
+  width: auto;
 }
 
 .campana {
@@ -117,4 +118,186 @@
 
 .activo {
   color: var(--color-primario);
+}
+
+/* ---------- Herramientas: avisos y menú de la cuenta ---------- */
+
+.herramientas {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cuenta {
+  position: relative;
+}
+
+.botonCuenta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tamano-tactil);
+  padding: 0 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-pill);
+  background: transparent;
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botonCuenta:hover {
+  border-color: var(--color-primario);
+}
+
+.nombreCuenta {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.girado {
+  transform: rotate(180deg);
+}
+
+.desplegable {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  min-width: 220px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.4);
+}
+
+.desplegableNombre {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--color-texto-secundario);
+  border-bottom: 1px solid var(--color-borde);
+  margin-bottom: 4px;
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tamano-tactil);
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radio-sm);
+  background: transparent;
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.opcion:hover,
+.opcion:focus-visible {
+  background: var(--color-fondo);
+}
+
+/* En el celular, el botón de cuenta muestra solo el ícono. */
+@media (max-width: 599px) {
+  .nombreCuenta {
+    display: none;
+  }
+}
+
+/* ---------- Escritorio ----------
+   El encabezado va de borde a borde. El contenido es una "hoja" centrada de hasta 1200 px
+   sobre el fondo de la marca; los laterales, más oscuros, dejan clara esa intención. */
+@media (min-width: 900px) {
+  .app {
+    max-width: none;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 1200px) 1fr;
+    grid-template-rows: auto 1fr;
+    background: var(--color-fondo-lateral);
+  }
+
+  /* Fondo del encabezado, de punta a punta. */
+  .app::before {
+    content: '';
+    grid-column: 1 / -1;
+    grid-row: 1;
+    background: var(--color-superficie);
+    border-bottom: 1px solid var(--color-borde);
+  }
+
+  /* Logo, menú y herramientas comparten la fila del encabezado, dentro del ancho del contenido. */
+  .barra {
+    display: contents;
+  }
+
+  .marca,
+  .menu,
+  .herramientas {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+
+  .marca {
+    justify-self: start;
+    padding: 14px 0 14px 24px;
+  }
+
+  .herramientas {
+    justify-self: end;
+    margin-right: 24px;
+  }
+
+  .menu {
+    justify-self: center;
+    position: static;
+    transform: none;
+    width: auto;
+    display: flex;
+    gap: 4px;
+    padding: 0;
+    background: transparent;
+    border-top: 0;
+  }
+
+  .item {
+    flex-direction: row;
+    gap: 8px;
+    min-height: var(--tamano-tactil);
+    padding: 0 14px;
+    font-size: 15px;
+  }
+
+  .item:hover {
+    color: var(--color-texto);
+  }
+
+  .activo {
+    background: var(--color-fondo);
+  }
+
+  .contenido {
+    grid-column: 2;
+    grid-row: 2;
+    padding: 32px 32px 64px;
+    background: var(--color-fondo);
+    border-left: 1px solid var(--color-borde);
+    border-right: 1px solid var(--color-borde);
+  }
+
+  .titulo {
+    font-size: 36px;
+  }
 }

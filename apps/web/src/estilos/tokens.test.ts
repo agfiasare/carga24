@@ -10,6 +10,7 @@ const css = readFileSync(fileURLToPath(new URL('./globales.css', import.meta.url
 describe('tokens', () => {
   it.each([
     ['--color-fondo', tokens.color.fondo],
+    ['--color-fondo-lateral', tokens.color.fondoLateral],
     ['--color-superficie', tokens.color.superficie],
     ['--color-borde', tokens.color.borde],
     ['--color-texto', tokens.color.texto],

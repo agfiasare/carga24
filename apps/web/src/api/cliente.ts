@@ -1,3 +1,5 @@
+import { seguirPeticion } from './actividad';
+
 /** Error de la API con el formato { mensaje, codigo?, errores? }. */
 export class ErrorApi extends Error {
   constructor(
@@ -23,12 +25,12 @@ export class ErrorApi extends Error {
 export async function api<T>(metodo: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE', ruta: string, cuerpo?: unknown): Promise<T> {
   let respuesta: Response;
   try {
-    respuesta = await fetch(`/api/v1${ruta}`, {
+    respuesta = await seguirPeticion(fetch(`/api/v1${ruta}`, {
       method: metodo,
       credentials: 'same-origin',
       headers: cuerpo === undefined ? undefined : { 'Content-Type': 'application/json' },
       body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
-    });
+    }));
   } catch {
     throw new ErrorApi(0, 'No pudimos conectarnos. Revisá tu conexión y probá de nuevo.');
   }

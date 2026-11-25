@@ -8,7 +8,7 @@ import { useAccion } from '../../../api/useAccion';
 import { useConsulta } from '../../../api/useConsulta';
 import { leerPesos } from '../../../comun/formato';
 import { Aviso, Boton, CampoFormulario, SelectorFormulario } from '../../../componentes';
-import { PaginaJugador } from './comun';
+import { PaginaJugador, plataformaElegida, SelectorPlataforma } from './comun';
 import clases from './portal.module.css';
 
 export function Cargar() {
@@ -23,6 +23,7 @@ export function Cargar() {
   const [promo, setPromo] = useState<PromoPublica | null>(null);
   const validacion = useAccion(promociones.validarJugador);
   const pedido = useAccion(portal.pedir);
+  const [plataformaId, setPlataformaId] = useState('');
 
   const monto = leerPesos(montoTexto);
   const descuento = parametros?.comision.modo === 'descuento';
@@ -32,12 +33,13 @@ export function Cargar() {
   const cuentaElegida = cuentaId || (usables.length === 1 ? usables[0]!.id : '');
   const cuentaVerificada = usables.find((c) => c.id === cuentaElegida)?.estado === 'verificada';
   const pideComprobante = !cuentaVerificada;
-  const listo = Boolean(monto && !fueraDeRango && cuentaElegida && (archivo || !pideComprobante));
+  const plataforma = plataformaElegida(parametros?.plataformas ?? [], plataformaId);
+  const listo = Boolean(monto && !fueraDeRango && cuentaElegida && plataforma && (archivo || !pideComprobante));
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
     if (!monto || (!archivo && pideComprobante)) return;
-    const resultado = await pedido.ejecutar({ tipo: 'carga', monto, cuentaId: cuentaElegida, ...(archivo ? { archivo } : {}), ...(promo ? { codigoPromo: promo.codigo } : {}) });
+    const resultado = await pedido.ejecutar({ tipo: 'carga', monto, cuentaId: cuentaElegida, plataformaId: plataforma, ...(archivo ? { archivo } : {}), ...(promo ? { codigoPromo: promo.codigo } : {}) });
     if (resultado) navegar(`/pedidos/${resultado.valor.id}`, { replace: true });
   }
 
@@ -70,6 +72,7 @@ export function Cargar() {
             ayuda={`De ${formatearPesos(parametros.montos.cargaMinima)} a ${formatearPesos(parametros.montos.cargaMaxima)}`}
             error={montoTexto && !monto ? 'Escribí un monto válido, por ejemplo 10.000' : fueraDeRango ? 'El monto está fuera del rango permitido' : undefined}
           />
+          <SelectorPlataforma plataformas={parametros.plataformas} valor={plataformaId} alCambiar={setPlataformaId} tipo="carga" />
           {calculo ? (
             <dl className={clases.calculo} aria-live="polite">
               <dt>Transferís</dt>
@@ -145,7 +148,7 @@ export function Cargar() {
           <Boton type="submit" tamano="lg" anchoCompleto cargando={pedido.cargando} disabled={!listo}>
             Enviar pedido
           </Boton>
-          {!listo ? <span className={clases.secundario}>{pideComprobante ? 'Completá el monto, la cuenta y el comprobante.' : 'Completá el monto y la cuenta.'}</span> : null}
+          {!listo ? <span className={clases.secundario}>{pideComprobante ? 'Completá el monto, la plataforma, la cuenta y el comprobante.' : 'Completá el monto, la plataforma y la cuenta.'}</span> : null}
         </form>
       ) : null}
     </PaginaJugador>

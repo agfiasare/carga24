@@ -6,7 +6,7 @@ import { useAccion } from '../../../api/useAccion';
 import { useConsulta } from '../../../api/useConsulta';
 import { leerPesos } from '../../../comun/formato';
 import { Aviso, Boton, CampoFormulario, SelectorFormulario } from '../../../componentes';
-import { PaginaJugador } from './comun';
+import { PaginaJugador, plataformaElegida, SelectorPlataforma } from './comun';
 import clases from './portal.module.css';
 
 export function Retirar() {
@@ -16,17 +16,19 @@ export function Retirar() {
   const [montoTexto, setMontoTexto] = useState('');
   const [cuentaId, setCuentaId] = useState('');
   const pedido = useAccion(portal.pedir);
+  const [plataformaId, setPlataformaId] = useState('');
 
   const monto = leerPesos(montoTexto);
   const verificadas = (cuentas ?? []).filter((c) => c.estado === 'verificada');
   const cuentaElegida = cuentaId || (verificadas.length === 1 ? verificadas[0]!.id : '');
   const bajo = monto && parametros ? monto < parametros.montos.retiroMinimo : false;
+  const plataforma = plataformaElegida(parametros?.plataformas ?? [], plataformaId);
   const conAprobacion = monto && parametros ? monto >= parametros.montos.retiroConAprobacionDesde : false;
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
     if (!monto) return;
-    const resultado = await pedido.ejecutar({ tipo: 'retiro', monto, cuentaId: cuentaElegida });
+    const resultado = await pedido.ejecutar({ tipo: 'retiro', monto, cuentaId: cuentaElegida, plataformaId: plataforma });
     if (resultado) navegar(`/pedidos/${resultado.valor.id}`, { replace: true });
   }
 
@@ -49,6 +51,7 @@ export function Retirar() {
               ayuda={`Mínimo ${formatearPesos(parametros.montos.retiroMinimo)}`}
               error={montoTexto && !monto ? 'Escribí un monto válido, por ejemplo 20.000' : bajo ? 'Es menos que el mínimo' : undefined}
             />
+            <SelectorPlataforma plataformas={parametros.plataformas} valor={plataformaId} alCambiar={setPlataformaId} tipo="retiro" />
             <SelectorFormulario
               etiqueta="¿A qué cuenta?"
               vacio={verificadas.length > 1 ? 'Elegí una cuenta' : undefined}
@@ -58,7 +61,7 @@ export function Retirar() {
             />
             {conAprobacion ? <Aviso tipo="info">Por el monto, un supervisor tiene que aprobarlo. Puede tardar un poco más.</Aviso> : null}
             <p className={clases.secundario}>Lo descontamos de tu usuario en la plataforma y te lo transferimos.</p>
-            <Boton type="submit" tamano="lg" anchoCompleto cargando={pedido.cargando} disabled={!monto || bajo || !cuentaElegida}>
+            <Boton type="submit" tamano="lg" anchoCompleto cargando={pedido.cargando} disabled={!monto || bajo || !cuentaElegida || !plataforma}>
               Pedir retiro
             </Boton>
           </form>

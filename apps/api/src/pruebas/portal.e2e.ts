@@ -116,6 +116,20 @@ describe('Portal del jugador', () => {
     });
   });
 
+  describe('plataformas', () => {
+    it('el jugador elige la plataforma; una inactiva se rechaza', async () => {
+      const otra = await prisma.plataforma.create({ data: { nombre: 'Casino Dos' } });
+      const parametros = (await ana.get(`${API}/yo/parametros`).expect(200)).body;
+      expect(parametros.plataformas.map((p: { nombre: string }) => p.nombre)).toEqual(['Casino Dos', 'Plataforma principal']);
+      const { body } = await ana.post(`${API}/yo/pedidos`).field('tipo', 'carga').field('monto', '500000').field('cuentaId', cuentaId).field('plataformaId', otra.id).expect(201);
+      expect(body.plataforma.nombre).toBe('Casino Dos');
+      await operador.post(`${API}/pedidos/${body.id}/rechazar`).send({ motivo: 'otro' }).expect(200);
+      await prisma.plataforma.update({ where: { id: otra.id }, data: { activa: false } });
+      const inactiva = await ana.post(`${API}/yo/pedidos`).field('tipo', 'carga').field('monto', '500000').field('cuentaId', cuentaId).field('plataformaId', otra.id).expect(400);
+      expect(inactiva.body.mensaje).toBe('Esa plataforma no está disponible');
+    });
+  });
+
   describe('carga desde una cuenta ya verificada', () => {
     it('no pide comprobante: el pago se busca en el banco', async () => {
       const { body } = await ana.post(`${API}/yo/pedidos`).field('tipo', 'carga').field('monto', '500000').field('cuentaId', cuentaId).expect(201);
@@ -137,9 +151,9 @@ describe('Portal del jugador', () => {
 
     it('filtra el historial', async () => {
       const todos = (await ana.get(`${API}/yo/pedidos`).expect(200)).body;
-      expect(todos.total).toBe(3);
+      expect(todos.total).toBe(4);
       expect((await ana.get(`${API}/yo/pedidos?tipo=retiro`)).body.pedidos.map((p: { tipo: string }) => p.tipo)).toEqual(['retiro']);
-      expect((await ana.get(`${API}/yo/pedidos?estado=cerrados`)).body.total).toBe(3);
+      expect((await ana.get(`${API}/yo/pedidos?estado=cerrados`)).body.total).toBe(4);
       expect((await ana.get(`${API}/yo/pedidos?estado=en_curso`)).body.total).toBe(0);
       expect((await otro.get(`${API}/yo/pedidos`)).body.total).toBe(0);
     });

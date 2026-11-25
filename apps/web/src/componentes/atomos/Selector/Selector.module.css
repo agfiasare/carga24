@@ -24,12 +24,23 @@
   min-height: 44px;
   padding: 0 40px 0 14px;
   border: 0;
-  background: transparent;
+  /* Fondo propio (no transparente): la lista desplegable del sistema lo toma de acá. */
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-md);
   color: var(--color-texto);
+  /* Que Windows y Chrome dibujen la lista con el tema que corresponde (oscuro o claro). */
+  color-scheme: inherit;
   font: inherit;
   font-size: 15px;
   outline: none;
   cursor: pointer;
+}
+
+/* Las opciones de la lista: sin esto, en Windows quedan con texto claro sobre fondo blanco. */
+.selector option,
+.selector optgroup {
+  background-color: var(--color-superficie);
+  color: var(--color-texto);
 }
 
 .selector:focus-visible {

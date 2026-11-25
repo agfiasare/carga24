@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { authJugador, authStaff, type Jugador, type StaffYo } from '../api/auth';
 import { ErrorApi } from '../api/cliente';
+import { LogoCargando } from '../componentes';
 import clases from './sesion.module.css';
 
 interface EstadoSesion<T> {
@@ -51,8 +52,8 @@ export const useSesionStaff = staff.useSesion;
 
 function Cargando() {
   return (
-    <div className={clases.cargando} role="status" aria-label="Cargando">
-      <span className={clases.spinner} aria-hidden="true" />
+    <div className={clases.cargando} data-carga-pantalla-completa="">
+      <LogoCargando tamano={88} />
     </div>
   );
 }

@@ -1,0 +1,7 @@
+# Modo sin Cloudflare: Caddy publica los puertos y saca los certificados solo.
+services:
+  caddy:
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"

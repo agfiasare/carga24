@@ -358,3 +358,61 @@
   flex-direction: column;
   gap: 10px;
 }
+
+/* ---------- Inicio en dos columnas (escritorio) ---------- */
+
+.inicio,
+.principal,
+.lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .inicio {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+    align-items: start;
+    gap: 24px;
+  }
+
+  /* Formularios con un ancho cómodo: no se estiran de punta a punta. */
+  .formulario {
+    max-width: 560px;
+  }
+}
+
+/* Encabezado de una sección con su acción a la derecha ("Ver todos"). */
+.encabezadoSeccion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tituloSeccion {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.verTodos {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-pill);
+  color: var(--color-primario);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.verTodos:hover {
+  border-color: var(--color-primario);
+}

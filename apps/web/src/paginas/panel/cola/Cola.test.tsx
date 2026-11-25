@@ -149,6 +149,36 @@ describe('Cola de pedidos', () => {
   });
 });
 
+describe('Búsqueda en la cola', () => {
+  it('filtra en todas las columnas y "/" lleva al buscador', async () => {
+    apiFalsa({
+      'GET /auth/staff/yo': respuesta(200, laura),
+      'GET /pedidos/cola': respuesta(200, [
+        base,
+        { ...base, id: 2, monto: 2_500_000, montoPagado: 2_625_000, jugador: { id: 'j2', nombreUsuario: 'juanp', telefono: '5491155550001', usuarioPlataforma: 'juan' }, telefono: '5491155550001' },
+        { ...base, id: 3, estado: 'rechazado', motivoRechazo: 'El pago no llegó' },
+      ]),
+    });
+    montar();
+    await screen.findByRole('article', { name: 'Carga #2' });
+    await userEvent.keyboard('/');
+    const buscador = screen.getByLabelText('Buscar en la cola');
+    expect(buscador).toHaveFocus();
+    await userEvent.type(buscador, '25.000');
+    expect(screen.getByRole('article', { name: 'Carga #2' })).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Carga #1' })).not.toBeInTheDocument();
+    expect(screen.getByText('1 pedido coincide con “25.000”.')).toBeInTheDocument();
+    await userEvent.clear(buscador);
+    await userEvent.type(buscador, '11 4444');
+    expect(screen.getAllByRole('article').map((a) => a.getAttribute('aria-labelledby'))).toEqual(['pedido-1', 'pedido-3']);
+    await userEvent.keyboard('{Escape}');
+    expect(buscador).toHaveValue('');
+    expect(screen.getAllByRole('article')).toHaveLength(3);
+    await userEvent.type(buscador, 'nadie');
+    expect(screen.getByText(/Nada coincide con “nadie”/)).toBeInTheDocument();
+  });
+});
+
 describe('leerPesos', () => {
   it('entiende montos escritos como en Argentina', () => {
     expect(leerPesos('10.000')).toBe(1_000_000);

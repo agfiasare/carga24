@@ -243,8 +243,15 @@ export function Landing() {
         </section>
 
         <section className={clases.cierre}>
+          {/* Dos copias iguales: cuando la primera sale por la izquierda, la segunda ya ocupa su lugar. */}
           <div className={clases.marquesina} aria-hidden="true">
-            Cargá · Jugá · Cobrá · Cargá · Jugá · Cobrá · Cargá · Jugá · Cobrá
+            <div className={clases.marquesinaPista}>
+              {[0, 1].map((copia) => (
+                <span key={copia} className={clases.marquesinaTexto}>
+                  Cargá · Jugá · Cobrá · Cargá · Jugá · Cobrá ·&nbsp;
+                </span>
+              ))}
+            </div>
           </div>
           <div className={`${clases.contenedor} ${clases.cierreContenido}`}>
             <span className={clases.cierreTexto}>Tu cuenta te espera. Pedí por donde quieras: lo encontrás todo acá.</span>

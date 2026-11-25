@@ -26,6 +26,7 @@ import { PerfilEditor } from './paginas/panel/PerfilEditor';
 import { Perfiles } from './paginas/panel/Perfiles';
 import { Staff } from './paginas/panel/Staff';
 import { StaffDetalle } from './paginas/panel/StaffDetalle';
+import { IndicadorPeticiones } from './sesion/IndicadorPeticiones';
 import { ProveedorPortalEnVivo } from './sesion/portalEnVivo';
 import { ProveedorSesionJugador, ProveedorSesionStaff, RutaJugador, RutaStaff } from './sesion/sesion';
 
@@ -103,6 +104,7 @@ export function App() {
   return (
     <BrowserRouter>
       {usarPanel() ? <RutasPanel /> : <RutasJugador />}
+      <IndicadorPeticiones />
     </BrowserRouter>
   );
 }
