@@ -3,7 +3,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fechaArgentina } from '../reportes/fechas.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
-import { agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
+import { abrirTurno, agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
 
 const API = '/api/v1';
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(16, 3)]);
@@ -21,10 +21,12 @@ describe('Promociones', () => {
     ({ app, prisma } = await crearAppDePrueba());
     admin = agente(app);
     await primerIngresoStaff(admin, 'admin', CONTRASENA_ADMIN, 'admin-nueva-segura');
+    await abrirTurno(admin);
     const perfilPagos = (await prisma.perfil.findUniqueOrThrow({ where: { nombre: 'Pagos' } })).id;
     const { body } = await admin.post(`${API}/staff`).send({ nombreUsuario: 'caja', nombreVisible: 'Caja', perfilId: perfilPagos }).expect(201);
     pagos = agente(app);
     await primerIngresoStaff(pagos, 'caja', body.contrasenaTemporal, 'caja-clave-propia');
+    await abrirTurno(pagos);
     jugador = agente(app);
     await jugador.post(`${API}/auth/jugador/registro`).send({ usuarioPlataforma: 'ana99', telefono: '1144441234', nombreUsuario: 'ana', contrasena: 'clave-segura-1', mayorDeEdad: true }).expect(201);
   });

@@ -48,6 +48,11 @@ export async function primerIngresoStaff(cliente: Agente, usuario: string, tempo
   return body.secreto as string;
 }
 
+/** Abre un turno: sin turno el staff no opera pedidos. */
+export async function abrirTurno(cliente: Agente): Promise<void> {
+  await cliente.post('/api/v1/turnos').expect(201);
+}
+
 export async function ingresarStaff(cliente: Agente, usuario: string, contrasena: string, secreto: string): Promise<void> {
   const ingreso = await cliente.post('/api/v1/auth/staff/ingreso').send({ identificador: usuario, contrasena }).expect(200);
   expect(ingreso.body).toEqual({ siguientePaso: 'verificar_2fa' });

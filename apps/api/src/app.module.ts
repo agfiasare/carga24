@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AuditoriaModule } from './auditoria/auditoria.service.js';
 import { AuthModule } from './auth/auth.module.js';
+import { CajaModule } from './caja/caja.js';
 import { AutenticacionGuard } from './auth/autenticacion.guard.js';
 import { PermisosGuard } from './auth/permisos.guard.js';
 import { ConfiguracionModule } from './configuracion/configuracion.service.js';
@@ -16,7 +17,7 @@ import { SaludModule } from './salud/salud.module.js';
 import { UsuariosModule } from './usuarios.module.js';
 
 @Module({
-  imports: [PrismaModule, AuditoriaModule, ConfiguracionModule, AuthModule, UsuariosModule, PedidosModule, PortalModule, NovedadesModule, ReportesModule, PromocionesModule, PublicoModule, SaludModule],
+  imports: [PrismaModule, AuditoriaModule, ConfiguracionModule, AuthModule, UsuariosModule, PedidosModule, CajaModule, PortalModule, NovedadesModule, ReportesModule, PromocionesModule, PublicoModule, SaludModule],
   providers: [
     // 1) ¿Quién es? (cookie de sesión) y ¿puede entrar a esta ruta? (@Publico, @SoloJugador, @SoloStaff…)
     { provide: APP_GUARD, useClass: AutenticacionGuard },

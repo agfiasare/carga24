@@ -3,7 +3,7 @@ import ExcelJS from 'exceljs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fechaArgentina } from '../reportes/fechas.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
-import { agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
+import { abrirTurno, agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
 
 const API = '/api/v1';
 
@@ -20,11 +20,13 @@ describe('Configuración, auditoría, reportes y exportación', () => {
     ({ app, prisma } = await crearAppDePrueba());
     admin = agente(app);
     await primerIngresoStaff(admin, 'admin', CONTRASENA_ADMIN, 'admin-nueva-segura');
+    await abrirTurno(admin);
     const operador = (await prisma.perfil.findUniqueOrThrow({ where: { nombre: 'Operador' } })).id;
     const { body } = await admin.post(`${API}/staff`).send({ nombreUsuario: 'laura', nombreVisible: 'Laura', perfilId: operador }).expect(201);
     lauraId = body.staff.id;
     laura = agente(app);
     await primerIngresoStaff(laura, 'laura', body.contrasenaTemporal, 'laura-clave-propia');
+    await abrirTurno(laura);
     plataformaId = (await prisma.plataforma.findFirstOrThrow()).id;
   });
   afterAll(async () => {

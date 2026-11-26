@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { PromocionesService } from '../promociones/promociones.js';
 import { calcularCarga, formatearPesos, MOTIVOS_RECHAZO, siguienteEstado, type AccionPedido, type MotivoRechazo } from '@carga24/shared';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { bloquearCaja, SIN_TURNO, turnoAbiertoDe } from '../caja/candado.js';
 import type { UsuarioAutenticado } from '../auth/usuario-autenticado.js';
 import { normalizarTelefono } from '../comun/telefono.js';
 import { ConfiguracionService } from '../configuracion/configuracion.service.js';
@@ -61,6 +62,9 @@ export interface OpcionesTransicion {
   motivo?: MotivoRechazo;
   detalle?: string;
 }
+
+/** Lo que mueve plata o fichas pide un turno abierto. Liberar y aprobar, no. */
+const ACCIONES_CON_TURNO: ReadonlySet<AccionPedido> = new Set(['tomar', 'verificar', 'acreditar', 'pagar', 'rechazar']);
 
 /** Zona horaria del negocio: "cerrados hoy" es el día en Argentina. */
 export function inicioDelDia(ahora = new Date()): Date {
@@ -184,6 +188,7 @@ export class PedidosService {
 
     const canal = extra.canal ?? 'manual';
     const pedido = await this.prisma.$transaction(async (tx) => {
+      if (actor.tipo === 'staff' && !(await turnoAbiertoDe(tx, actor.id))) throw new ForbiddenException(SIN_TURNO);
       const creado = await tx.pedido.create({
         data: {
           tipo: datos.tipo,
@@ -225,8 +230,12 @@ export class PedidosService {
 
     const destinoFinal = await this.prisma
       .$transaction(async (tx) => {
+        // Acreditar y pagar mueven la caja: van de a uno, para no cruzarse con un cierre de turno.
+        if (accion === 'acreditar' || accion === 'pagar') await bloquearCaja(tx);
         const pedido = await tx.pedido.findUnique({ where: { id }, include: { tomadoPor: nombre, cuenta: true, comprobantes: true } });
         if (!pedido) throw new NotFoundException(`No existe el pedido #${id}`);
+        const turno = ACCIONES_CON_TURNO.has(accion) ? await turnoAbiertoDe(tx, actor.id) : null;
+        if (ACCIONES_CON_TURNO.has(accion) && !turno) throw new ForbiddenException(SIN_TURNO);
 
         // Validar un retiro grande lo manda a aprobación en lugar de a "por pagar".
         const accionReal: AccionPedido =
@@ -241,7 +250,7 @@ export class PedidosService {
         }
 
         const ahora = new Date();
-        const datos: Prisma.PedidoUpdateManyMutationInput & { tomadoPorId?: string | null; verificadoPorId?: string; ejecutadoPorId?: string } = {};
+        const datos: Prisma.PedidoUpdateManyMutationInput & { tomadoPorId?: string | null; verificadoPorId?: string; ejecutadoPorId?: string; turnoId?: string } = {};
         let nota: string | undefined;
         switch (accion) {
           case 'tomar':
@@ -269,7 +278,8 @@ export class PedidosService {
             if (accion === 'pagar' && pedido.medioPago !== 'efectivo' && !pedido.comprobantes.some((c) => c.tipo === 'retiro')) {
               throw new BadRequestException('Adjuntá el comprobante de la transferencia antes de marcarlo pagado');
             }
-            Object.assign(datos, { ejecutadoPorId: actor.id, ejecutadoEn: ahora });
+            // Cuenta en la caja del turno de quien lo acredita o paga.
+            Object.assign(datos, { ejecutadoPorId: actor.id, ejecutadoEn: ahora, turnoId: turno!.id });
             break;
           case 'rechazar': {
             if (!opciones.motivo) throw new BadRequestException('Elegí un motivo');
