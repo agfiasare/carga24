@@ -3,6 +3,7 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Turno, TurnoActual } from '../../../api/caja';
 import type { Pedido } from '../../../api/pedidos';
 import { ProveedorSesionStaff } from '../../../sesion/sesion';
 import { apiFalsa, respuesta } from '../../../test/apiFalsa';
@@ -27,6 +28,26 @@ class FuenteFalsa {
 
 const laura = { id: 'laura', nombreUsuario: 'laura', nombreVisible: 'Laura', perfil: { id: 'p', nombre: 'Operador' }, permisos: PERFILES_INICIALES.Operador };
 const ahora = new Date().toISOString();
+const turno: Turno = {
+  id: 't1',
+  usuario: { id: 'laura', nombre: 'Laura' },
+  abiertoEn: ahora,
+  cerradoEn: null,
+  cerradoPor: null,
+  cajaAlAbrir: -40_000_000,
+  cajaAlCerrar: null,
+  saldoInformado: null,
+  nota: null,
+  cantidadCargas: 38,
+  cantidadRetiros: 12,
+  ingresos: 345_000_000,
+  comision: 10_350_000,
+  cargasNetas: 334_650_000,
+  premios: 210_000_000,
+  resultado: 135_000_000,
+};
+const conTurno: TurnoActual = { turno, caja: -40_000_000, ultimoCierre: { usuario: 'Martín', cerradoEn: ahora } };
+const sinTurno: TurnoActual = { turno: null, caja: -40_000_000, ultimoCierre: { usuario: 'Martín', cerradoEn: ahora } };
 const base: Pedido = {
   id: 1, tipo: 'carga', estado: 'pendiente', canal: 'manual', medioPago: 'otra_cuenta', monto: 1_000_000, montoPagado: 1_050_000, ganancia: 50_000,
   comisionPb: 500, modoComision: 'recargo', referenciaMovimiento: null, motivoRechazo: null, telefono: '5491144441234',
@@ -34,7 +55,8 @@ const base: Pedido = {
   cuenta: null, tomadoPor: null, tomadoEn: null, verificadoPor: null, ejecutadoPor: null, comprobantes: [], promo: null, requiereAprobacion: false, creadoEn: ahora, actualizadoEn: ahora,
 };
 
-function montar() {
+/** Monta la cola y espera a que cargue el turno (sin turno, los botones están desactivados). */
+async function montar() {
   render(
     <MemoryRouter initialEntries={['/panel/cola']}>
       <ProveedorSesionStaff>
@@ -44,6 +66,7 @@ function montar() {
       </ProveedorSesionStaff>
     </MemoryRouter>,
   );
+  await screen.findByRole('region', { name: /^Turno/ });
 }
 
 const columna = (nombre: RegExp) => screen.getByRole('region', { name: nombre });
@@ -57,6 +80,7 @@ describe('Cola de pedidos', () => {
   it('reparte los pedidos en sus columnas y muestra las acciones de cada uno', async () => {
     apiFalsa({
       'GET /auth/staff/yo': respuesta(200, laura),
+      'GET /turnos/actual': respuesta(200, conTurno),
       'GET /pedidos/cola': respuesta(200, [
         base,
         { ...base, id: 2, estado: 'en_proceso', tomadoPor: { id: 'laura', nombre: 'Laura' } },
@@ -65,7 +89,7 @@ describe('Cola de pedidos', () => {
         { ...base, id: 5, estado: 'rechazado', motivoRechazo: 'El pago no llegó' },
       ]),
     });
-    montar();
+    await montar();
 
     const pendientes = await screen.findByRole('region', { name: /Pendientes/ });
     expect(within(pendientes).getByRole('button', { name: 'Tomar' })).toBeInTheDocument();
@@ -88,10 +112,11 @@ describe('Cola de pedidos', () => {
   it('tomar pasa por un modal de confirmación', async () => {
     const api = apiFalsa({
       'GET /auth/staff/yo': respuesta(200, laura),
+      'GET /turnos/actual': respuesta(200, conTurno),
       'GET /pedidos/cola': respuesta(200, [base]),
       'POST /pedidos/1/tomar': respuesta(200, { ...base, estado: 'en_proceso', eventos: [] }),
     });
-    montar();
+    await montar();
     await userEvent.click(await screen.findByRole('button', { name: 'Tomar' }));
     const modal = screen.getByRole('dialog', { name: '¿Tomás el pedido #1?' });
     expect(within(modal).getByText('ana99', { exact: false })).toBeInTheDocument();
@@ -104,10 +129,11 @@ describe('Cola de pedidos', () => {
   it('verificar un pago exige el número de operación y muestra el error de la API', async () => {
     const api = apiFalsa({
       'GET /auth/staff/yo': respuesta(200, laura),
+      'GET /turnos/actual': respuesta(200, conTurno),
       'GET /pedidos/cola': respuesta(200, [{ ...base, estado: 'en_proceso', tomadoPor: { id: 'laura', nombre: 'Laura' } }]),
       'POST /pedidos/1/verificar': respuesta(409, { mensaje: 'Ese número de operación ya se usó en el pedido #7' }),
     });
-    montar();
+    await montar();
     await userEvent.click(await screen.findByRole('button', { name: 'Verificar pago' }));
     const modal = screen.getByRole('dialog', { name: '¿Encontraste el pago en el banco?' });
     const confirmar = within(modal).getByRole('button', { name: 'Sí, verificar pago' });
@@ -121,10 +147,11 @@ describe('Cola de pedidos', () => {
   it('"No llegó" rechaza con el motivo ya elegido', async () => {
     const api = apiFalsa({
       'GET /auth/staff/yo': respuesta(200, laura),
+      'GET /turnos/actual': respuesta(200, conTurno),
       'GET /pedidos/cola': respuesta(200, [{ ...base, estado: 'en_proceso', tomadoPor: { id: 'laura', nombre: 'Laura' } }]),
       'POST /pedidos/1/rechazar': respuesta(200, { ...base, estado: 'rechazado', eventos: [] }),
     });
-    montar();
+    await montar();
     await userEvent.click(await screen.findByRole('button', { name: 'No llegó' }));
     const modal = screen.getByRole('dialog');
     expect(within(modal).getByLabelText('Motivo')).toHaveValue('no_llego');
@@ -136,9 +163,10 @@ describe('Cola de pedidos', () => {
     let cola = [base];
     const api = apiFalsa({
       'GET /auth/staff/yo': respuesta(200, { ...laura, permisos: TODOS_LOS_PERMISOS }),
+      'GET /turnos/actual': respuesta(200, conTurno),
       'GET /pedidos/cola': () => respuesta(200, cola),
     });
-    montar();
+    await montar();
     await screen.findByRole('article', { name: 'Carga #1' });
     cola = [base, { ...base, id: 9, jugador: null, telefono: '5491199990000' }];
     act(() => FuenteFalsa.ultima!.emitir('pedido.creado', { tipo: 'pedido.creado', pedidoId: 9, estado: 'pendiente', actorId: 'otro' }));
@@ -149,17 +177,51 @@ describe('Cola de pedidos', () => {
   });
 });
 
+describe('Turno', () => {
+  it('sin turno se ve la cola, pero no se opera hasta iniciarlo', async () => {
+    let abierto = false;
+    const api = apiFalsa({
+      'GET /auth/staff/yo': respuesta(200, laura),
+      'GET /turnos/actual': () => respuesta(200, abierto ? conTurno : sinTurno),
+      'POST /turnos': () => {
+        abierto = true;
+        return respuesta(201, conTurno);
+      },
+      'GET /pedidos/cola': respuesta(200, [base]),
+    });
+    await montar();
+    expect(screen.getByText('No tenés un turno abierto')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tomar' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Registrar pedido' })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar turno' }));
+    const modal = screen.getByRole('dialog', { name: 'Iniciar turno' });
+    expect(within(modal).getByText(/Martín · cerrado el/)).toBeInTheDocument();
+    expect(within(modal).getByText('-$ 400.000')).toBeInTheDocument();
+    await userEvent.click(within(modal).getByRole('button', { name: 'Iniciar turno' }));
+
+    const barra = await screen.findByRole('region', { name: 'Turno abierto' });
+    expect(api.enviado('POST /turnos')).toHaveLength(1);
+    expect(within(barra).getByText('$ 3.450.000')).toBeInTheDocument();
+    expect(within(barra).getByText('+$ 1.350.000')).toBeInTheDocument();
+    expect(within(barra).getByText('$ 950.000')).toBeInTheDocument();
+    expect(within(barra).getByRole('link', { name: 'Cerrar turno' })).toHaveAttribute('href', '/panel/turnos/t1');
+    expect(screen.getByRole('button', { name: 'Tomar' })).toBeEnabled();
+  });
+});
+
 describe('Búsqueda en la cola', () => {
   it('filtra en todas las columnas y "/" lleva al buscador', async () => {
     apiFalsa({
       'GET /auth/staff/yo': respuesta(200, laura),
+      'GET /turnos/actual': respuesta(200, conTurno),
       'GET /pedidos/cola': respuesta(200, [
         base,
         { ...base, id: 2, monto: 2_500_000, montoPagado: 2_625_000, jugador: { id: 'j2', nombreUsuario: 'juanp', telefono: '5491155550001', usuarioPlataforma: 'juan' }, telefono: '5491155550001' },
         { ...base, id: 3, estado: 'rechazado', motivoRechazo: 'El pago no llegó' },
       ]),
     });
-    montar();
+    await montar();
     await screen.findByRole('article', { name: 'Carga #2' });
     await userEvent.keyboard('/');
     const buscador = screen.getByLabelText('Buscar en la cola');

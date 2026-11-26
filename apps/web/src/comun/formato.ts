@@ -1,3 +1,5 @@
+import { formatearPesos } from '@carga24/shared';
+
 /**
  * "5491155550001" → "+54 9 11 5555-0001". Como el código de área varía (11, 351, 2944…),
  * fuera de Buenos Aires se muestra "+54 9 3514445566" sin adivinar dónde cortar.
@@ -37,4 +39,18 @@ export function leerPesos(texto: string): number | null {
   const limpio = texto.replace(/\s|\$/g, '').replace(/\./g, '').replace(',', '.');
   if (!/^\d+(\.\d{1,2})?$/.test(limpio)) return null;
   return Math.round(Number(limpio) * 100);
+}
+
+/** Monto con signo explícito: +$ 1.350.000 / −$ 400.000. */
+export function formatearConSigno(centavos: number): string {
+  const signo = centavos > 0 ? '+' : centavos < 0 ? '−' : '';
+  return `${signo}${formatearPesos(Math.abs(centavos))}`;
+}
+
+/** "5 h 40 min" desde un instante hasta ahora (o hasta `hasta`). */
+export function formatearDuracion(desde: string, hasta: string | number = Date.now()): string {
+  const fin = typeof hasta === 'number' ? hasta : new Date(hasta).getTime();
+  const minutos = Math.max(0, Math.floor((fin - new Date(desde).getTime()) / 60_000));
+  const horas = Math.floor(minutos / 60);
+  return horas > 0 ? `${horas} h ${String(minutos % 60).padStart(2, '0')} min` : `${minutos} min`;
 }

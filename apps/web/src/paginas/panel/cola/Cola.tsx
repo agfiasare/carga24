@@ -1,6 +1,7 @@
 import { columnaDe, type ColumnaCola } from '@carga24/shared';
 import { Bell, BellOff, Plus, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { caja } from '../../../api/caja';
 import { pedidos, type Pedido } from '../../../api/pedidos';
 import { useAccion } from '../../../api/useAccion';
 import { useColaEnVivo, sonarAviso, type AvisoCola } from '../../../api/useColaEnVivo';
@@ -8,6 +9,7 @@ import { useConsulta } from '../../../api/useConsulta';
 import { formatearHace, formatearHora } from '../../../comun/formato';
 import { Aviso, Boton, Campo, Selector, TarjetaPedido } from '../../../componentes';
 import { useSesionStaff } from '../../../sesion/sesion';
+import { BarraTurno } from '../caja/BarraTurno';
 import { PaginaPanel, usePermisos } from '../PaginaPanel';
 import { coincide } from './busqueda';
 import { nombreJugador } from './comun';
@@ -37,7 +39,16 @@ function leerSonido(): boolean {
 export function Cola() {
   const { usuario } = useSesionStaff();
   const { tiene } = usePermisos();
-  const { datos, error, recargar } = useConsulta(pedidos.cola, []);
+  const { datos, error, recargar: recargarCola } = useConsulta(pedidos.cola, []);
+  const turno = useConsulta(caja.turnoActual, []);
+  const recargarTurno = turno.recargar;
+  // Cada cambio en la cola puede mover el balance del turno.
+  const recargar = useCallback(() => {
+    recargarCola();
+    recargarTurno();
+  }, [recargarCola, recargarTurno]);
+  // Sin turno abierto se ve todo, pero no se opera (la API también lo controla).
+  const conTurno = Boolean(turno.datos?.turno);
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroCanal, setFiltroCanal] = useState('');
   const [busqueda, setBusqueda] = useState('');
@@ -126,7 +137,7 @@ export function Cola() {
   }
 
   function accionesDe(p: Pedido) {
-    const botones: { texto: string; alHacer: () => void; variante?: 'primario' | 'secundario' | 'peligro' | 'fantasma' }[] = [];
+    const botones: { texto: string; alHacer: () => void; variante?: 'primario' | 'secundario' | 'peligro' | 'fantasma'; sinTurno?: boolean }[] = [];
     const abrir = (accion: AccionModal) => () => setModal({ accion, pedido: p });
     const mio = p.tomadoPor?.id === usuario?.id;
     switch (p.estado) {
@@ -140,10 +151,10 @@ export function Cola() {
         if (tiene('pedidos.rechazar')) {
           botones.push(p.tipo === 'carga' && p.medioPago !== 'efectivo' ? { texto: 'No llegó', alHacer: abrir('no_llego'), variante: 'secundario' } : { texto: 'Rechazar', alHacer: abrir('rechazar'), variante: 'secundario' });
         }
-        botones.push({ texto: 'Liberar', alHacer: () => void liberar(p), variante: 'fantasma' });
+        botones.push({ texto: 'Liberar', alHacer: () => void liberar(p), variante: 'fantasma', sinTurno: true });
         break;
       case 'espera_aprobacion':
-        if (tiene('pedidos.aprobar_retiro')) botones.push({ texto: 'Aprobar', alHacer: abrir('aprobar') });
+        if (tiene('pedidos.aprobar_retiro')) botones.push({ texto: 'Aprobar', alHacer: abrir('aprobar'), sinTurno: true });
         if (tiene('pedidos.aprobar_retiro') && tiene('pedidos.rechazar')) botones.push({ texto: 'Rechazar', alHacer: abrir('rechazar'), variante: 'fantasma' });
         break;
       case 'verificado':
@@ -153,7 +164,7 @@ export function Cola() {
     }
     if (botones.length === 0) return undefined;
     return botones.map((b) => (
-      <Boton key={b.texto} variante={b.variante ?? 'primario'} onClick={b.alHacer}>
+      <Boton key={b.texto} variante={b.variante ?? 'primario'} onClick={b.alHacer} disabled={!b.sinTurno && !conTurno} title={!b.sinTurno && !conTurno ? 'Iniciá tu turno para operar' : undefined}>
         {b.texto}
       </Boton>
     ));
@@ -169,13 +180,15 @@ export function Cola() {
             {sonido ? 'Sonido activado' : 'Sonido apagado'}
           </Boton>
           {tiene('pedidos.crear') ? (
-            <Boton icono={<Plus size={18} aria-hidden="true" />} onClick={() => setRegistrando(true)}>
+            <Boton icono={<Plus size={18} aria-hidden="true" />} onClick={() => setRegistrando(true)} disabled={!conTurno} title={conTurno ? undefined : 'Iniciá tu turno para registrar pedidos'}>
               Registrar pedido
             </Boton>
           ) : null}
         </>
       }
     >
+      <BarraTurno estado={turno.datos} alCambiar={recargarTurno} />
+      {turno.error ? <Aviso tipo="error">{turno.error.message}</Aviso> : null}
       <div className={clases.filtros}>
         <div className={clases.buscador}>
           <Campo

@@ -1,0 +1,205 @@
+/* Barra del turno en la cola */
+.sinTurno {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 16px 20px;
+  border-radius: var(--radio-lg);
+  border: 1px solid color-mix(in srgb, var(--color-en-proceso) 35%, transparent);
+  background: var(--color-en-proceso-fondo);
+}
+
+.sinTurnoTexto {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  color: var(--color-texto-secundario);
+}
+
+.sinTurnoTexto strong {
+  font-size: 16px;
+  color: var(--color-texto);
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  padding: 14px 20px;
+  border-radius: var(--radio-lg);
+  background: var(--marca-verde);
+  color: var(--marca-texto);
+}
+
+.estadoTurno {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7ee2a8;
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: var(--marca-texto-secundario);
+}
+
+.dato strong {
+  font-family: var(--fuente-titulos);
+  font-size: 17px;
+  color: var(--marca-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.positivoClaro {
+  color: #7ee2a8 !important;
+}
+
+.negativoClaro {
+  color: #ff9a9e !important;
+}
+
+.oro {
+  color: var(--marca-oro) !important;
+}
+
+.cerrar {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tamano-tactil);
+  padding: 0 20px;
+  border-radius: var(--radio-md);
+  background: var(--marca-oro);
+  color: #08251b;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Balances y tablas */
+.balance {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px 16px;
+  font-size: 15px;
+}
+
+.balance dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.desglose {
+  padding-left: 16px;
+  color: var(--color-texto-secundario);
+}
+
+dd.desglose {
+  font-weight: 400;
+}
+
+.total {
+  padding-top: 12px;
+  border-top: 1px solid var(--color-borde);
+  font-weight: 700;
+}
+
+dd.total {
+  font-size: 18px;
+  font-family: var(--fuente-titulos);
+}
+
+.recuadro {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: var(--radio-md);
+  background: var(--color-fondo);
+  font-size: 15px;
+}
+
+.recuadro dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.positivo {
+  color: var(--color-ok);
+}
+
+.negativo {
+  color: var(--color-error);
+}
+
+.pendientes {
+  padding: 16px 18px;
+  border-radius: var(--radio-lg);
+  border: 1px solid color-mix(in srgb, var(--color-en-proceso) 35%, transparent);
+  background: var(--color-en-proceso-fondo);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.pendientes h2 {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: 16px;
+}
+
+.pendientes ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.pendientes p {
+  margin: 0;
+  color: var(--color-texto-secundario);
+}
+
+.insignia {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radio-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cierre_turno {
+  background: var(--color-ok-fondo);
+  color: var(--color-ok);
+}
+
+.liquidacion {
+  background: var(--color-en-proceso-fondo);
+  color: var(--color-en-proceso);
+}
+
+.ajuste {
+  background: var(--color-fondo);
+  color: var(--color-texto-secundario);
+}
+
+.segmentos {
+  display: flex;
+  gap: 8px;
+}

@@ -158,7 +158,8 @@
 
 @media (max-width: 860px) {
   .panel {
-    grid-template-columns: 1fr;
+    /* minmax(0, …): el menú largo se desplaza de costado en vez de ensanchar la página. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
   }
 

@@ -12,6 +12,9 @@ import { PedidoDetalle } from './paginas/jugador/portal/PedidoDetalle';
 import { Retirar } from './paginas/jugador/portal/Retirar';
 import { Registro } from './paginas/jugador/Registro';
 import { IngresoPanel } from './paginas/panel/IngresoPanel';
+import { Caja } from './paginas/panel/caja/Caja';
+import { CerrarTurno } from './paginas/panel/caja/CerrarTurno';
+import { Rendiciones } from './paginas/panel/caja/Rendiciones';
 import { Cola } from './paginas/panel/cola/Cola';
 import { InicioPanel } from './paginas/panel/InicioPanel';
 import { JugadorDetalle } from './paginas/panel/JugadorDetalle';
@@ -80,6 +83,9 @@ function RutasPanel() {
         <Route element={<RutaStaff />}>
           <Route path="/panel" element={<InicioPanel />} />
           <Route path="/panel/cola" element={<Cola />} />
+          <Route path="/panel/turnos/:id" element={<CerrarTurno />} />
+          <Route path="/panel/caja" element={<Caja />} />
+          <Route path="/panel/rendiciones" element={<Rendiciones />} />
           <Route path="/panel/jugadores" element={<Jugadores />} />
           <Route path="/panel/jugadores/:id" element={<JugadorDetalle />} />
           <Route path="/panel/staff" element={<Staff />} />

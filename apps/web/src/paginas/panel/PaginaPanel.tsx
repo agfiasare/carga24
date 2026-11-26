@@ -1,5 +1,5 @@
 import type { Permiso } from '@carga24/shared';
-import { BarChart3, FileClock, House, KeyRound, ListTodo, Megaphone, Settings, Shield, Ticket, UserCog, Users } from 'lucide-react';
+import { BarChart3, FileClock, HandCoins, House, KeyRound, ListTodo, Megaphone, Settings, Shield, Ticket, UserCog, Users, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { authStaff } from '../../api/auth';
@@ -21,6 +21,8 @@ const SECCIONES: (ItemMenu & { permisos?: Permiso[]; sinPermisos?: Permiso[] })[
   { a: '/panel', texto: 'Inicio', icono: <House size={18} />, sinPermisos: ['pedidos.ver'] },
   { a: '/panel/cola', texto: 'Cola', icono: <ListTodo size={18} />, permisos: ['pedidos.ver'] },
   { a: '/panel/jugadores', texto: 'Jugadores', icono: <Users size={18} />, permisos: ['jugadores.ver'] },
+  { a: '/panel/caja', texto: 'Caja', icono: <Wallet size={18} />, permisos: ['caja.ver'] },
+  { a: '/panel/rendiciones', texto: 'Rendiciones', icono: <HandCoins size={18} />, permisos: ['caja.ver', 'rendiciones.registrar'] },
   { a: '/panel/reportes', texto: 'Reportes', icono: <BarChart3 size={18} />, permisos: ['reportes.ver'] },
   { a: '/panel/promociones', texto: 'Promociones', icono: <Ticket size={18} />, permisos: ['promos.gestionar'] },
   { a: '/panel/novedades', texto: 'Novedades', icono: <Megaphone size={18} />, permisos: ['novedades.publicar'] },
