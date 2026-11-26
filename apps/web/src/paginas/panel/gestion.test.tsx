@@ -108,6 +108,29 @@ describe('Detalle de jugador', () => {
     expect(await screen.findByText('Bloqueado')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Desbloquear' })).toBeInTheDocument();
   });
+
+  it('muestra sus pedidos con totales, también los rechazados', async () => {
+    const ahora = new Date().toISOString();
+    apiFalsa({
+      'GET /auth/staff/yo': respuesta(200, { ...yoAdmin, permisos: [...yoAdmin.permisos, 'pedidos.ver'] }),
+      'GET /jugadores/j1': respuesta(200, ana),
+      'GET /jugadores/j1/pedidos': respuesta(200, {
+        totales: { cargas: { cantidad: 1, monto: 1_000_000 }, retiros: { cantidad: 0, monto: 0 }, ganancia: 50_000, rechazados: 1, enCurso: 0, pedidos: 2 },
+        pedidos: [
+          { id: 8, tipo: 'carga', estado: 'rechazado', canal: 'web', monto: 500_000, montoPagado: 525_000, ganancia: 0, motivoRechazo: 'El pago no llegó', creadoEn: ahora, ejecutadoEn: null, operador: 'Laura' },
+          { id: 7, tipo: 'carga', estado: 'acreditado', canal: 'manual', monto: 1_000_000, montoPagado: 1_050_000, ganancia: 50_000, motivoRechazo: null, creadoEn: ahora, ejecutadoEn: ahora, operador: 'Laura' },
+        ],
+      }),
+    });
+    montar('/panel/jugadores/j1', '/panel/jugadores/:id', <JugadorDetalle />);
+    const seccion = await screen.findByRole('region', { name: 'Pedidos' });
+    expect(await within(seccion).findByText('Carga #8')).toBeInTheDocument();
+    expect(within(seccion).getByText('El pago no llegó')).toBeInTheDocument();
+    expect(within(seccion).getByText('Cargado').nextSibling).toHaveTextContent('$ 10.000');
+    await userEvent.click(within(seccion).getByRole('button', { name: 'Rechazados' }));
+    expect(within(seccion).queryByText('Carga #7')).not.toBeInTheDocument();
+    expect(within(seccion).getByText('Carga #8')).toBeInTheDocument();
+  });
 });
 
 describe('Detalle de staff', () => {

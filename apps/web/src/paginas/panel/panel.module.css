@@ -256,3 +256,76 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Texto que abre algo (un detalle), con aspecto de enlace. */
+.enlaceBoton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-texto);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* Lista plegable (reportes, ficha del jugador). */
+.plegable {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+}
+
+.plegable > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--tamano-tactil);
+  padding: 14px 20px;
+  font-family: var(--fuente-titulos);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.plegable > summary::-webkit-details-marker {
+  display: none;
+}
+
+.plegable > summary::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.15s;
+}
+
+.plegable[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+.plegable > summary small {
+  margin-left: 8px;
+  font-family: var(--fuente-texto);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-texto-secundario);
+}
+
+.plegableCuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 20px 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plegable > summary::after {
+    transition: none;
+  }
+}

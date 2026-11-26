@@ -1,3 +1,4 @@
+import { formatearPesos } from '@carga24/shared';
 import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
 import { jugadores, type JugadorPanel } from '../../api/gestion';
@@ -6,11 +7,14 @@ import { useConsulta } from '../../api/useConsulta';
 import { formatearFecha, formatearTelefono } from '../../comun/formato';
 import { Aviso, Boton, CampoFormulario, ContrasenaTemporal, ModalConfirmacion } from '../../componentes';
 import { EstadoJugador } from './Jugadores';
+import { ListaPedidos } from './ListaPedidos';
 import { PaginaPanel, usePermisos } from './PaginaPanel';
 import clases from './panel.module.css';
+import propias from './reportes.module.css';
 
 export function JugadorDetalle() {
   const { id = '' } = useParams();
+  const { tiene } = usePermisos();
   const { datos: jugador, setDatos, error } = useConsulta(() => jugadores.obtener(id), [id]);
   const nombre = jugador ? (jugador.nombreUsuario ?? formatearTelefono(jugador.telefono)) : 'Jugador';
 
@@ -25,6 +29,7 @@ export function JugadorDetalle() {
           </div>
         </div>
       ) : null}
+      {jugador && tiene('pedidos.ver') ? <PedidosDelJugador id={jugador.id} /> : null}
     </PaginaPanel>
   );
 }
@@ -170,6 +175,68 @@ function Acciones({ jugador, alCambiar }: { jugador: JugadorPanel; alCambiar: (j
         </ModalConfirmacion>
       ) : null}
       {temporal ? <ContrasenaTemporal para={nombre} contrasena={temporal} alCerrar={() => setTemporal(null)} /> : null}
+    </section>
+  );
+}
+
+const FILTROS = [
+  { clave: 'todos', texto: 'Todos' },
+  { clave: 'carga', texto: 'Cargas' },
+  { clave: 'retiro', texto: 'Retiros' },
+  { clave: 'rechazado', texto: 'Rechazados' },
+  { clave: 'en_curso', texto: 'En curso' },
+] as const;
+type Filtro = (typeof FILTROS)[number]['clave'];
+
+/** Cargas y retiros del jugador, con totales; incluye los rechazados y los que siguen en curso. */
+function PedidosDelJugador({ id }: { id: string }) {
+  const { datos, error } = useConsulta(() => jugadores.pedidos(id), [id]);
+  const [filtro, setFiltro] = useState<Filtro>('todos');
+  const visibles = (datos?.pedidos ?? []).filter((p) => {
+    if (filtro === 'todos') return true;
+    if (filtro === 'rechazado') return p.estado === 'rechazado';
+    if (filtro === 'en_curso') return !['acreditado', 'pagado', 'rechazado'].includes(p.estado);
+    return p.tipo === filtro;
+  });
+  const t = datos?.totales;
+  return (
+    <section className={clases.tarjeta} aria-labelledby="titulo-pedidos-jugador">
+      <h2 id="titulo-pedidos-jugador">Pedidos</h2>
+      {error ? <Aviso tipo="error">{error.message}</Aviso> : null}
+      {t ? (
+        <div className={propias.indicadores}>
+          <div className={propias.indicador}>
+            <span className={propias.indicadorTitulo}>Cargado</span>
+            <span className={propias.indicadorValor}>{formatearPesos(t.cargas.monto)}</span>
+            <span className={propias.indicadorDetalle}>{t.cargas.cantidad} {t.cargas.cantidad === 1 ? 'carga acreditada' : 'cargas acreditadas'}</span>
+          </div>
+          <div className={propias.indicador}>
+            <span className={propias.indicadorTitulo}>Retirado</span>
+            <span className={propias.indicadorValor}>{formatearPesos(t.retiros.monto)}</span>
+            <span className={propias.indicadorDetalle}>{t.retiros.cantidad} {t.retiros.cantidad === 1 ? 'retiro pagado' : 'retiros pagados'}</span>
+          </div>
+          <div className={propias.indicador}>
+            <span className={propias.indicadorTitulo}>Ganancia</span>
+            <span className={propias.indicadorValor}>{formatearPesos(t.ganancia)}</span>
+          </div>
+          <div className={propias.indicador}>
+            <span className={propias.indicadorTitulo}>Rechazados / en curso</span>
+            <span className={propias.indicadorValor}>
+              {t.rechazados} / {t.enCurso}
+            </span>
+            <span className={propias.indicadorDetalle}>de {t.pedidos} pedidos</span>
+          </div>
+        </div>
+      ) : null}
+      <div className={propias.periodo} role="group" aria-label="Mostrar">
+        {FILTROS.map((f) => (
+          <button key={f.clave} type="button" className={filtro === f.clave ? propias.chipActivo : propias.chip} aria-pressed={filtro === f.clave} onClick={() => setFiltro(f.clave)}>
+            {f.texto}
+          </button>
+        ))}
+      </div>
+      {datos ? <ListaPedidos pedidos={visibles} vacio="No hay pedidos con ese filtro." /> : null}
+      {datos && datos.pedidos.length === 200 ? <p className={clases.explicacion}>Se muestran los últimos 200. Los anteriores se buscan en Reportes.</p> : null}
     </section>
   );
 }

@@ -213,6 +213,20 @@ describe('Pedidos: alta manual, cola y cambios de estado', () => {
     });
   });
 
+  it('la ficha del jugador trae sus pedidos (también los rechazados) y sus totales', async () => {
+    const { body } = await staff.laura!.get(`${API}/jugadores/${jugadorId}/pedidos`).expect(200);
+    const enBase = await prisma.pedido.findMany({ where: { jugadorId } });
+    expect(body.pedidos).toHaveLength(enBase.length);
+    expect(body.pedidos[0].id).toBe(Math.max(...enBase.map((p) => p.id)));
+    expect(body.totales).toMatchObject({
+      pedidos: enBase.length,
+      rechazados: enBase.filter((p) => p.estado === 'rechazado').length,
+      cargas: { cantidad: enBase.filter((p) => p.estado === 'acreditado').length, monto: enBase.filter((p) => p.estado === 'acreditado').reduce((t, p) => t + p.monto, 0) },
+    });
+    expect(body.totales.rechazados).toBeGreaterThan(0);
+    expect(body.pedidos.find((p: { estado: string }) => p.estado === 'rechazado').motivoRechazo).toBeTruthy();
+  });
+
   it('la cola en vivo avisa por Server-Sent Events', async () => {
     // Cookie de una sesión completa de Pablo, para abrir el flujo con un cliente HTTP común.
     const ingreso = await request(app.getHttpServer()).post(`${API}/auth/staff/ingreso`).send({ identificador: 'pablo', contrasena: 'pablo-clave-propia' }).expect(200);

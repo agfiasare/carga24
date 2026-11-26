@@ -113,3 +113,10 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Pedidos de una fila abierta en un desglose. */
+.detalleFila {
+  padding: 12px !important;
+  white-space: normal !important;
+  background: var(--color-fondo);
+}

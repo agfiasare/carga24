@@ -1,4 +1,4 @@
-import type { Permiso } from '@carga24/shared';
+import type { EstadoPedido, Permiso, TipoPedido } from '@carga24/shared';
 import { api } from './cliente';
 
 export type EstadoUsuario = 'activo' | 'bloqueado';
@@ -81,7 +81,35 @@ export const jugadores = {
   desbloquear: (jugadorId: string) => api<JugadorPanel>('POST', `/jugadores/${id(jugadorId)}/desbloquear`),
   resetearContrasena: (jugadorId: string) => api<{ contrasenaTemporal: string }>('POST', `/jugadores/${id(jugadorId)}/resetear-contrasena`),
   cuentas: (jugadorId: string) => api<CuentaJugador[]>('GET', `/jugadores/${id(jugadorId)}/cuentas`),
+  pedidos: (jugadorId: string) => api<PedidosJugador>('GET', `/jugadores/${id(jugadorId)}/pedidos`),
 };
+
+export interface PedidoJugador {
+  id: number;
+  tipo: TipoPedido;
+  estado: EstadoPedido;
+  canal: 'web' | 'manual';
+  monto: number;
+  montoPagado: number | null;
+  ganancia: number;
+  motivoRechazo: string | null;
+  creadoEn: string;
+  ejecutadoEn: string | null;
+  operador: string | null;
+}
+
+/** Ficha del jugador: totales (solo cargas acreditadas y retiros pagados suman) y sus últimos 200 pedidos. */
+export interface PedidosJugador {
+  totales: {
+    cargas: { cantidad: number; monto: number };
+    retiros: { cantidad: number; monto: number };
+    ganancia: number;
+    rechazados: number;
+    enCurso: number;
+    pedidos: number;
+  };
+  pedidos: PedidoJugador[];
+}
 
 export interface CuentaJugador {
   id: string;

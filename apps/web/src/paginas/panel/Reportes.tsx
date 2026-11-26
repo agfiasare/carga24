@@ -1,10 +1,11 @@
 import { formatearPesos, type EstadoPedido } from '@carga24/shared';
 import { Download } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { administracion, fechaRelativa, type FiltrosPedidos } from '../../api/administracion';
 import { useConsulta } from '../../api/useConsulta';
 import { formatearFecha, formatearHora } from '../../comun/formato';
 import { Aviso, Boton, Campo, InsigniaEstado, Selector } from '../../componentes';
+import { ListaPedidos } from './ListaPedidos';
 import { PaginaPanel, usePermisos } from './PaginaPanel';
 import clases from './panel.module.css';
 import propias from './reportes.module.css';
@@ -82,29 +83,39 @@ export function Reportes() {
             <Indicador titulo="Rechazados / en curso" valor={`${r.totales.rechazados} / ${r.totales.enCurso}`} detalle={`de ${r.totales.pedidos} pedidos`} />
           </div>
 
-          <div className={propias.grilla}>
-            <Tabla
-              titulo="Por canal"
-              columnas={['Canal', 'Pedidos', 'Cargas', 'Retiros', 'Ganancia']}
-              filas={r.porCanal.map((c) => [c.canal === 'manual' ? 'WhatsApp' : 'Web', c.pedidos, formatearPesos(c.cargas), formatearPesos(c.retiros), formatearPesos(c.ganancia)])}
-            />
-            <Tabla
-              titulo="Por operador"
-              columnas={['Operador', 'Pedidos', 'Acreditado', 'Pagado', 'Ganancia']}
-              filas={r.porOperador.map((o) => [o.nombre, o.pedidos, formatearPesos(o.acreditado), formatearPesos(o.pagado), formatearPesos(o.ganancia)])}
-            />
-            <Tabla
-              titulo="Por día"
-              columnas={['Día', 'Cargas', 'Retiros', 'Ganancia']}
-              filas={r.porDia.map((d) => [formatearFecha(`${d.fecha}T12:00:00-03:00`), formatearPesos(d.cargas), formatearPesos(d.retiros), formatearPesos(d.ganancia)])}
-            />
-            <Tabla
-              titulo="Jugadores que más cargaron"
-              columnas={['Jugador', 'Pedidos', 'Cargado', 'Retirado']}
-              filas={r.porJugador.map((j) => [j.jugador, j.pedidos, formatearPesos(j.cargado), formatearPesos(j.retirado)])}
-            />
-          </div>
-          <p className={clases.total}>Cuentan los pedidos creados en el período. Los totales suman solo cargas acreditadas y retiros pagados.</p>
+          <Desglose
+            titulo="Por canal"
+            desde={desde}
+            hasta={hasta}
+            columnas={['Canal', 'Pedidos', 'Cargas', 'Retiros', 'Ganancia', 'Rechazados']}
+            filas={r.porCanal.map((c) => ({ clave: c.canal, celdas: [c.canal === 'manual' ? 'WhatsApp' : 'Web', c.pedidos, formatearPesos(c.cargas), formatearPesos(c.retiros), formatearPesos(c.ganancia), c.rechazados], filtros: { canal: c.canal } }))}
+          />
+          <Desglose
+            titulo="Por operador"
+            desde={desde}
+            hasta={hasta}
+            columnas={['Operador', 'Pedidos', 'Acreditado', 'Pagado', 'Ganancia', 'Rechazados']}
+            filas={r.porOperador.map((o) => ({ clave: o.id ?? 'sin', celdas: [o.nombre, o.pedidos, formatearPesos(o.acreditado), formatearPesos(o.pagado), formatearPesos(o.ganancia), o.rechazados], filtros: o.id ? { operadorId: o.id } : null }))}
+          />
+          <Desglose
+            titulo="Por día"
+            desde={desde}
+            hasta={hasta}
+            columnas={['Día', 'Pedidos', 'Cargas', 'Retiros', 'Ganancia', 'Rechazados']}
+            filas={r.porDia.map((d) => ({ clave: d.fecha, celdas: [formatearFecha(`${d.fecha}T12:00:00-03:00`), d.pedidos, formatearPesos(d.cargas), formatearPesos(d.retiros), formatearPesos(d.ganancia), d.rechazados], filtros: { desde: d.fecha, hasta: d.fecha } }))}
+          />
+          <Desglose
+            titulo="Jugadores que más cargaron"
+            desde={desde}
+            hasta={hasta}
+            columnas={['Jugador', 'Pedidos', 'Cargado', 'Retirado', 'Rechazados']}
+            filas={r.porJugador.map((j) => ({
+              clave: j.id ?? `tel:${j.telefono}`,
+              celdas: [j.jugador, j.pedidos, formatearPesos(j.cargado), formatearPesos(j.retirado), j.rechazados],
+              filtros: j.id ? { jugadorId: j.id } : j.telefono ? { buscar: j.telefono } : null,
+            }))}
+          />
+          <p className={clases.total}>Cuentan los pedidos creados en el período. Los montos suman solo cargas acreditadas y retiros pagados; los rechazados se cuentan aparte. Tocá una fila para ver sus pedidos.</p>
         </>
       ) : null}
 
@@ -189,38 +200,90 @@ function Indicador({ titulo, valor, detalle, destacado = false }: { titulo: stri
   );
 }
 
-function Tabla({ titulo, columnas, filas }: { titulo: string; columnas: string[]; filas: (string | number)[][] }) {
+interface FilaDesglose {
+  clave: string;
+  celdas: (string | number)[];
+  /** Filtros que traen los pedidos de esta fila; null si no se pueden listar. */
+  filtros: Partial<FiltrosPedidos> | null;
+}
+
+/** Un desglose plegable: cada fila se abre y muestra sus pedidos (también los rechazados). */
+function Desglose({ titulo, columnas, filas, desde, hasta }: { titulo: string; columnas: string[]; filas: FilaDesglose[]; desde: string; hasta: string }) {
+  const [abierta, setAbierta] = useState<string | null>(null);
   return (
-    <section className={clases.tarjeta} aria-label={titulo}>
-      <h2>{titulo}</h2>
-      {filas.length === 0 ? (
-        <p className={clases.explicacion}>Sin movimientos.</p>
-      ) : (
-        <div className={clases.envoltorioTabla}>
-          <table className={clases.tabla}>
-            <thead>
-              <tr>
-                {columnas.map((c, i) => (
-                  <th key={c} scope="col" className={i > 0 ? propias.numero : undefined}>
-                    {c}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filas.map((fila, i) => (
-                <tr key={i}>
-                  {fila.map((celda, j) => (
-                    <td key={j} className={j > 0 ? propias.numero : undefined}>
-                      {celda}
-                    </td>
+    <details className={clases.plegable}>
+      <summary>
+        <span>
+          {titulo}
+          <small>
+            {filas.length} {filas.length === 1 ? 'fila' : 'filas'}
+          </small>
+        </span>
+      </summary>
+      <div className={clases.plegableCuerpo}>
+        {filas.length === 0 ? (
+          <p className={clases.explicacion}>Sin movimientos.</p>
+        ) : (
+          <div className={clases.envoltorioTabla}>
+            <table className={clases.tabla}>
+              <thead>
+                <tr>
+                  {columnas.map((c, i) => (
+                    <th key={c} scope="col" className={i > 0 ? propias.numero : undefined}>
+                      {c}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+              </thead>
+              <tbody>
+                {filas.map((fila) => {
+                  const abiertaEsta = abierta === fila.clave;
+                  return (
+                    <Fragment key={fila.clave}>
+                      <tr>
+                        {fila.celdas.map((celda, j) => (
+                          <td key={j} className={j > 0 ? propias.numero : undefined}>
+                            {j === 0 && fila.filtros ? (
+                              <button type="button" className={clases.enlaceBoton} aria-expanded={abiertaEsta} onClick={() => setAbierta(abiertaEsta ? null : fila.clave)}>
+                                {abiertaEsta ? '▾' : '▸'} {celda}
+                              </button>
+                            ) : (
+                              celda
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                      {abiertaEsta && fila.filtros ? (
+                        <tr>
+                          <td colSpan={columnas.length} className={propias.detalleFila}>
+                            <PedidosDelGrupo filtros={{ desde, hasta, ...fila.filtros, pagina: 1 }} />
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </details>
+  );
+}
+
+function PedidosDelGrupo({ filtros }: { filtros: FiltrosPedidos }) {
+  const { datos, error } = useConsulta(() => administracion.pedidos(filtros), [JSON.stringify(filtros)]);
+  if (error) return <Aviso tipo="error">{error.message}</Aviso>;
+  if (!datos) return null;
+  return (
+    <>
+      <ListaPedidos pedidos={datos.pedidos} conJugador />
+      {datos.total > datos.pedidos.length ? (
+        <p className={clases.explicacion}>
+          Se muestran {datos.pedidos.length} de {datos.total}. Para ver todos, filtrá el listado de abajo.
+        </p>
+      ) : null}
+    </>
   );
 }

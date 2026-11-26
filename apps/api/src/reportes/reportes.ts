@@ -20,6 +20,7 @@ const esquemaFiltros = esquemaPeriodo.and(
     tipo: z.enum(['carga', 'retiro']).optional(),
     canal: z.enum(['web', 'manual']).optional(),
     operadorId: z.uuid().optional(),
+    jugadorId: z.uuid().optional(),
     buscar: z.string().trim().max(60).optional(),
     pagina: z.coerce.number().int().min(1).default(1),
   }),
@@ -59,14 +60,29 @@ export class ReportesService {
       rechazados: 0,
       enCurso: 0,
     };
-    const porCanal = new Map<string, { canal: string; cargas: number; retiros: number; ganancia: number; pedidos: number }>();
-    const porOperador = new Map<string, { id: string | null; nombre: string; pedidos: number; acreditado: number; pagado: number; ganancia: number }>();
-    const porJugador = new Map<string, { jugador: string; pedidos: number; cargado: number; retirado: number }>();
-    const porDia = new Map<string, { fecha: string; cargas: number; retiros: number; ganancia: number }>();
+    const porCanal = new Map<string, { canal: string; cargas: number; retiros: number; ganancia: number; pedidos: number; rechazados: number }>();
+    const porOperador = new Map<string, { id: string | null; nombre: string; pedidos: number; acreditado: number; pagado: number; ganancia: number; rechazados: number }>();
+    const porJugador = new Map<string, { id: string | null; telefono: string | null; jugador: string; pedidos: number; cargado: number; retirado: number; rechazados: number }>();
+    const porDia = new Map<string, { fecha: string; pedidos: number; cargas: number; retiros: number; ganancia: number; rechazados: number }>();
+    /** Las filas de cada desglose a las que pertenece un pedido (se crean al primer uso). */
+    const grupos = (p: (typeof pedidos)[number]) => {
+      const claveOperador = p.tomadoPor?.id ?? 'sin';
+      const claveJugador = p.jugador?.id ?? `tel:${p.telefono}`;
+      const dia = fechaArgentina(p.creadoEn);
+      if (!porCanal.has(p.canal)) porCanal.set(p.canal, { canal: p.canal, cargas: 0, retiros: 0, ganancia: 0, pedidos: 0, rechazados: 0 });
+      if (!porOperador.has(claveOperador)) porOperador.set(claveOperador, { id: p.tomadoPor?.id ?? null, nombre: nombre(p.tomadoPor) ?? 'Sin asignar', pedidos: 0, acreditado: 0, pagado: 0, ganancia: 0, rechazados: 0 });
+      if (!porJugador.has(claveJugador)) {
+        porJugador.set(claveJugador, { id: p.jugador?.id ?? null, telefono: p.jugador ? null : p.telefono, jugador: p.jugador?.nombreUsuario ?? p.jugador?.telefono ?? p.telefono ?? '—', pedidos: 0, cargado: 0, retirado: 0, rechazados: 0 });
+      }
+      if (!porDia.has(dia)) porDia.set(dia, { fecha: dia, pedidos: 0, cargas: 0, retiros: 0, ganancia: 0, rechazados: 0 });
+      return { canal: porCanal.get(p.canal)!, operador: porOperador.get(claveOperador)!, jugador: porJugador.get(claveJugador)!, dia: porDia.get(dia)! };
+    };
 
     for (const p of pedidos) {
       if (p.estado === 'rechazado') {
         totales.rechazados++;
+        // Los rechazados no suman montos, pero se cuentan en cada desglose.
+        for (const g of Object.values(grupos(p))) g.rechazados++;
         continue;
       }
       const cerrado = p.estado === 'acreditado' || p.estado === 'pagado';
@@ -86,24 +102,11 @@ export class ReportesService {
       }
       totales.ganancia += p.ganancia;
 
-      const canal = porCanal.get(p.canal) ?? { canal: p.canal, cargas: 0, retiros: 0, ganancia: 0, pedidos: 0 };
+      const { canal, operador, jugador, dia } = grupos(p);
       Object.assign(canal, { cargas: canal.cargas + carga, retiros: canal.retiros + retiro, ganancia: canal.ganancia + p.ganancia, pedidos: canal.pedidos + 1 });
-      porCanal.set(p.canal, canal);
-
-      const claveOperador = p.tomadoPor?.id ?? 'sin';
-      const operador = porOperador.get(claveOperador) ?? { id: p.tomadoPor?.id ?? null, nombre: nombre(p.tomadoPor) ?? 'Sin asignar', pedidos: 0, acreditado: 0, pagado: 0, ganancia: 0 };
       Object.assign(operador, { pedidos: operador.pedidos + 1, acreditado: operador.acreditado + carga, pagado: operador.pagado + retiro, ganancia: operador.ganancia + p.ganancia });
-      porOperador.set(claveOperador, operador);
-
-      const claveJugador = p.jugador?.id ?? `tel:${p.telefono}`;
-      const jugador = porJugador.get(claveJugador) ?? { jugador: p.jugador?.nombreUsuario ?? p.jugador?.telefono ?? p.telefono ?? '—', pedidos: 0, cargado: 0, retirado: 0 };
       Object.assign(jugador, { pedidos: jugador.pedidos + 1, cargado: jugador.cargado + carga, retirado: jugador.retirado + retiro });
-      porJugador.set(claveJugador, jugador);
-
-      const dia = fechaArgentina(p.creadoEn);
-      const fila = porDia.get(dia) ?? { fecha: dia, cargas: 0, retiros: 0, ganancia: 0 };
-      Object.assign(fila, { cargas: fila.cargas + carga, retiros: fila.retiros + retiro, ganancia: fila.ganancia + p.ganancia });
-      porDia.set(dia, fila);
+      Object.assign(dia, { pedidos: dia.pedidos + 1, cargas: dia.cargas + carga, retiros: dia.retiros + retiro, ganancia: dia.ganancia + p.ganancia });
     }
 
     return {
@@ -125,6 +128,7 @@ export class ReportesService {
       ...(f.tipo ? { tipo: f.tipo } : {}),
       ...(f.canal ? { canal: f.canal } : {}),
       ...(f.operadorId ? { tomadoPorId: f.operadorId } : {}),
+      ...(f.jugadorId ? { jugadorId: f.jugadorId } : {}),
       ...(buscar
         ? {
             OR: [

@@ -107,8 +107,13 @@ describe('Configuración, auditoría, reportes y exportación', () => {
       expect(suma(body.porCanal)).toBe(body.totales.ganancia);
       expect(suma(body.porOperador)).toBe(body.totales.ganancia);
       expect(suma(body.porDia)).toBe(body.totales.ganancia);
-      expect(body.porOperador).toEqual([expect.objectContaining({ id: lauraId, nombre: 'Laura', pedidos: 4, acreditado: 3_500_000, pagado: 800_000 })]);
-      expect(body.porDia).toEqual([{ fecha: hoy, cargas: 3_500_000, retiros: 800_000, ganancia: 175_000 }]);
+      expect(body.porOperador).toContainEqual(expect.objectContaining({ id: lauraId, nombre: 'Laura', pedidos: 4, acreditado: 3_500_000, pagado: 800_000 }));
+      expect(body.porDia).toEqual([{ fecha: hoy, pedidos: 4, cargas: 3_500_000, retiros: 800_000, ganancia: 175_000, rechazados: 2 }]);
+      // Los rechazados se cuentan en cada desglose, sin sumar montos.
+      const rechazados = (filas: { rechazados: number }[]) => filas.reduce((t, f) => t + f.rechazados, 0);
+      expect(rechazados(body.porCanal)).toBe(2);
+      expect(rechazados(body.porOperador)).toBe(2);
+      expect(rechazados(body.porJugador)).toBe(2);
       const db = await prisma.pedido.aggregate({ where: { estado: { in: ['acreditado', 'pagado'] } }, _sum: { ganancia: true } });
       expect(db._sum.ganancia).toBe(body.totales.ganancia);
     });
