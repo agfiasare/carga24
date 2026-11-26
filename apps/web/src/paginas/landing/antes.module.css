@@ -1,0 +1,153 @@
+/* ---------- Antes / ahora ---------- */
+.antes {
+  background: var(--papel);
+  color: var(--color-fondo);
+}
+
+.antes .contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.resaltado {
+  display: inline-block;
+  padding: 0 0.18em;
+  background: var(--color-fondo);
+  color: var(--color-primario);
+  transform: rotate(-1.5deg);
+}
+
+.comparacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+.columna {
+  flex: 1 1 380px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rotuloAntes,
+.rotuloAhora {
+  font-family: var(--fuente-display);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rotuloAntes {
+  color: var(--tinta-ocre);
+}
+
+.rotuloAhora {
+  color: var(--verde-sello);
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 22px;
+  background: var(--papel-oscuro);
+  transform: rotate(-1deg);
+}
+
+.mensaje {
+  align-self: flex-end;
+  max-width: 78%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--chat-burbuja);
+  color: var(--chat-texto);
+  font-size: 15px;
+}
+
+.mensaje small {
+  align-self: flex-end;
+  font-size: 11px;
+  color: var(--chat-hora);
+}
+
+.escribiendo {
+  align-self: center;
+  padding-top: 4px;
+  font-size: 12px;
+  color: var(--tinta-ocre);
+}
+
+.cuenta {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 22px;
+  border-radius: 22px;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  box-shadow: 0 24px 50px rgb(8 37 27 / 0.25);
+  transform: rotate(0.8deg);
+}
+
+.filaCuenta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.filaCuenta:last-child {
+  border-bottom: 0;
+}
+
+.filaTexto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 16px;
+}
+
+.filaTexto small {
+  font-size: 13px;
+  color: var(--color-texto-secundario);
+}
+
+.filaMonto {
+  font-family: var(--fuente-display);
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.pildoraAmbar,
+.pildoraVerde {
+  padding: 4px 10px;
+  border-radius: var(--radio-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pildoraAmbar {
+  background: var(--color-en-proceso-fondo);
+  color: var(--color-en-proceso);
+}
+
+.pildoraVerde {
+  background: var(--color-ok-fondo);
+  color: var(--color-ok);
+}
+
+.explicacion {
+  margin: 6px 0 0;
+  max-width: 520px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--tinta);
+}

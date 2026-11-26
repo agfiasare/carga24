@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
 import { CambiarContrasena } from './paginas/jugador/CambiarContrasena';
-import { Landing } from './paginas/Landing';
+import { Landing } from './paginas/landing/Landing';
 import { Ingresar } from './paginas/jugador/Ingresar';
 import { Avisos } from './paginas/jugador/portal/Avisos';
 import { Cargar } from './paginas/jugador/portal/Cargar';

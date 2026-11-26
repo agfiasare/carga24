@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ProveedorSesionJugador } from '../sesion/sesion';
-import { apiFalsa, respuesta } from '../test/apiFalsa';
+import { ProveedorSesionJugador } from '../../sesion/sesion';
+import { apiFalsa, respuesta } from '../../test/apiFalsa';
 import { Landing } from './Landing';
 
 function montar() {
