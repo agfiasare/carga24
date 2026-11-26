@@ -7,6 +7,7 @@ import { useConsulta } from '../../../api/useConsulta';
 import { formatearConSigno, formatearDuracion, formatearFecha, formatearHora, leerPesos } from '../../../comun/formato';
 import { Aviso, Boton, CampoFormulario, ModalConfirmacion } from '../../../componentes';
 import { useSesionStaff } from '../../../sesion/sesion';
+import { useTurno } from './turno';
 import { PaginaPanel, usePermisos } from '../PaginaPanel';
 import panel from '../panel.module.css';
 import clases from './caja.module.css';
@@ -46,6 +47,7 @@ export function CerrarTurno() {
   const [confirmando, setConfirmando] = useState(false);
   const [recienCerrado, setRecienCerrado] = useState(false);
   const cierre = useAccion(caja.cerrarTurno);
+  const turnoActual = useTurno();
 
   const saldoInformado = saldoTexto.trim() ? leerPesos(saldoTexto) : null;
   const saldoInvalido = Boolean(saldoTexto.trim()) && saldoInformado === null;
@@ -59,6 +61,7 @@ export function CerrarTurno() {
       setDatos(resultado.valor);
       setConfirmando(false);
       setRecienCerrado(true);
+      turnoActual?.recargar();
     }
   }
 

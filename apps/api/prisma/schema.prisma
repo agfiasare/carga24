@@ -272,6 +272,7 @@ model Pedido {
   promocion    Promocion?     @relation(fields: [promocionId], references: [id])
   liquidacion  Liquidacion?   @relation(fields: [liquidacionId], references: [id])
   turno        Turno?         @relation(fields: [turnoId], references: [id])
+  movimientoCaja MovimientoCaja?
   eventos      EventoPedido[]
   comprobantes Comprobante[]
 
@@ -412,6 +413,8 @@ enum TipoMovimientoCaja {
   cierre_turno
   liquidacion
   ajuste
+  /// Pedido acreditado o pagado por alguien que opera sin turno (permiso turnos.opcional).
+  pedido_sin_turno
 }
 
 /// Turno de trabajo de una persona del staff. Sin turno abierto no se operan pedidos.
@@ -460,10 +463,12 @@ model MovimientoCaja {
   saldoPosterior Int                @map("saldo_posterior")
   nota           String?
   turnoId        String?            @unique @map("turno_id")
+  pedidoId       Int?               @unique @map("pedido_id")
   creadoPorId    String             @map("creado_por_id")
   creadoEn       DateTime           @default(now()) @map("creado_en")
 
   turno     Turno?  @relation(fields: [turnoId], references: [id])
+  pedido    Pedido? @relation(fields: [pedidoId], references: [id])
   creadoPor Usuario @relation(fields: [creadoPorId], references: [id])
 
   @@index([creadoEn])

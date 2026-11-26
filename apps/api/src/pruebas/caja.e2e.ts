@@ -59,7 +59,7 @@ describe('Turnos, caja y rendiciones', () => {
 
     it('turnos/actual dice que no hay turno y muestra la caja', async () => {
       const { body } = await sofi.get(`${API}/turnos/actual`).expect(200);
-      expect(body).toEqual({ turno: null, caja: 0, ultimoCierre: null });
+      expect(body).toEqual({ turno: null, requiereTurno: true, caja: 0, ultimoCierre: null });
     });
   });
 
@@ -159,6 +159,23 @@ describe('Turnos, caja y rendiciones', () => {
       expect(rendida.pendiente.desde).toBeTruthy();
 
       await laura.post(`${API}/rendiciones`).send({ monto: 1 }).expect(403);
+    });
+  });
+
+  describe('operar sin turno (turnos.opcional)', () => {
+    it('quien tiene el permiso opera sin turno y lo que acredita o paga va directo a la caja', async () => {
+      const turnoAdmin = (await admin.get(`${API}/turnos/actual`).expect(200)).body.turno.id;
+      await admin.post(`${API}/turnos/${turnoAdmin}/cierre`).send({}).expect(200);
+      const actual = (await admin.get(`${API}/turnos/actual`).expect(200)).body;
+      expect(actual).toMatchObject({ turno: null, requiereTurno: false });
+      const saldoAntes = actual.caja;
+
+      const id = await completar(admin, 'carga', 1_000_000); // paga 1.050.000
+      const { body } = await admin.get(`${API}/caja`).expect(200);
+      expect(body.saldo).toBe(saldoAntes + 1_050_000);
+      expect(body.movimientos[0]).toMatchObject({ tipo: 'pedido_sin_turno', monto: 1_050_000, pedidoId: id, nota: `Carga #${id} sin turno`, creadoPor: 'Admin' });
+      const pedido = await prisma.pedido.findUniqueOrThrow({ where: { id } });
+      expect(pedido.turnoId).toBeNull();
     });
   });
 });

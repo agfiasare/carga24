@@ -94,7 +94,7 @@ const estadoCaja: EstadoCaja = {
   gananciaSemana: 81_240_000,
   turnosAbiertos: [],
   turnosSinLiquidar: [{ ...turno, cerradoEn: ahora }],
-  movimientos: [{ id: 'm1', tipo: 'cierre_turno', monto: 135_000_000, saldoPosterior: 95_000_000, nota: null, creadoEn: ahora, creadoPor: 'Laura', turno: { id: 't1', usuario: 'Laura', abiertoEn: ahora, cerradoEn: ahora } }],
+  movimientos: [{ id: 'm1', tipo: 'cierre_turno', monto: 135_000_000, saldoPosterior: 95_000_000, nota: null, creadoEn: ahora, creadoPor: 'Laura', pedidoId: null, turno: { id: 't1', usuario: 'Laura', abiertoEn: ahora, cerradoEn: ahora } }],
 };
 
 describe('Caja', () => {

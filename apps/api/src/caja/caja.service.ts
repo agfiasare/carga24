@@ -58,6 +58,8 @@ export class CajaService {
     ]);
     return {
       turno: turno ? await this.conBalance(turno) : null,
+      // Quien tiene turnos.opcional opera sin turno (puede abrir uno igual).
+      requiereTurno: !actor.permisos.has('turnos.opcional'),
       caja,
       ultimoCierre: ultimo ? { usuario: nombreDe(ultimo.usuario), cerradoEn: ultimo.cerradoEn } : null,
     };
@@ -177,6 +179,7 @@ export class CajaService {
         nota: m.nota,
         creadoEn: m.creadoEn,
         creadoPor: nombreDe(m.creadoPor),
+        pedidoId: m.pedidoId,
         turno: m.turno ? { id: m.turno.id, usuario: nombreDe(m.turno.usuario), abiertoEn: m.turno.abiertoEn, cerradoEn: m.turno.cerradoEn } : null,
       })),
     };

@@ -7,6 +7,7 @@ import type { Turno, TurnoActual } from '../../../api/caja';
 import type { Pedido } from '../../../api/pedidos';
 import { ProveedorSesionStaff } from '../../../sesion/sesion';
 import { apiFalsa, respuesta } from '../../../test/apiFalsa';
+import { ProveedorTurno } from '../caja/turno';
 import { Cola } from './Cola';
 import { leerPesos } from '../../../comun/formato';
 
@@ -46,8 +47,8 @@ const turno: Turno = {
   premios: 210_000_000,
   resultado: 135_000_000,
 };
-const conTurno: TurnoActual = { turno, caja: -40_000_000, ultimoCierre: { usuario: 'Martín', cerradoEn: ahora } };
-const sinTurno: TurnoActual = { turno: null, caja: -40_000_000, ultimoCierre: { usuario: 'Martín', cerradoEn: ahora } };
+const conTurno: TurnoActual = { turno, requiereTurno: true, caja: -40_000_000, ultimoCierre: { usuario: 'Martín', cerradoEn: ahora } };
+const sinTurno: TurnoActual = { turno: null, requiereTurno: true, caja: -40_000_000, ultimoCierre: { usuario: 'Martín', cerradoEn: ahora } };
 const base: Pedido = {
   id: 1, tipo: 'carga', estado: 'pendiente', canal: 'manual', medioPago: 'otra_cuenta', monto: 1_000_000, montoPagado: 1_050_000, ganancia: 50_000,
   comisionPb: 500, modoComision: 'recargo', referenciaMovimiento: null, motivoRechazo: null, telefono: '5491144441234',
@@ -61,12 +62,19 @@ async function montar() {
     <MemoryRouter initialEntries={['/panel/cola']}>
       <ProveedorSesionStaff>
         <Routes>
-          <Route path="/panel/cola" element={<Cola />} />
+          <Route
+            path="/panel/cola"
+            element={
+              <ProveedorTurno>
+                <Cola />
+              </ProveedorTurno>
+            }
+          />
         </Routes>
       </ProveedorSesionStaff>
     </MemoryRouter>,
   );
-  await screen.findByRole('region', { name: /^Turno/ });
+  await screen.findByText(/^Turno abierto$|^Sin turno|^Operás sin turno/);
 }
 
 const columna = (nombre: RegExp) => screen.getByRole('region', { name: nombre });
@@ -190,7 +198,7 @@ describe('Turno', () => {
       'GET /pedidos/cola': respuesta(200, [base]),
     });
     await montar();
-    expect(screen.getByText('No tenés un turno abierto')).toBeInTheDocument();
+    expect(screen.getByText('Sin turno: iniciá uno para operar')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tomar' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Registrar pedido' })).toBeDisabled();
 
@@ -200,13 +208,28 @@ describe('Turno', () => {
     expect(within(modal).getByText('-$ 400.000')).toBeInTheDocument();
     await userEvent.click(within(modal).getByRole('button', { name: 'Iniciar turno' }));
 
-    const barra = await screen.findByRole('region', { name: 'Turno abierto' });
+    const cerrar = await screen.findByRole('link', { name: 'Cerrar turno' });
+    expect(cerrar).toHaveAttribute('href', '/panel/turnos/t1');
     expect(api.enviado('POST /turnos')).toHaveLength(1);
+    const barra = screen.getByRole('region', { name: 'Turno' });
     expect(within(barra).getByText('$ 3.450.000')).toBeInTheDocument();
     expect(within(barra).getByText('+$ 1.350.000')).toBeInTheDocument();
-    expect(within(barra).getByText('$ 950.000')).toBeInTheDocument();
-    expect(within(barra).getByRole('link', { name: 'Cerrar turno' })).toHaveAttribute('href', '/panel/turnos/t1');
     expect(screen.getByRole('button', { name: 'Tomar' })).toBeEnabled();
+  });
+});
+
+describe('Turno opcional', () => {
+  it('quien tiene turnos.opcional opera sin turno y puede abrir uno igual', async () => {
+    apiFalsa({
+      'GET /auth/staff/yo': respuesta(200, { ...laura, permisos: TODOS_LOS_PERMISOS }),
+      'GET /turnos/actual': respuesta(200, { ...sinTurno, requiereTurno: false }),
+      'GET /pedidos/cola': respuesta(200, [base]),
+    });
+    await montar();
+    expect(screen.getByText(/Operás sin turno/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tomar' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Registrar pedido' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Iniciar turno' })).toBeInTheDocument();
   });
 });
 

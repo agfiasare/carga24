@@ -125,6 +125,15 @@
   gap: 20px;
 }
 
+.barraSuperior {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: -12px 0 0;
+  padding-top: 12px;
+  background: var(--color-fondo);
+}
+
 .cabecera {
   display: flex;
   align-items: flex-end;

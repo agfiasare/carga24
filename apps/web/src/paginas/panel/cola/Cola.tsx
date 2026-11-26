@@ -1,7 +1,6 @@
 import { columnaDe, type ColumnaCola } from '@carga24/shared';
 import { Bell, BellOff, Plus, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { caja } from '../../../api/caja';
 import { pedidos, type Pedido } from '../../../api/pedidos';
 import { useAccion } from '../../../api/useAccion';
 import { useColaEnVivo, sonarAviso, type AvisoCola } from '../../../api/useColaEnVivo';
@@ -9,7 +8,7 @@ import { useConsulta } from '../../../api/useConsulta';
 import { formatearHace, formatearHora } from '../../../comun/formato';
 import { Aviso, Boton, Campo, Selector, TarjetaPedido } from '../../../componentes';
 import { useSesionStaff } from '../../../sesion/sesion';
-import { BarraTurno } from '../caja/BarraTurno';
+import { useTurno } from '../caja/turno';
 import { PaginaPanel, usePermisos } from '../PaginaPanel';
 import { coincide } from './busqueda';
 import { nombreJugador } from './comun';
@@ -40,15 +39,15 @@ export function Cola() {
   const { usuario } = useSesionStaff();
   const { tiene } = usePermisos();
   const { datos, error, recargar: recargarCola } = useConsulta(pedidos.cola, []);
-  const turno = useConsulta(caja.turnoActual, []);
-  const recargarTurno = turno.recargar;
+  const turno = useTurno();
+  const recargarTurno = turno?.recargar;
   // Cada cambio en la cola puede mover el balance del turno.
   const recargar = useCallback(() => {
     recargarCola();
-    recargarTurno();
+    recargarTurno?.();
   }, [recargarCola, recargarTurno]);
-  // Sin turno abierto se ve todo, pero no se opera (la API también lo controla).
-  const conTurno = Boolean(turno.datos?.turno);
+  // Sin turno (y sin el permiso para operar sin turno) se ve todo, pero no se opera. La API también lo controla.
+  const conTurno = turno ? turno.puedeOperar : true;
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroCanal, setFiltroCanal] = useState('');
   const [busqueda, setBusqueda] = useState('');
@@ -187,8 +186,7 @@ export function Cola() {
         </>
       }
     >
-      <BarraTurno estado={turno.datos} alCambiar={recargarTurno} />
-      {turno.error ? <Aviso tipo="error">{turno.error.message}</Aviso> : null}
+      {turno?.estado && !conTurno ? <Aviso tipo="info">Para tomar, verificar, acreditar o pagar pedidos, iniciá tu turno con el botón de arriba.</Aviso> : null}
       <div className={clases.filtros}>
         <div className={clases.buscador}>
           <Campo

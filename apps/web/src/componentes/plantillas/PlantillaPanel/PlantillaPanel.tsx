@@ -18,11 +18,13 @@ export interface PlantillaPanelProps {
   volver?: ReactNode;
   /** Botones a la derecha del título. */
   acciones?: ReactNode;
+  /** Barra fija arriba del contenido en todas las páginas (hora, turno). */
+  barraSuperior?: ReactNode;
   children: ReactNode;
 }
 
 /** Estructura del panel del staff: menú (lateral en escritorio, arriba en el celular) y contenido. */
-export function PlantillaPanel({ menu, usuario, alSalir, titulo, volver, acciones, children }: PlantillaPanelProps) {
+export function PlantillaPanel({ menu, usuario, alSalir, titulo, volver, acciones, barraSuperior, children }: PlantillaPanelProps) {
   return (
     <div className={clases.panel} data-tema="staff">
       <aside className={clases.lateral}>
@@ -54,6 +56,7 @@ export function PlantillaPanel({ menu, usuario, alSalir, titulo, volver, accione
         </div>
       </aside>
       <main className={clases.contenido}>
+        {barraSuperior ? <div className={clases.barraSuperior}>{barraSuperior}</div> : null}
         <header className={clases.cabecera}>
           <div>
             {volver ? <div className={clases.volver}>{volver}</div> : null}

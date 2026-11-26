@@ -14,7 +14,7 @@ import clases from './caja.module.css';
 const signo = (monto: number) => (monto > 0 ? clases.positivo : monto < 0 ? clases.negativo : undefined);
 const momento = (iso: string) => `${formatearFecha(iso)} ${formatearHora(iso)}`;
 
-const TIPOS: Record<MovimientoCaja['tipo'], string> = { cierre_turno: 'Cierre de turno', liquidacion: 'Liquidación', ajuste: 'Ajuste' };
+const TIPOS: Record<MovimientoCaja['tipo'], string> = { cierre_turno: 'Cierre de turno', liquidacion: 'Liquidación', ajuste: 'Ajuste', pedido_sin_turno: 'Sin turno' };
 
 function detalleMovimiento(m: MovimientoCaja): string {
   if (m.tipo === 'cierre_turno' && m.turno) return `Turno de ${m.turno.usuario ?? '—'} (desde las ${formatearHora(m.turno.abiertoEn)})`;

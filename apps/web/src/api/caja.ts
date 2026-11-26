@@ -26,6 +26,8 @@ export interface Turno {
 
 export interface TurnoActual {
   turno: Turno | null;
+  /** false para quien tiene turnos.opcional: opera sin turno (puede abrir uno igual). */
+  requiereTurno: boolean;
   /** Saldo de la caja sin liquidar. */
   caja: number;
   ultimoCierre: { usuario: string | null; cerradoEn: string } | null;
@@ -41,12 +43,13 @@ export interface ResumenTurno extends Turno {
 
 export interface MovimientoCaja {
   id: string;
-  tipo: 'cierre_turno' | 'liquidacion' | 'ajuste';
+  tipo: 'cierre_turno' | 'liquidacion' | 'ajuste' | 'pedido_sin_turno';
   monto: number;
   saldoPosterior: number;
   nota: string | null;
   creadoEn: string;
   creadoPor: string | null;
+  pedidoId: number | null;
   turno: { id: string; usuario: string | null; abiertoEn: string; cerradoEn: string | null } | null;
 }
 

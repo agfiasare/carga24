@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { PromocionesService } from '../promociones/promociones.js';
 import { calcularCarga, formatearPesos, MOTIVOS_RECHAZO, siguienteEstado, type AccionPedido, type MotivoRechazo } from '@carga24/shared';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { saldoCaja } from '../caja/balance.js';
 import { bloquearCaja, SIN_TURNO, turnoAbiertoDe } from '../caja/candado.js';
 import type { UsuarioAutenticado } from '../auth/usuario-autenticado.js';
 import { normalizarTelefono } from '../comun/telefono.js';
@@ -188,7 +189,7 @@ export class PedidosService {
 
     const canal = extra.canal ?? 'manual';
     const pedido = await this.prisma.$transaction(async (tx) => {
-      if (actor.tipo === 'staff' && !(await turnoAbiertoDe(tx, actor.id))) throw new ForbiddenException(SIN_TURNO);
+      if (actor.tipo === 'staff' && !actor.permisos.has('turnos.opcional') && !(await turnoAbiertoDe(tx, actor.id))) throw new ForbiddenException(SIN_TURNO);
       const creado = await tx.pedido.create({
         data: {
           tipo: datos.tipo,
@@ -235,7 +236,7 @@ export class PedidosService {
         const pedido = await tx.pedido.findUnique({ where: { id }, include: { tomadoPor: nombre, cuenta: true, comprobantes: true } });
         if (!pedido) throw new NotFoundException(`No existe el pedido #${id}`);
         const turno = ACCIONES_CON_TURNO.has(accion) ? await turnoAbiertoDe(tx, actor.id) : null;
-        if (ACCIONES_CON_TURNO.has(accion) && !turno) throw new ForbiddenException(SIN_TURNO);
+        if (ACCIONES_CON_TURNO.has(accion) && !turno && !actor.permisos.has('turnos.opcional')) throw new ForbiddenException(SIN_TURNO);
 
         // Validar un retiro grande lo manda a aprobación en lugar de a "por pagar".
         const accionReal: AccionPedido =
@@ -279,7 +280,8 @@ export class PedidosService {
               throw new BadRequestException('Adjuntá el comprobante de la transferencia antes de marcarlo pagado');
             }
             // Cuenta en la caja del turno de quien lo acredita o paga.
-            Object.assign(datos, { ejecutadoPorId: actor.id, ejecutadoEn: ahora, turnoId: turno!.id });
+            // Sin turno (permiso turnos.opcional) va directo a la caja, más abajo.
+            Object.assign(datos, { ejecutadoPorId: actor.id, ejecutadoEn: ahora, ...(turno ? { turnoId: turno.id } : {}) });
             break;
           case 'rechazar': {
             if (!opciones.motivo) throw new BadRequestException('Elegí un motivo');
@@ -297,6 +299,14 @@ export class PedidosService {
         if (count === 0) {
           const actual = await tx.pedido.findUnique({ where: { id }, include: { tomadoPor: nombre } });
           throw new ConflictException(actual ? this.explicarEstado(id, actual.estado, actual.tomadoPor) : 'El pedido cambió. Actualizá la cola.');
+        }
+
+        if ((accion === 'acreditar' || accion === 'pagar') && !turno) {
+          const monto = pedido.tipo === 'carga' ? (pedido.montoPagado ?? pedido.monto) : -pedido.monto;
+          const saldo = await saldoCaja(tx);
+          await tx.movimientoCaja.create({
+            data: { tipo: 'pedido_sin_turno', monto, saldoPosterior: saldo + monto, pedidoId: id, nota: `${pedido.tipo === 'carga' ? 'Carga' : 'Retiro'} #${id} sin turno`, creadoPorId: actor.id, creadoEn: ahora },
+          });
         }
 
         // El primer pago confirmado desde una cuenta pendiente la verifica.

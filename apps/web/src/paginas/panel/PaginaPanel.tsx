@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 import { authStaff } from '../../api/auth';
 import { Aviso, PlantillaPanel, type ItemMenu } from '../../componentes';
 import { useSesionStaff } from '../../sesion/sesion';
+import { BarraTurno } from './caja/BarraTurno';
 
 /** Permisos efectivos de quien está en el panel. */
 export function usePermisos() {
@@ -70,6 +71,7 @@ export function PaginaPanel({ titulo, volver, acciones, requiere, children }: Pa
       titulo={permitido ? titulo : 'Sin acceso'}
       volver={volver}
       acciones={permitido ? acciones : undefined}
+      barraSuperior={<BarraTurno />}
     >
       {permitido ? children : <Aviso tipo="info">No tenés permiso para ver esta sección. Si lo necesitás, pedíselo a quien administra el staff.</Aviso>}
     </PlantillaPanel>

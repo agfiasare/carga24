@@ -15,6 +15,7 @@ import { IngresoPanel } from './paginas/panel/IngresoPanel';
 import { Caja } from './paginas/panel/caja/Caja';
 import { CerrarTurno } from './paginas/panel/caja/CerrarTurno';
 import { Rendiciones } from './paginas/panel/caja/Rendiciones';
+import { ProveedorTurno } from './paginas/panel/caja/turno';
 import { Cola } from './paginas/panel/cola/Cola';
 import { InicioPanel } from './paginas/panel/InicioPanel';
 import { JugadorDetalle } from './paginas/panel/JugadorDetalle';
@@ -81,24 +82,32 @@ function RutasPanel() {
       <Routes>
         <Route path="/panel/ingresar" element={<IngresoPanel />} />
         <Route element={<RutaStaff />}>
-          <Route path="/panel" element={<InicioPanel />} />
-          <Route path="/panel/cola" element={<Cola />} />
-          <Route path="/panel/turnos/:id" element={<CerrarTurno />} />
-          <Route path="/panel/caja" element={<Caja />} />
-          <Route path="/panel/rendiciones" element={<Rendiciones />} />
-          <Route path="/panel/jugadores" element={<Jugadores />} />
-          <Route path="/panel/jugadores/:id" element={<JugadorDetalle />} />
-          <Route path="/panel/staff" element={<Staff />} />
-          <Route path="/panel/staff/:id" element={<StaffDetalle />} />
-          <Route path="/panel/perfiles" element={<Perfiles />} />
-          <Route path="/panel/perfiles/nuevo" element={<PerfilEditor />} />
-          <Route path="/panel/perfiles/:id" element={<PerfilEditor />} />
-          <Route path="/panel/novedades" element={<NovedadesPanel />} />
-          <Route path="/panel/reportes" element={<Reportes />} />
-          <Route path="/panel/promociones" element={<Promociones />} />
-          <Route path="/panel/configuracion" element={<Configuracion />} />
-          <Route path="/panel/auditoria" element={<Auditoria />} />
-          <Route path="/panel/mi-cuenta" element={<MiCuenta />} />
+          <Route
+            element={
+              <ProveedorTurno>
+                <Outlet />
+              </ProveedorTurno>
+            }
+          >
+            <Route path="/panel" element={<InicioPanel />} />
+            <Route path="/panel/cola" element={<Cola />} />
+            <Route path="/panel/turnos/:id" element={<CerrarTurno />} />
+            <Route path="/panel/caja" element={<Caja />} />
+            <Route path="/panel/rendiciones" element={<Rendiciones />} />
+            <Route path="/panel/jugadores" element={<Jugadores />} />
+            <Route path="/panel/jugadores/:id" element={<JugadorDetalle />} />
+            <Route path="/panel/staff" element={<Staff />} />
+            <Route path="/panel/staff/:id" element={<StaffDetalle />} />
+            <Route path="/panel/perfiles" element={<Perfiles />} />
+            <Route path="/panel/perfiles/nuevo" element={<PerfilEditor />} />
+            <Route path="/panel/perfiles/:id" element={<PerfilEditor />} />
+            <Route path="/panel/novedades" element={<NovedadesPanel />} />
+            <Route path="/panel/reportes" element={<Reportes />} />
+            <Route path="/panel/promociones" element={<Promociones />} />
+            <Route path="/panel/configuracion" element={<Configuracion />} />
+            <Route path="/panel/auditoria" element={<Auditoria />} />
+            <Route path="/panel/mi-cuenta" element={<MiCuenta />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/panel" replace />} />
       </Routes>

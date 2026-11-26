@@ -1,90 +1,99 @@
-/* Barra del turno en la cola */
-.sinTurno {
+/* Barra de arriba (en todo el panel): hora y turno */
+.barraSuperior {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 16px;
-  padding: 16px 20px;
+  justify-content: space-between;
+  gap: 10px 20px;
+  padding: 10px 16px;
+  border: 1px solid var(--color-borde);
   border-radius: var(--radio-lg);
-  border: 1px solid color-mix(in srgb, var(--color-en-proceso) 35%, transparent);
-  background: var(--color-en-proceso-fondo);
+  background: var(--color-superficie);
+  font-size: 14px;
 }
 
-.sinTurnoTexto {
-  flex: 1 1 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 14px;
+.reloj {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--color-texto-secundario);
 }
 
-.sinTurnoTexto strong {
-  font-size: 16px;
+.reloj strong {
+  font-family: var(--fuente-titulos);
+  font-size: 17px;
   color: var(--color-texto);
+  font-variant-numeric: tabular-nums;
 }
 
-.barra {
+.dia::first-letter {
+  text-transform: uppercase;
+}
+
+.turnoAbierto {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 28px;
-  padding: 14px 20px;
-  border-radius: var(--radio-lg);
-  background: var(--marca-verde);
-  color: var(--marca-texto);
+  gap: 8px 20px;
 }
 
 .estadoTurno {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .punto {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #7ee2a8;
+  background: var(--color-ok);
+  box-shadow: 0 0 0 4px var(--color-ok-fondo);
+}
+
+.duracion {
+  color: var(--color-texto-secundario);
 }
 
 .dato {
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
-  color: var(--marca-texto-secundario);
+  color: var(--color-texto-secundario);
 }
 
 .dato strong {
-  font-family: var(--fuente-titulos);
-  font-size: 17px;
-  color: var(--marca-texto);
+  margin-left: 4px;
+  color: var(--color-texto);
   font-variant-numeric: tabular-nums;
 }
 
-.positivoClaro {
-  color: #7ee2a8 !important;
-}
-
-.negativoClaro {
-  color: #ff9a9e !important;
-}
-
-.oro {
-  color: var(--marca-oro) !important;
-}
-
 .cerrar {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   min-height: var(--tamano-tactil);
-  padding: 0 20px;
+  padding: 0 18px;
   border-radius: var(--radio-md);
-  background: var(--marca-oro);
-  color: #08251b;
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
   font-weight: 700;
   text-decoration: none;
+}
+
+.sinTurno {
+  padding: 6px 12px;
+  border-radius: var(--radio-pill);
+  background: var(--color-en-proceso-fondo);
+  color: var(--color-en-proceso);
+  font-weight: 700;
+}
+
+.opcional {
+  color: var(--color-texto-secundario);
+}
+
+@media (max-width: 860px) {
+  .dato,
+  .duracion {
+    display: none;
+  }
 }
 
 /* Balances y tablas */
@@ -197,6 +206,11 @@ dd.total {
 .ajuste {
   background: var(--color-fondo);
   color: var(--color-texto-secundario);
+}
+
+.pedido_sin_turno {
+  background: #e7eefb;
+  color: #2f4f8a;
 }
 
 .segmentos {
