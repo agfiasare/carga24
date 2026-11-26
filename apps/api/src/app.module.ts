@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AuditoriaModule } from './auditoria/auditoria.service.js';
 import { AuthModule } from './auth/auth.module.js';
-import { CajaModule } from './caja/caja.js';
+import { CajaModule } from './caja/caja.module.js';
 import { AutenticacionGuard } from './auth/autenticacion.guard.js';
 import { PermisosGuard } from './auth/permisos.guard.js';
 import { ConfiguracionModule } from './configuracion/configuracion.service.js';

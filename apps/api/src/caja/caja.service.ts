@@ -1,91 +1,20 @@
-import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, HttpCode, Injectable, Module, NotFoundException, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { formatearPesos } from '@carga24/shared';
-import { z } from 'zod';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
-import { SoloStaff } from '../auth/acceso.decorator.js';
-import { RequiereAlgunPermiso, RequierePermisos } from '../auth/permisos.decorator.js';
-import { Usuario } from '../auth/usuario.decorator.js';
-import type { Peticion, UsuarioAutenticado } from '../auth/usuario-autenticado.js';
-import { Validar } from '../comun/validacion.js';
+import type { UsuarioAutenticado } from '../auth/usuario-autenticado.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { EventosPedidos } from '../pedidos/eventos.service.js';
-import { PedidosModule } from '../pedidos/pedidos.module.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { fechaArgentina, inicioDeFecha } from '../reportes/fechas.js';
+import { balance, inicioDeSemana, saldoCaja, type Balance } from './balance.js';
 import { bloquearCaja, turnoAbiertoDe } from './candado.js';
+import type { DatosAjuste, DatosCierre, DatosLiquidacion, DatosRendicion } from './esquemas.js';
 
 type Tx = Prisma.TransactionClient;
-
-export interface Balance {
-  cantidadCargas: number;
-  cantidadRetiros: number;
-  /** Lo que transfirieron los jugadores. */
-  ingresos: number;
-  /** Parte de los ingresos que es ganancia. */
-  comision: number;
-  /** Fichas acreditadas. */
-  cargasNetas: number;
-  premios: number;
-  /** ingresos − premios. */
-  resultado: number;
-}
-
-/** Suma los pedidos cerrados (acreditados o pagados) que cumplen el filtro. */
-async function balance(tx: Pick<Tx, 'pedido'>, donde: Prisma.PedidoWhereInput): Promise<Balance> {
-  const grupos = await tx.pedido.groupBy({
-    by: ['tipo'],
-    where: { ...donde, estado: { in: ['acreditado', 'pagado'] } },
-    _count: { _all: true },
-    _sum: { monto: true, montoPagado: true, ganancia: true },
-  });
-  const carga = grupos.find((g) => g.tipo === 'carga');
-  const retiro = grupos.find((g) => g.tipo === 'retiro');
-  const ingresos = carga?._sum.montoPagado ?? 0;
-  const premios = retiro?._sum.monto ?? 0;
-  return {
-    cantidadCargas: carga?._count._all ?? 0,
-    cantidadRetiros: retiro?._count._all ?? 0,
-    ingresos,
-    comision: carga?._sum.ganancia ?? 0,
-    cargasNetas: carga?._sum.monto ?? 0,
-    premios,
-    resultado: ingresos - premios,
-  };
-}
-
-async function saldoCaja(tx: Pick<Tx, 'movimientoCaja'>): Promise<number> {
-  const { _sum } = await tx.movimientoCaja.aggregate({ _sum: { monto: true } });
-  return _sum.monto ?? 0;
-}
-
-/** Lunes de esta semana, 00:00 en Argentina. */
-function inicioDeSemana(ahora = new Date()): Date {
-  const hoy = inicioDeFecha(fechaArgentina(ahora));
-  const diaSemana = new Date(hoy.getTime() + 3 * 3600_000).getUTCDay(); // 0 = domingo
-  return new Date(hoy.getTime() - ((diaSemana + 6) % 7) * 24 * 3600_000);
-}
 
 const nombreDe = (u: { nombreVisible: string | null; nombreUsuario: string | null } | null) => (u ? (u.nombreVisible ?? u.nombreUsuario ?? '') : null);
 const PERSONA = { select: { id: true, nombreVisible: true, nombreUsuario: true } } as const;
 
 type TurnoConPersonas = Prisma.TurnoGetPayload<{ include: { usuario: typeof PERSONA; cerradoPor: typeof PERSONA } }>;
-
-const esquemaCierre = z.object({
-  saldoInformado: z.number().int('El saldo va en centavos enteros').min(-100_000_000_000).max(100_000_000_000).optional(),
-  nota: z.string().trim().max(500, 'La nota es muy larga').optional(),
-});
-const esquemaLiquidacion = z.object({
-  monto: z.number({ error: 'Escribí el monto' }).int('El monto va en centavos enteros').positive('El monto tiene que ser mayor a cero').max(100_000_000_000),
-  nota: z.string().trim().max(300, 'La nota es muy larga').optional(),
-});
-const esquemaAjuste = z.object({
-  monto: z.number({ error: 'Escribí el monto' }).int('El monto va en centavos enteros').min(-100_000_000_000).max(100_000_000_000).refine((m) => m !== 0, 'El ajuste no puede ser cero'),
-  nota: z.string({ error: 'Explicá el motivo del ajuste' }).trim().min(3, 'Explicá el motivo del ajuste').max(300, 'La nota es muy larga'),
-});
-const esquemaRendicion = z.object({
-  monto: z.number({ error: 'Escribí el monto' }).int('El monto va en centavos enteros').min(-100_000_000_000).max(100_000_000_000),
-  nota: z.string().trim().max(300, 'La nota es muy larga').optional(),
-});
 
 @Injectable()
 export class CajaService {
@@ -183,7 +112,7 @@ export class CajaService {
    * Cierra el turno: libera los pedidos que la persona dejó tomados, congela el balance
    * y suma el resultado a la caja. Un turno cerrado no se modifica más.
    */
-  async cerrar(id: string, datos: z.infer<typeof esquemaCierre>, actor: UsuarioAutenticado, ip?: string) {
+  async cerrar(id: string, datos: DatosCierre, actor: UsuarioAutenticado, ip?: string) {
     const liberados = await this.prisma.$transaction(async (tx) => {
       await bloquearCaja(tx);
       const turno = await tx.turno.findUnique({ where: { id } });
@@ -254,7 +183,7 @@ export class CajaService {
   }
 
   /** Registra lo que se sacó de la caja (todo el saldo o una parte). */
-  async liquidar(datos: z.infer<typeof esquemaLiquidacion>, actor: UsuarioAutenticado, ip?: string) {
+  async liquidar(datos: DatosLiquidacion, actor: UsuarioAutenticado, ip?: string) {
     await this.prisma.$transaction(async (tx) => {
       await bloquearCaja(tx);
       const saldo = await saldoCaja(tx);
@@ -267,7 +196,7 @@ export class CajaService {
   }
 
   /** Corrige la caja (un error en un turno cerrado, un gasto, un aporte). Siempre con motivo. */
-  async ajustar(datos: z.infer<typeof esquemaAjuste>, actor: UsuarioAutenticado, ip?: string) {
+  async ajustar(datos: DatosAjuste, actor: UsuarioAutenticado, ip?: string) {
     await this.prisma.$transaction(async (tx) => {
       await bloquearCaja(tx);
       const saldo = await saldoCaja(tx);
@@ -296,7 +225,7 @@ export class CajaService {
     return { pendiente, historial: historial.map(({ creadoPor, creadoPorId: _c, ...r }) => ({ ...r, creadoPor: nombreDe(creadoPor) })) };
   }
 
-  async rendir(datos: z.infer<typeof esquemaRendicion>, actor: UsuarioAutenticado, ip?: string) {
+  async rendir(datos: DatosRendicion, actor: UsuarioAutenticado, ip?: string) {
     await this.prisma.$transaction(async (tx) => {
       await bloquearCaja(tx);
       const p = await this.pendiente(tx, new Date());
@@ -308,69 +237,3 @@ export class CajaService {
     return this.rendiciones();
   }
 }
-
-@SoloStaff()
-@Controller()
-export class CajaController {
-  constructor(private readonly caja: CajaService) {}
-
-  @Get('turnos/actual')
-  actual(@Usuario() actor: UsuarioAutenticado) {
-    return this.caja.actual(actor);
-  }
-
-  @Post('turnos')
-  abrir(@Usuario() actor: UsuarioAutenticado, @Req() peticion: Peticion) {
-    return this.caja.abrir(actor, peticion.ip);
-  }
-
-  @Get('turnos')
-  @RequierePermisos('caja.ver')
-  listar() {
-    return this.caja.listarTurnos();
-  }
-
-  @Get('turnos/:id')
-  resumen(@Param('id', ParseUUIDPipe) id: string, @Usuario() actor: UsuarioAutenticado) {
-    return this.caja.resumen(id, actor);
-  }
-
-  @Post('turnos/:id/cierre')
-  @HttpCode(200)
-  cerrar(@Param('id', ParseUUIDPipe) id: string, @Body(new Validar(esquemaCierre)) datos: z.infer<typeof esquemaCierre>, @Usuario() actor: UsuarioAutenticado, @Req() peticion: Peticion) {
-    return this.caja.cerrar(id, datos, actor, peticion.ip);
-  }
-
-  @Get('caja')
-  @RequierePermisos('caja.ver')
-  verCaja() {
-    return this.caja.caja();
-  }
-
-  @Post('caja/liquidaciones')
-  @RequierePermisos('caja.liquidar')
-  liquidar(@Body(new Validar(esquemaLiquidacion)) datos: z.infer<typeof esquemaLiquidacion>, @Usuario() actor: UsuarioAutenticado, @Req() peticion: Peticion) {
-    return this.caja.liquidar(datos, actor, peticion.ip);
-  }
-
-  @Post('caja/ajustes')
-  @RequierePermisos('caja.ajustar')
-  ajustar(@Body(new Validar(esquemaAjuste)) datos: z.infer<typeof esquemaAjuste>, @Usuario() actor: UsuarioAutenticado, @Req() peticion: Peticion) {
-    return this.caja.ajustar(datos, actor, peticion.ip);
-  }
-
-  @Get('rendiciones')
-  @RequiereAlgunPermiso('caja.ver', 'rendiciones.registrar')
-  rendiciones() {
-    return this.caja.rendiciones();
-  }
-
-  @Post('rendiciones')
-  @RequierePermisos('rendiciones.registrar')
-  rendir(@Body(new Validar(esquemaRendicion)) datos: z.infer<typeof esquemaRendicion>, @Usuario() actor: UsuarioAutenticado, @Req() peticion: Peticion) {
-    return this.caja.rendir(datos, actor, peticion.ip);
-  }
-}
-
-@Module({ imports: [PedidosModule], controllers: [CajaController], providers: [CajaService] })
-export class CajaModule {}
