@@ -210,9 +210,14 @@ describe('Comprobante de turno', () => {
     expect(within(ticket).getByText('impuesto plataforma').nextSibling).toHaveTextContent('$ 250');
     expect(within(ticket).getByText('comisión de retiro').nextSibling).toHaveTextContent('$ 150');
     expect(within(ticket).getByText('RDO NETO (plataforma):').nextSibling).toHaveTextContent('−$ 300');
-    expect(within(ticket).getByText('DETALLE DE MOVIMIENTOS (2)')).toBeInTheDocument();
-    expect(within(ticket).getByText(/#12 RETIRO/)).toBeInTheDocument();
-    expect(within(ticket).getByText('nuevo · WhatsApp')).toBeInTheDocument();
+    expect(within(ticket).getByText('MOVIMIENTOS:').nextSibling).toHaveTextContent('2');
+    // El detalle de cada movimiento va al lado, en una tabla.
+    const tabla = screen.getByRole('region', { name: 'Movimientos del turno (2)' });
+    const fila = within(tabla).getByRole('button', { name: 'Retiro #12' }).closest('tr')!;
+    expect(within(fila).getByText('nuevo')).toBeInTheDocument();
+    expect(within(fila).getByText('−$ 9.850')).toBeInTheDocument();
+    expect(within(fila).getByText('−$ 10.000')).toBeInTheDocument();
+    expect(within(fila).getByText('$ 150')).toBeInTheDocument();
   });
 });
 

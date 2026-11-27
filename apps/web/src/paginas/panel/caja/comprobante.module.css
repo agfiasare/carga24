@@ -1,7 +1,19 @@
+/* El ticket y, al lado, la tabla de movimientos. */
+.disposicion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.movimientosLado {
+  flex: 999 1 520px;
+  min-width: 0;
+}
+
 /* Comprobante con formato de ticket de impresora (papel de 80 mm). */
 .ticket {
-  align-self: flex-start;
-  width: 100%;
+  flex: 1 1 320px;
   max-width: 380px;
   box-sizing: border-box;
   padding: 22px 20px 26px;
@@ -73,38 +85,14 @@
   color: #444444;
 }
 
-.subtitulo {
-  margin: 0 0 4px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-}
 
-.movimientos {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
 
-.detalle {
-  padding-left: 14px;
-  font-size: 12px;
-  text-transform: none;
-  color: #444444;
-}
 
 .nota {
   margin: 6px 0 0;
   text-transform: none;
 }
 
-.centro {
-  margin: 0;
-  text-align: center;
-}
 
 .pie {
   margin-top: 14px;

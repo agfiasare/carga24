@@ -1,11 +1,15 @@
 import { formatearPesos } from '@carga24/shared';
 import { Printer } from 'lucide-react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { caja, type ComprobanteTurno as Datos } from '../../../api/caja';
 import { useConsulta } from '../../../api/useConsulta';
 import { formatearConSigno, formatearFecha, formatearHora } from '../../../comun/formato';
 import { Aviso, Boton } from '../../../componentes';
-import { PaginaPanel } from '../PaginaPanel';
+import { DetallePedido } from '../cola/DetallePedido';
+import { PaginaPanel, usePermisos } from '../PaginaPanel';
+import panel from '../panel.module.css';
+import reportes from '../reportes.module.css';
 import clases from './comprobante.module.css';
 
 const segundos = new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', timeZone: 'America/Argentina/Buenos_Aires' });
@@ -35,7 +39,12 @@ export function ComprobanteTurno() {
       }
     >
       {error ? <Aviso tipo="error">{error.message}</Aviso> : null}
-      {datos ? <Ticket t={datos} /> : null}
+      {datos ? (
+        <div className={clases.disposicion}>
+          <Ticket t={datos} />
+          <Movimientos t={datos} />
+        </div>
+      ) : null}
     </PaginaPanel>
   );
 }
@@ -92,32 +101,7 @@ export function Ticket({ t }: { t: Datos }) {
       </section>
 
       <section className={clases.bloque} aria-label="Movimientos">
-        <h3 className={clases.subtitulo}>DETALLE DE MOVIMIENTOS ({t.pedidos.length})</h3>
-        {t.pedidos.length === 0 ? <p className={clases.centro}>Sin movimientos.</p> : null}
-        <ol className={clases.movimientos}>
-          {t.pedidos.map((p) => {
-            const carga = p.tipo === 'carga';
-            return (
-              <li key={p.id}>
-                <div className={clases.fila}>
-                  <span>
-                    {formatearHora(p.ejecutadoEn)} #{p.id} {carga ? 'CARGA' : 'RETIRO'}
-                  </span>
-                  <span>{formatearConSigno(carga ? (p.montoPagado ?? p.monto) : -p.monto)}</span>
-                </div>
-                <div className={`${clases.fila} ${clases.detalle}`}>
-                  <span>
-                    {p.jugador ?? '—'} · {p.canal === 'manual' ? 'WhatsApp' : 'web'}
-                  </span>
-                  <span>
-                    {carga ? `fichas ${formatearPesos(p.monto)}` : `fichas ${formatearPesos(p.montoPagado ?? p.monto)}`}
-                    {p.ganancia > 0 ? ` · gan. ${formatearPesos(p.ganancia)}` : ''}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+        <Fila etiqueta="MOVIMIENTOS:" valor={String(t.pedidos.length)} fuerte />
       </section>
 
       <footer className={clases.pie}>
@@ -128,5 +112,86 @@ export function Ticket({ t }: { t: Datos }) {
         </div>
       </footer>
     </article>
+  );
+}
+
+/** Cada pedido acreditado o pagado en el turno, con su detalle; el número abre el pedido. */
+function Movimientos({ t }: { t: Datos }) {
+  const { tiene } = usePermisos();
+  const [abierto, setAbierto] = useState<number | null>(null);
+  const total = (f: (p: Datos['pedidos'][number]) => number) => t.pedidos.reduce((n, p) => n + f(p), 0);
+  const transferido = (p: Datos['pedidos'][number]) => (p.tipo === 'carga' ? (p.montoPagado ?? p.monto) : -p.monto);
+  const fichas = (p: Datos['pedidos'][number]) => (p.tipo === 'carga' ? p.monto : -(p.montoPagado ?? p.monto));
+  return (
+    <section className={`${panel.tarjeta} ${clases.movimientosLado}`} aria-labelledby="titulo-movimientos">
+      <h2 id="titulo-movimientos">Movimientos del turno ({t.pedidos.length})</h2>
+      {t.pedidos.length === 0 ? (
+        <p className={panel.explicacion}>
+          No hubo cargas acreditadas ni retiros pagados con este turno abierto. Lo que se opera sin turno (permiso "Operar pedidos sin abrir turno") va directo a la caja y no
+          aparece acá.
+        </p>
+      ) : (
+        <div className={panel.envoltorioTabla}>
+          <table className={panel.tabla}>
+            <thead>
+              <tr>
+                <th scope="col">Hora</th>
+                <th scope="col">Pedido</th>
+                <th scope="col">Jugador</th>
+                <th scope="col">Canal</th>
+                <th scope="col" className={reportes.numero}>Dinero</th>
+                <th scope="col" className={reportes.numero}>Fichas</th>
+                <th scope="col" className={reportes.numero}>Impuesto</th>
+                <th scope="col" className={reportes.numero}>Ganancia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {t.pedidos.map((p) => {
+                const texto = `${p.tipo === 'carga' ? 'Carga' : 'Retiro'} #${p.id}`;
+                return (
+                  <tr key={p.id}>
+                    <td>{formatearHora(p.ejecutadoEn)}</td>
+                    <td>
+                      {tiene('pedidos.ver') ? (
+                        <button type="button" className={panel.enlaceBoton} onClick={() => setAbierto(p.id)}>
+                          {texto}
+                        </button>
+                      ) : (
+                        texto
+                      )}
+                    </td>
+                    <td>{p.jugador ?? '—'}</td>
+                    <td>{p.canal === 'manual' ? 'WhatsApp' : 'Web'}</td>
+                    <td className={reportes.numero}>{formatearConSigno(transferido(p))}</td>
+                    <td className={reportes.numero}>{formatearConSigno(fichas(p))}</td>
+                    <td className={reportes.numero}>{p.impuesto ? formatearPesos(p.impuesto) : '—'}</td>
+                    <td className={reportes.numero}>{p.ganancia ? formatearPesos(p.ganancia) : '—'}</td>
+                  </tr>
+                );
+              })}
+              <tr>
+                <td colSpan={4}>
+                  <strong>Total</strong>
+                </td>
+                <td className={reportes.numero}>
+                  <strong>{formatearConSigno(total(transferido))}</strong>
+                </td>
+                <td className={reportes.numero}>
+                  <strong>{formatearConSigno(total(fichas))}</strong>
+                </td>
+                <td className={reportes.numero}>
+                  <strong>{formatearPesos(total((p) => p.impuesto))}</strong>
+                </td>
+                <td className={reportes.numero}>
+                  <strong>{formatearPesos(total((p) => p.ganancia))}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className={panel.explicacion}>Dinero: lo que entró o salió de la cuenta. Fichas: lo que se cargó o salió de la plataforma (su total es el RDO neto).</p>
+      {abierto !== null ? <DetallePedido id={abierto} alCerrar={() => setAbierto(null)} /> : null}
+    </section>
   );
 }
