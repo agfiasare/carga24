@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { AdministracionController, AdministracionService } from './configuracion.controller.js';
 
 export interface ParametrosPedidos {
-  comision: { modo: ModoComision; porcentajePb: number };
+  comision: { modo: ModoComision; porcentajePb: number; impuestoPb: number };
   montos: { cargaMinima: number; cargaMaxima: number; retiroMinimo: number; retiroConAprobacionDesde: number };
   cuentasPendientesMaximas: number;
 }
@@ -16,7 +16,7 @@ export class ConfiguracionService {
 
   async parametrosPedidos(): Promise<ParametrosPedidos> {
     const filas = await this.prisma.configuracion.findMany({
-      where: { clave: { in: ['comision.modo', 'comision.porcentaje_pb', 'montos.carga_minima', 'montos.carga_maxima', 'montos.retiro_minimo', 'montos.retiro_con_aprobacion_desde', 'cuentas.pendientes_maximas'] } },
+      where: { clave: { in: ['comision.modo', 'comision.porcentaje_pb', 'comision.impuesto_pb', 'montos.carga_minima', 'montos.carga_maxima', 'montos.retiro_minimo', 'montos.retiro_con_aprobacion_desde', 'cuentas.pendientes_maximas'] } },
     });
     const valor = new Map(filas.map((f) => [f.clave, f.valor as unknown]));
     const numero = (clave: string, defecto: number) => {
@@ -27,6 +27,7 @@ export class ConfiguracionService {
       comision: {
         modo: valor.get('comision.modo') === 'descuento' ? 'descuento' : 'recargo',
         porcentajePb: numero('comision.porcentaje_pb', 0),
+        impuestoPb: numero('comision.impuesto_pb', 0),
       },
       montos: {
         cargaMinima: numero('montos.carga_minima', 0),

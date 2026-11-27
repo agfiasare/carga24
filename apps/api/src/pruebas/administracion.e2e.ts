@@ -149,6 +149,20 @@ describe('Configuración, auditoría, reportes y exportación', () => {
     });
   });
 
+  describe('impuesto de la plataforma', () => {
+    it('la ganancia es el % sobre lo transferido menos el impuesto; al jugador se le descuenta el % entero', async () => {
+      const antes = (await admin.get(`${API}/configuracion`).expect(200)).body.comision;
+      await admin.put(`${API}/configuracion`).send({ comision: { modo: 'descuento', porcentajePb: 300, impuestoPb: 250 } }).expect(200);
+      try {
+        const { body } = await laura.post(`${API}/pedidos`).send({ tipo: 'carga', telefono: '11 7777 0000', plataformaId, monto: 1_000_000, medioPago: 'efectivo' }).expect(201);
+        expect(body).toMatchObject({ montoPagado: 1_000_000, monto: 970_000, ganancia: 29_250 });
+        await laura.post(`${API}/pedidos/${body.id}/rechazar`).send({ motivo: 'otro' }).expect(200);
+      } finally {
+        await admin.put(`${API}/configuracion`).send({ comision: { modo: antes.modo, porcentajePb: antes.porcentajePb, impuestoPb: antes.impuestoPb ?? 0 } }).expect(200);
+      }
+    });
+  });
+
   describe('auditoría', () => {
     it('filtra por persona y acción; nadie puede cambiar los registros', async () => {
       const opciones = (await admin.get(`${API}/auditoria/opciones`).expect(200)).body;

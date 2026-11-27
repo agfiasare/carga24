@@ -31,6 +31,7 @@ export function Configuracion() {
 function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Config) => void }) {
   const [modo, setModo] = useState(config.comision.modo);
   const [pct, setPct] = useState(porcentaje(config.comision.porcentajePb));
+  const [impuesto, setImpuesto] = useState(porcentaje(config.comision.impuestoPb ?? 0));
   const [montos, setMontos] = useState({
     cargaMinima: pesos(config.montos.cargaMinima),
     cargaMaxima: pesos(config.montos.cargaMaxima),
@@ -46,16 +47,17 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
   const guardar = useAccion(administracion.guardarConfiguracion);
 
   const pb = leerPorcentaje(pct);
+  const impuestoPb = leerPorcentaje(impuesto);
   const montosLeidos = Object.fromEntries(Object.entries(montos).map(([k, v]) => [k, leerPesos(v)])) as Record<keyof typeof montos, number | null>;
   const cantidadPendientes = Number(pendientes);
-  const invalido = pb === null || Object.values(montosLeidos).some((v) => v === null) || !Number.isInteger(cantidadPendientes) || cantidadPendientes < 1 || cantidadPendientes > 10;
-  const cambiaComision = pb !== config.comision.porcentajePb || modo !== config.comision.modo;
-  const ejemplo = pb !== null ? calcularCarga(1_000_000, pb, modo) : null;
+  const invalido = pb === null || impuestoPb === null || Object.values(montosLeidos).some((v) => v === null) || !Number.isInteger(cantidadPendientes) || cantidadPendientes < 1 || cantidadPendientes > 10;
+  const cambiaComision = pb !== config.comision.porcentajePb || modo !== config.comision.modo || impuestoPb !== (config.comision.impuestoPb ?? 0);
+  const ejemplo = pb !== null && impuestoPb !== null ? calcularCarga(1_000_000, pb, modo, impuestoPb) : null;
 
   async function enviar() {
     if (invalido) return;
     const resultado = await guardar.ejecutar({
-      comision: { modo, porcentajePb: pb! },
+      comision: { modo, porcentajePb: pb!, impuestoPb: impuestoPb! },
       montos: montosLeidos as Config['montos'],
       cuentasPendientesMaximas: cantidadPendientes,
       pago,
@@ -106,11 +108,19 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
             onChange={(e) => setModo(e.target.value as Config['comision']['modo'])}
           />
           <CampoFormulario etiqueta="Porcentaje" inputMode="decimal" value={pct} onChange={(e) => setPct(e.target.value)} error={pb === null ? 'Entre 0 y 50' : undefined} />
+          <CampoFormulario
+            etiqueta="Impuesto de la plataforma (%)"
+            ayuda="El que retiene la plataforma (por ejemplo, ley 27.346: 2,5). La ganancia es el porcentaje de arriba sobre lo transferido menos este impuesto."
+            inputMode="decimal"
+            value={impuesto}
+            onChange={(e) => setImpuesto(e.target.value)}
+            error={impuestoPb === null ? 'Entre 0 y 50' : undefined}
+          />
         </div>
         {ejemplo ? (
           <p className={clases.explicacion}>
-            Ejemplo con {formatearPesos(1_000_000)}: transfiere <strong>{formatearPesos(ejemplo.pagado)}</strong>, se acreditan <strong>{formatearPesos(ejemplo.acreditado)}</strong>, ganancia{' '}
-            {formatearPesos(ejemplo.ganancia)}.
+            Ejemplo con {formatearPesos(1_000_000)}: transfiere <strong>{formatearPesos(ejemplo.pagado)}</strong>, se acreditan <strong>{formatearPesos(ejemplo.acreditado)}</strong>
+            {ejemplo.impuesto > 0 ? `, impuesto ${formatearPesos(ejemplo.impuesto)}` : ''}, ganancia <strong>{formatearPesos(ejemplo.ganancia)}</strong>.
           </p>
         ) : null}
       </section>
@@ -165,7 +175,11 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
       {confirmar ? (
         <ModalConfirmacion titulo="¿Cambiás la comisión?" textoConfirmar="Sí, cambiar" cargando={guardar.cargando} alConfirmar={() => void enviar()} alCerrar={() => setConfirmar(false)}>
           <p>
-            Pasa de {porcentaje(config.comision.porcentajePb)} % ({config.comision.modo}) a <strong>{pct} % ({modo})</strong>. Aplica a los pedidos nuevos desde ahora; los anteriores no cambian.
+            Pasa de {porcentaje(config.comision.porcentajePb)} % ({config.comision.modo}, impuesto {porcentaje(config.comision.impuestoPb ?? 0)} %) a{' '}
+            <strong>
+              {pct} % ({modo}, impuesto {impuesto} %)
+            </strong>
+            . Aplica a los pedidos nuevos desde ahora; los anteriores no cambian.
           </p>
         </ModalConfirmacion>
       ) : null}

@@ -17,6 +17,8 @@ export interface CalculoCarga {
   acreditado: Centavos;
   /** Ganancia del negocio. */
   ganancia: Centavos;
+  /** Impuesto que retiene la plataforma (por ejemplo, ley 27.346) sobre lo transferido. */
+  impuesto: Centavos;
 }
 
 function asegurarEntero(valor: number, nombre: string): void {
@@ -36,11 +38,19 @@ export function aplicarPorcentaje(monto: Centavos, porcentaje: PuntosBasicos): C
  * Calcula una carga.
  * - recargo: `monto` es lo que el jugador quiere recibir.
  * - descuento: `monto` es lo que el jugador transfiere.
+ *
+ * Al jugador se le cobra (o descuenta) el porcentaje sobre lo transferido. La ganancia de la
+ * agencia es ese mismo porcentaje, pero sobre el neto: lo transferido menos el impuesto que
+ * retiene la plataforma (`impuesto`, en puntos básicos; 0 = sin impuesto, ganancia = comisión).
+ * Ejemplo con 3 % y 2,5 %: transfiere 100 → se acreditan 97; neto 97,50; ganancia 2,925.
  */
-export function calcularCarga(monto: Centavos, porcentaje: PuntosBasicos, modo: ModoComision): CalculoCarga {
-  const ganancia = aplicarPorcentaje(monto, porcentaje);
-  if (modo === 'recargo') return { pagado: monto + ganancia, acreditado: monto, ganancia };
-  return { pagado: monto, acreditado: monto - ganancia, ganancia };
+export function calcularCarga(monto: Centavos, porcentaje: PuntosBasicos, modo: ModoComision, impuesto: PuntosBasicos = 0): CalculoCarga {
+  const comision = aplicarPorcentaje(monto, porcentaje);
+  const pagado = modo === 'recargo' ? monto + comision : monto;
+  const acreditado = modo === 'recargo' ? monto : monto - comision;
+  const retenido = aplicarPorcentaje(pagado, impuesto);
+  const ganancia = impuesto > 0 ? aplicarPorcentaje(pagado - retenido, porcentaje) : comision;
+  return { pagado, acreditado, ganancia, impuesto: retenido };
 }
 
 /** Comisión del operador = ganancia del pedido × porcentaje del operador. */

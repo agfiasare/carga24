@@ -2,7 +2,7 @@ import type { EstadoPedido, ModoComision, TipoPedido } from '@carga24/shared';
 import { api } from './cliente';
 
 export interface Configuracion {
-  comision: { modo: ModoComision; porcentajePb: number };
+  comision: { modo: ModoComision; porcentajePb: number; impuestoPb: number };
   montos: { cargaMinima: number; cargaMaxima: number; retiroMinimo: number; retiroConAprobacionDesde: number };
   cuentasPendientesMaximas: number;
   pago: { alias: string; titular: string; banco: string };

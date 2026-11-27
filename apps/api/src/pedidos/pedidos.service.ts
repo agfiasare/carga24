@@ -179,7 +179,7 @@ export class PedidosService {
       if (datos.monto < montos.cargaMinima || datos.monto > montos.cargaMaxima) {
         throw new BadRequestException(`La carga tiene que ser de ${formatearPesos(montos.cargaMinima)} a ${formatearPesos(montos.cargaMaxima)}`);
       }
-      const calculo = calcularCarga(datos.monto, comision.porcentajePb, comision.modo);
+      const calculo = calcularCarga(datos.monto, comision.porcentajePb, comision.modo, comision.impuestoPb);
       importes = { monto: calculo.acreditado, montoPagado: calculo.pagado, ganancia: calculo.ganancia, comisionPb: comision.porcentajePb };
     } else {
       if (datos.monto < montos.retiroMinimo) throw new BadRequestException(`El retiro mínimo es de ${formatearPesos(montos.retiroMinimo)}`);

@@ -55,7 +55,7 @@ export interface EventoPedido {
 export type PedidoDetalle = Pedido & { eventos: EventoPedido[] };
 
 export interface ParametrosPedidos {
-  comision: { modo: ModoComision; porcentajePb: number };
+  comision: { modo: ModoComision; porcentajePb: number; impuestoPb: number };
   montos: { cargaMinima: number; cargaMaxima: number; retiroMinimo: number; retiroConAprobacionDesde: number };
   plataformas: { id: string; nombre: string }[];
 }

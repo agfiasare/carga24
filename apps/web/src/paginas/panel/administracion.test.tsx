@@ -78,7 +78,7 @@ describe('Reportes', () => {
 });
 
 const config: Config = {
-  comision: { modo: 'recargo', porcentajePb: 500 },
+  comision: { modo: 'recargo', porcentajePb: 500, impuestoPb: 0 },
   montos: { cargaMinima: 100_000, cargaMaxima: 50_000_000, retiroMinimo: 200_000, retiroConAprobacionDesde: 10_000_000 },
   cuentasPendientesMaximas: 3,
   pago: { alias: '', titular: '', banco: '' },
@@ -108,7 +108,7 @@ describe('Configuración', () => {
     await userEvent.click(within(modal).getByRole('button', { name: 'Sí, cambiar' }));
     expect(await screen.findByText(/Configuración guardada/)).toBeInTheDocument();
     expect(api.enviado('PUT /configuracion')[0]).toMatchObject({
-      comision: { modo: 'recargo', porcentajePb: 750 },
+      comision: { modo: 'recargo', porcentajePb: 750, impuestoPb: 0 },
       montos: { cargaMinima: 200_000, cargaMaxima: 50_000_000 },
       pago: { alias: 'carga24.pagos' },
     });

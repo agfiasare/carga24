@@ -9,6 +9,7 @@ import type { PrismaClient } from './generated/prisma/client.js';
 const CONFIGURACION_INICIAL: Record<string, unknown> = {
   'comision.modo': 'recargo',
   'comision.porcentaje_pb': 500,
+  'comision.impuesto_pb': 0,
   'comision_operadores.porcentaje_pb': 0,
   'comision_operadores.periodo': 'mensual',
   'montos.carga_minima': 100_000,

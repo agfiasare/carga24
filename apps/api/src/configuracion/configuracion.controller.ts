@@ -15,7 +15,13 @@ const texto = (max: number) => z.string().trim().max(max);
 
 const esquemaConfiguracion = z
   .object({
-    comision: z.object({ modo: z.enum(['recargo', 'descuento']), porcentajePb: z.number().int().min(0).max(5_000, 'La comisión no puede superar el 50 %') }).partial(),
+    comision: z
+      .object({
+        modo: z.enum(['recargo', 'descuento']),
+        porcentajePb: z.number().int().min(0).max(5_000, 'La comisión no puede superar el 50 %'),
+        impuestoPb: z.number().int().min(0).max(5_000, 'El impuesto no puede superar el 50 %'),
+      })
+      .partial(),
     montos: z.object({ cargaMinima: centavos, cargaMaxima: centavos, retiroMinimo: centavos, retiroConAprobacionDesde: centavos }).partial(),
     cuentasPendientesMaximas: z.number().int().min(1).max(10),
     pago: z.object({ alias: texto(40), titular: texto(80), banco: texto(60) }).partial(),
@@ -35,6 +41,7 @@ type DatosEditarPlataforma = z.infer<typeof esquemaEditarPlataforma>;
 const CLAVES = {
   'comision.modo': ['comision', 'modo'],
   'comision.porcentaje_pb': ['comision', 'porcentajePb'],
+  'comision.impuesto_pb': ['comision', 'impuestoPb'],
   'montos.carga_minima': ['montos', 'cargaMinima'],
   'montos.carga_maxima': ['montos', 'cargaMaxima'],
   'montos.retiro_minimo': ['montos', 'retiroMinimo'],

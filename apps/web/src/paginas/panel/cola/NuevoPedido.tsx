@@ -80,7 +80,7 @@ export function NuevoPedido({ alCerrar, alCrear }: { alCerrar: () => void; alCre
 
   const monto = leerPesos(montoTexto);
   const cuentasValidas = cuentas.filter((c) => (tipo === 'retiro' ? c.estado === 'verificada' : c.estado !== 'rechazada'));
-  const calculo = tipo === 'carga' && monto && parametros ? calcularCarga(monto, parametros.comision.porcentajePb, parametros.comision.modo) : null;
+  const calculo = tipo === 'carga' && monto && parametros ? calcularCarga(monto, parametros.comision.porcentajePb, parametros.comision.modo, parametros.comision.impuestoPb) : null;
   const etiquetaMonto =
     tipo === 'retiro' ? 'Monto a retirar' : parametros?.comision.modo === 'descuento' ? 'Monto que transfiere' : 'Monto a cargar';
 

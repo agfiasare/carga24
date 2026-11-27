@@ -27,7 +27,7 @@ export function Cargar() {
 
   const monto = leerPesos(montoTexto);
   const descuento = parametros?.comision.modo === 'descuento';
-  const calculo = monto && parametros ? calcularCarga(monto, parametros.comision.porcentajePb, parametros.comision.modo) : null;
+  const calculo = monto && parametros ? calcularCarga(monto, parametros.comision.porcentajePb, parametros.comision.modo, parametros.comision.impuestoPb) : null;
   const fueraDeRango = monto && parametros ? monto < parametros.montos.cargaMinima || monto > parametros.montos.cargaMaxima : false;
   const usables = (cuentas ?? []).filter((c) => c.estado !== 'rechazada');
   const cuentaElegida = cuentaId || (usables.length === 1 ? usables[0]!.id : '');
