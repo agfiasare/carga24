@@ -55,6 +55,9 @@ export function PlantillaPanel({ menu, usuario, alSalir, titulo, volver, accione
           <span className={clases.texto}>
             Carga24 <small>Panel</small>
           </span>
+            <button type="button" className={clases.encoger} onClick={alternar} aria-expanded={!encogido} aria-label={encogido ? 'Mostrar el menú completo' : 'Encoger el menú'} title={encogido ? 'Mostrar el menú completo' : 'Encoger el menú'}>
+              {encogido ? <ChevronsRight size={18} aria-hidden="true" /> : <ChevronsLeft size={18} aria-hidden="true" />}
+            </button>
         </div>
         <nav aria-label="Secciones del panel" className={clases.menu}>
           {menu.map((item) => (
@@ -80,9 +83,6 @@ export function PlantillaPanel({ menu, usuario, alSalir, titulo, volver, accione
           <button type="button" className={clases.salir} onClick={alSalir} aria-label={encogido ? 'Salir' : undefined} title={encogido ? 'Salir' : undefined}>
             <LogOut size={18} aria-hidden="true" />
             <span className={clases.texto}>Salir</span>
-          </button>
-          <button type="button" className={clases.encoger} onClick={alternar} aria-expanded={!encogido} aria-label={encogido ? 'Mostrar el menú completo' : 'Encoger el menú'} title={encogido ? 'Mostrar el menú completo' : 'Encoger el menú'}>
-            {encogido ? <ChevronsRight size={18} aria-hidden="true" /> : <ChevronsLeft size={18} aria-hidden="true" />}
           </button>
         </div>
       </aside>
