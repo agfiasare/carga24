@@ -62,7 +62,7 @@
 }
 
 .indicadorValor {
-  font-family: var(--fuente-titulos);
+  font-family: var(--fuente-numeros, var(--fuente-titulos));
   font-size: 24px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;

@@ -42,22 +42,23 @@
 }
 
 .tablero {
+  /* Las columnas llegan hasta el fondo de la pantalla, separadas por una línea fina. */
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(4, minmax(260px, 1fr));
-  gap: 14px;
-  align-items: start;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 1px;
+  align-items: stretch;
+  min-height: calc(100vh - 210px);
   overflow-x: auto;
-  padding-bottom: 8px;
+  background: var(--color-borde);
+  border: 1px solid var(--color-borde);
 }
 
 .columna {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   min-width: 0;
-  padding: 12px;
-  background: color-mix(in srgb, var(--color-borde) 45%, var(--color-fondo));
-  border-radius: var(--radio-lg);
+  background: var(--color-superficie);
 }
 
 .tituloColumna {
@@ -65,25 +66,35 @@
   align-items: center;
   justify-content: space-between;
   margin: 0;
-  font-family: var(--fuente-titulos);
-  font-size: 14px;
-  font-weight: 700;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: #f3f5f2;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.columna:nth-child(1) .tituloColumna {
+  color: #8a5300;
+  background: #fbf5e8;
+}
+
+.columna:nth-child(2) .tituloColumna {
+  color: #2357b5;
+  background: #eef3fb;
 }
 
 .contador {
-  min-width: 24px;
-  padding: 0 8px;
-  border-radius: var(--radio-pill);
-  background: var(--color-superficie);
+  font-family: var(--fuente-numeros);
   font-size: 12px;
-  line-height: 22px;
-  text-align: center;
 }
 
 .lista {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 8px;
 }
 
 .vacia {

@@ -1,8 +1,8 @@
 .tarjeta {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 9px 10px;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
   border-left-width: 4px;

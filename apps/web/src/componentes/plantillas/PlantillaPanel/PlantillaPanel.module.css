@@ -1,7 +1,7 @@
 .panel {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: 200px minmax(0, 1fr);
 }
 
 .lateral {
@@ -10,9 +10,9 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px 12px;
-  background: var(--marca-verde);
+  gap: 12px;
+  padding: 14px 0;
+  background: #0e1a14;
   color: var(--marca-texto);
 }
 
@@ -20,7 +20,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 8px;
+  padding: 0 14px 12px;
+  border-bottom: 1px solid #1f2d26;
   font-family: var(--fuente-display);
   font-style: italic;
   font-weight: 900;
@@ -40,14 +41,14 @@
 
 .logo {
   /* El logo no es cuadrado (600×445): alto fijo y ancho proporcional. */
-  height: 32px;
+  height: 24px;
   width: auto;
 }
 
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
   flex: 1;
 }
 
@@ -56,8 +57,9 @@
   align-items: center;
   gap: 10px;
   min-height: var(--tamano-tactil);
-  padding: 0 12px;
-  border-radius: var(--radio-md);
+  padding: 0 14px;
+  border-left: 3px solid transparent;
+  border-radius: 0;
   color: var(--marca-texto-secundario);
   font-weight: 600;
   font-size: 14px;
@@ -70,8 +72,9 @@
 }
 
 .activo {
-  background: rgb(233 185 73 / 0.14);
-  color: var(--marca-oro);
+  background: #1b2b23;
+  border-left-color: var(--marca-oro);
+  color: #ffffff;
 }
 
 .icono {
@@ -119,19 +122,18 @@
 
 .contenido {
   min-width: 0;
-  padding: 28px 32px 48px;
+  padding: 0 20px 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
 .barraSuperior {
+  /* Franja de borde a borde, fija arriba. */
   position: sticky;
   top: 0;
   z-index: 5;
-  margin: -12px 0 0;
-  padding-top: 12px;
-  background: var(--color-fondo);
+  margin: 0 -20px;
 }
 
 .cabecera {
@@ -155,7 +157,7 @@
 .titulo {
   margin: 0;
   font-family: var(--fuente-titulos);
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 700;
 }
 
@@ -204,6 +206,10 @@
   }
 
   .contenido {
-    padding: 20px 16px 40px;
+    padding: 0 12px 24px;
+  }
+
+  .barraSuperior {
+    margin: 0 -12px;
   }
 }

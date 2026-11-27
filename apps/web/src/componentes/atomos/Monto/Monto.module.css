@@ -10,12 +10,12 @@
 
 .md {
   font-size: 18px;
-  font-family: var(--fuente-titulos);
+  font-family: var(--fuente-numeros, var(--fuente-titulos));
 }
 
 .lg {
   font-size: 26px;
-  font-family: var(--fuente-titulos);
+  font-family: var(--fuente-numeros, var(--fuente-titulos));
 }
 
 .entrada {
