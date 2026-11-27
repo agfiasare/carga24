@@ -23,14 +23,14 @@ export const tokens = {
       error: '#E5484D',
       errorFondo: '#3D1416',
     },
-    /** Panel del staff: tema claro, pensado para muchas horas frente a la pantalla. */
+    /** Panel del staff: tema claro tipo consola de operaciones, pensado para muchas horas frente a la pantalla. */
     staff: {
-      fondo: '#F4F6F9',
+      fondo: '#EEF0EC',
       superficie: '#FFFFFF',
-      borde: '#E3E8EF',
-      texto: '#08251B',
-      textoSecundario: '#56665F',
-      primario: '#0E3326',
+      borde: '#D5DAD3',
+      texto: '#0D1F17',
+      textoSecundario: '#5A6B62',
+      primario: '#0D1F17',
       sobrePrimario: '#FFFFFF',
       ok: '#137A48',
       okFondo: '#E3F5EB',
