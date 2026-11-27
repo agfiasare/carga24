@@ -15,6 +15,7 @@ const TITULOS: Record<Paso, { titulo: string; bajada: string }> = {
   credenciales: { titulo: 'Ingreso del staff', bajada: 'Con tu usuario y contraseña del panel.' },
   cambiar_contrasena: { titulo: 'Elegí tu contraseña', bajada: 'Estás usando una contraseña temporal. Elegí una tuya, de al menos 8 caracteres.' },
   configurar_2fa: { titulo: 'Activá la verificación en dos pasos', bajada: 'El panel pide un código de tu celular cada vez que ingresás.' },
+  listo: { titulo: 'Ingresando…', bajada: 'Un momento.' },
   verificar_2fa: { titulo: 'Código de verificación', bajada: 'Abrí tu app de autenticación y escribí el código de 6 dígitos de Carga24.' },
 };
 
@@ -33,6 +34,15 @@ export function IngresoPanel() {
       .catch(() => setPaso((actual) => actual ?? 'credenciales'));
   }, []);
 
+  // Sin 2FA (DOS_FACTORES=no en el servidor) el ingreso termina con la contraseña.
+  useEffect(() => {
+    if (paso !== 'listo') return;
+    void authStaff.yo().then((staff) => {
+      establecer(staff);
+      navegar('/panel', { replace: true });
+    });
+  }, [paso, establecer, navegar]);
+
   if (usuario) return <Navigate to="/panel" replace />;
   if (paso === null) return null;
 
@@ -40,6 +50,7 @@ export function IngresoPanel() {
     establecer(staff);
     navegar('/panel', { replace: true });
   }
+
 
   async function cancelar() {
     await authStaff.salir().catch(() => undefined);

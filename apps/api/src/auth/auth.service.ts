@@ -13,7 +13,15 @@ import type { DatosCambioContrasena, DatosIngreso, DatosRegistro } from './esque
 import { SesionesService } from './sesiones.service.js';
 import type { UsuarioAutenticado } from './usuario-autenticado.js';
 
-export type PasoIngresoStaff = 'cambiar_contrasena' | 'configurar_2fa' | 'verificar_2fa';
+export type PasoIngresoStaff = 'cambiar_contrasena' | 'configurar_2fa' | 'verificar_2fa' | 'listo';
+
+/**
+ * DOS_FACTORES=no desactiva el código de la app de autenticación para el staff
+ * (solo para pruebas: el ingreso queda con usuario y contraseña). Por defecto está activo.
+ */
+export function dosFactoresActivo(): boolean {
+  return process.env.DOS_FACTORES?.trim().toLowerCase() !== 'no';
+}
 
 const CREDENCIALES_INVALIDAS = 'Usuario o contraseña incorrectos';
 
@@ -115,6 +123,7 @@ export class AuthService {
 
   siguientePasoStaff(staff: Pick<Usuario, 'debeCambiarContrasena' | 'dosFactoresSecreto'>): PasoIngresoStaff {
     if (staff.debeCambiarContrasena) return 'cambiar_contrasena';
+    if (!dosFactoresActivo()) return 'listo';
     return staff.dosFactoresSecreto ? 'verificar_2fa' : 'configurar_2fa';
   }
 

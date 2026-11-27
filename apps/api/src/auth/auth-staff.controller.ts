@@ -38,8 +38,10 @@ export class AuthStaffController {
     @Res({ passthrough: true }) respuesta: Response,
   ) {
     const staff = await this.auth.validarIngreso('staff', datos, peticion.ip);
-    await this.sesiones.crear(staff.id, 'staff', 'pendiente', peticion, respuesta);
-    return { siguientePaso: this.auth.siguientePasoStaff(staff) };
+    const siguientePaso = this.auth.siguientePasoStaff(staff);
+    // Sin 2FA (DOS_FACTORES=no) y con la contraseña ya elegida, la sesión queda completa de una.
+    await this.sesiones.crear(staff.id, 'staff', siguientePaso === 'listo' ? 'completa' : 'pendiente', peticion, respuesta);
+    return { siguientePaso };
   }
 
   @StaffPendiente()
@@ -49,9 +51,12 @@ export class AuthStaffController {
     @Usuario() usuario: UsuarioAutenticado,
     @Body(new Validar(esquemaContrasenaNueva)) datos: { nueva: string },
     @Req() peticion: Peticion,
+    @Res({ passthrough: true }) respuesta: Response,
   ) {
     const staff = await this.auth.elegirContrasenaInicial(usuario, datos.nueva, peticion.ip);
-    return { siguientePaso: this.auth.siguientePasoStaff(staff) };
+    const siguientePaso = this.auth.siguientePasoStaff(staff);
+    if (siguientePaso === 'listo') await this.completarIngreso(usuario, peticion, respuesta);
+    return { siguientePaso };
   }
 
   @StaffPendiente()

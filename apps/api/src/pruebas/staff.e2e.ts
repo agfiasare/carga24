@@ -254,4 +254,30 @@ describe('Staff: ingreso con 2FA, gestión de jugadores, staff y perfiles', () =
       expect(acciones).toContain(accion);
     }
   });
+
+  describe('DOS_FACTORES=no (solo para pruebas)', () => {
+    it('el staff ingresa con usuario y contraseña, sin código', async () => {
+      const { body } = await admin.post(`${API}/staff`).send({ nombreUsuario: 'sin2fa', nombreVisible: 'Sin 2FA', perfilId: perfiles.Operador }).expect(201);
+      process.env.DOS_FACTORES = 'no';
+      try {
+        const cliente = agente(app);
+        const ingreso = await cliente.post(`${API}/auth/staff/ingreso`).send({ identificador: 'sin2fa', contrasena: body.contrasenaTemporal }).expect(200);
+        expect(ingreso.body).toEqual({ siguientePaso: 'cambiar_contrasena' });
+        await cliente.get(`${API}/auth/staff/yo`).expect(401);
+        const cambio = await cliente.post(`${API}/auth/staff/contrasena-inicial`).send({ nueva: 'sin2fa-clave-propia' }).expect(200);
+        expect(cambio.body).toEqual({ siguientePaso: 'listo' });
+        await cliente.get(`${API}/auth/staff/yo`).expect(200);
+
+        const otra = agente(app);
+        const segundo = await otra.post(`${API}/auth/staff/ingreso`).send({ identificador: 'sin2fa', contrasena: 'sin2fa-clave-propia' }).expect(200);
+        expect(segundo.body).toEqual({ siguientePaso: 'listo' });
+        await otra.get(`${API}/pedidos/cola`).expect(200);
+      } finally {
+        delete process.env.DOS_FACTORES;
+      }
+      // Con el 2FA activo otra vez, vuelve a pedir el código.
+      const despues = await agente(app).post(`${API}/auth/staff/ingreso`).send({ identificador: 'sin2fa', contrasena: 'sin2fa-clave-propia' }).expect(200);
+      expect(despues.body).toEqual({ siguientePaso: 'configurar_2fa' });
+    });
+  });
 });

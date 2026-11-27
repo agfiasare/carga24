@@ -10,6 +10,9 @@ async function bootstrap(): Promise<void> {
   app.enableShutdownHooks();
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
+  if (process.env.DOS_FACTORES?.trim().toLowerCase() === 'no') {
+    console.warn('AVISO: DOS_FACTORES=no — el staff ingresa sin código de verificación. Usalo solo para pruebas.');
+  }
 }
 
 void bootstrap();
