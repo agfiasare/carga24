@@ -203,6 +203,12 @@ export function NuevoPedido({ alCerrar, alCrear }: { alCerrar: () => void; alCre
             {formatearPesos(calculo.ganancia)} ({parametros.comision.porcentajePb / 100} % {parametros.comision.modo})
           </p>
         ) : null}
+        {tipo === 'retiro' && parametros?.retiro && parametros.retiro.comisionPb > 0 ? (
+          <p className={clases.calculo}>
+            Si el jugador no cargó con nosotros{parametros.retiro.diasSinCarga ? ` en los últimos ${parametros.retiro.diasSinCarga} días` : ''}, se descuenta una comisión del{' '}
+            {String(parametros.retiro.comisionPb / 100).replace('.', ',')} % de lo que se le transfiere. El detalle del pedido lo muestra.
+          </p>
+        ) : null}
 
         <SelectorFormulario etiqueta="Medio de pago" opciones={MEDIOS[tipo]} value={medioPago} onChange={(e) => setMedioPago(e.target.value as MedioPago)} />
         {medioPago === 'cuenta_registrada' ? (

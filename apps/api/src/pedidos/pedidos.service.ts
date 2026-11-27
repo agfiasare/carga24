@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PromocionesService } from '../promociones/promociones.js';
-import { calcularCarga, formatearPesos, MOTIVOS_RECHAZO, siguienteEstado, type AccionPedido, type MotivoRechazo } from '@carga24/shared';
+import { aplicarPorcentaje, calcularCarga, formatearPesos, MOTIVOS_RECHAZO, siguienteEstado, type AccionPedido, type MotivoRechazo } from '@carga24/shared';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { saldoCaja } from '../caja/balance.js';
 import { bloquearCaja, SIN_TURNO, turnoAbiertoDe } from '../caja/candado.js';
@@ -174,17 +174,27 @@ export class PedidosService {
     }
 
     const { montos, comision } = parametros;
-    let importes: { monto: number; montoPagado: number | null; ganancia: number; comisionPb: number };
+    let importes: { monto: number; montoPagado: number | null; ganancia: number; comisionPb: number; impuesto: number };
+    let notaComision: string | undefined;
     if (datos.tipo === 'carga') {
       if (datos.monto < montos.cargaMinima || datos.monto > montos.cargaMaxima) {
         throw new BadRequestException(`La carga tiene que ser de ${formatearPesos(montos.cargaMinima)} a ${formatearPesos(montos.cargaMaxima)}`);
       }
       const calculo = calcularCarga(datos.monto, comision.porcentajePb, comision.modo, comision.impuestoPb);
-      importes = { monto: calculo.acreditado, montoPagado: calculo.pagado, ganancia: calculo.ganancia, comisionPb: comision.porcentajePb };
+      importes = { monto: calculo.acreditado, montoPagado: calculo.pagado, ganancia: calculo.ganancia, comisionPb: comision.porcentajePb, impuesto: calculo.impuesto };
     } else {
       if (datos.monto < montos.retiroMinimo) throw new BadRequestException(`El retiro mínimo es de ${formatearPesos(montos.retiroMinimo)}`);
-      // La comisión de los retiros todavía no está definida: por ahora no se cobra.
-      importes = { monto: datos.monto, montoPagado: null, ganancia: 0, comisionPb: 0 };
+      // Comisión de retiro: solo para quien no cargó con nosotros (nunca, o en los últimos N días).
+      // `montoPagado` = las fichas que pide; `monto` = lo que se le transfiere.
+      const { retiro } = parametros;
+      const cobra = retiro.comisionPb > 0 && !(await this.cargoAntes(jugador?.id ?? null, telefono, retiro.diasSinCarga));
+      if (cobra) {
+        const cargo = aplicarPorcentaje(datos.monto, retiro.comisionPb);
+        importes = { monto: datos.monto - cargo, montoPagado: datos.monto, ganancia: cargo, comisionPb: retiro.comisionPb, impuesto: 0 };
+        notaComision = `Comisión de retiro ${String(retiro.comisionPb / 100).replace(".", ",")} %: no cargó con nosotros${retiro.diasSinCarga ? ` en los últimos ${retiro.diasSinCarga} días` : ''}`;
+      } else {
+        importes = { monto: datos.monto, montoPagado: null, ganancia: 0, comisionPb: 0, impuesto: 0 };
+      }
     }
 
     const canal = extra.canal ?? 'manual';
@@ -206,7 +216,8 @@ export class PedidosService {
         },
       });
       const notaInicial = canal === 'web' ? 'Pedido desde la web' : 'Registrado desde el panel';
-      await tx.eventoPedido.create({ data: { pedidoId: creado.id, a: 'pendiente', actorId: actor.id, nota: datos.nota?.trim() || notaInicial } });
+      const nota = [datos.nota?.trim() || notaInicial, notaComision].filter(Boolean).join('. ');
+      await tx.eventoPedido.create({ data: { pedidoId: creado.id, a: 'pendiente', actorId: actor.id, nota } });
       if (extra.comprobante) {
         await tx.comprobante.create({
           data: { pedidoId: creado.id, tipo: 'pago', claveAlmacenamiento: extra.comprobante.clave, mime: extra.comprobante.mime, tamanoBytes: extra.comprobante.tamanoBytes, subidoPorId: actor.id },
@@ -217,6 +228,21 @@ export class PedidosService {
     });
     this.eventos.emitir({ tipo: 'pedido.creado', pedidoId: pedido.id, estado: pedido.estado, actorId: actor.id, jugadorId: pedido.jugadorId });
     return this.obtener(pedido.id);
+  }
+
+  /** ¿Tiene alguna carga acreditada (en los últimos `dias` días; 0 = alguna vez)? */
+  async cargoAntes(jugadorId: string | null, telefono: string | null, dias: number): Promise<boolean> {
+    if (!jugadorId && !telefono) return false;
+    const carga = await this.prisma.pedido.findFirst({
+      where: {
+        tipo: 'carga',
+        estado: 'acreditado',
+        ...(jugadorId ? { jugadorId } : { telefono }),
+        ...(dias > 0 ? { ejecutadoEn: { gte: new Date(Date.now() - dias * 24 * 3600_000) } } : {}),
+      },
+      select: { id: true },
+    });
+    return Boolean(carga);
   }
 
   // ---------- Cambios de estado ----------

@@ -62,7 +62,7 @@ export class PortalService {
     private readonly auditoria: AuditoriaService,
   ) {}
 
-  async parametros() {
+  async parametros(jugadorId: string) {
     const [parametros, pago, plataformas] = await Promise.all([
       this.configuracion.parametrosPedidos(),
       this.prisma.configuracion.findMany({ where: { clave: { in: ['pago.alias', 'pago.titular', 'pago.banco', 'atencion.horario', 'atencion.whatsapp'] } } }),
@@ -76,6 +76,11 @@ export class PortalService {
       comision: parametros.comision,
       montos: parametros.montos,
       cuentasPendientesMaximas: parametros.cuentasPendientesMaximas,
+      // Comisión de retiro: si a este jugador le corresponde (no cargó con nosotros).
+      retiro: {
+        comisionPb: parametros.retiro.comisionPb,
+        aplica: parametros.retiro.comisionPb > 0 && !(await this.pedidos.cargoAntes(jugadorId, null, parametros.retiro.diasSinCarga)),
+      },
       datosPago: { alias: valor('pago.alias'), titular: valor('pago.titular'), banco: valor('pago.banco') },
       horario: valor('atencion.horario'),
       whatsapp: valor('atencion.whatsapp'),

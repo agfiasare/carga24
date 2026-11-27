@@ -5,6 +5,8 @@ export interface Configuracion {
   comision: { modo: ModoComision; porcentajePb: number; impuestoPb: number };
   montos: { cargaMinima: number; cargaMaxima: number; retiroMinimo: number; retiroConAprobacionDesde: number };
   cuentasPendientesMaximas: number;
+  /** Comisión a quien retira sin haber cargado (en los últimos `diasSinCarga` días; 0 = nunca). */
+  retiro: { comisionPb: number; diasSinCarga: number } | null;
   pago: { alias: string; titular: string; banco: string };
   horario: string;
   whatsapp: string;

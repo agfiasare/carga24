@@ -59,6 +59,12 @@ export function Retirar() {
               value={cuentaElegida}
               onChange={(e) => setCuentaId(e.target.value)}
             />
+            {parametros.retiro?.aplica && monto ? (
+              <Aviso tipo="info">
+                Como no cargaste con nosotros, este retiro tiene una comisión del {String(parametros.retiro.comisionPb / 100).replace('.', ',')} %: te transferimos{' '}
+                <strong>{formatearPesos(monto - Math.round((monto * parametros.retiro.comisionPb) / 10_000))}</strong>.
+              </Aviso>
+            ) : null}
             {conAprobacion ? <Aviso tipo="info">Por el monto, un supervisor tiene que aprobarlo. Puede tardar un poco más.</Aviso> : null}
             <p className={clases.secundario}>Lo descontamos de tu usuario en la plataforma y te lo transferimos.</p>
             <Boton type="submit" tamano="lg" anchoCompleto cargando={pedido.cargando} disabled={!monto || bajo || !cuentaElegida || !plataforma}>

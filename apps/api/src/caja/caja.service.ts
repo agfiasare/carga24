@@ -42,7 +42,7 @@ export class CajaService {
   /** Balance de un turno: el congelado si está cerrado, el de este momento si sigue abierto. */
   private async conBalance(t: TurnoConPersonas) {
     const b: Balance = t.cerradoEn
-      ? { cantidadCargas: t.cantidadCargas, cantidadRetiros: t.cantidadRetiros, ingresos: t.ingresos, comision: t.comision, cargasNetas: t.cargasNetas, premios: t.premios, resultado: t.resultado }
+      ? { cantidadCargas: t.cantidadCargas, cantidadRetiros: t.cantidadRetiros, ingresos: t.ingresos, comision: t.comision, cargasNetas: t.cargasNetas, premios: t.premios, retirosFichas: t.retirosFichas, impuesto: t.impuesto, resultado: t.resultado }
       : await balance(this.prisma, { turnoId: t.id });
     return this.presentarTurno(t, b);
   }
@@ -102,6 +102,24 @@ export class CajaService {
       cajaAntes: turno.cerradoEn ? (turno.cajaAlCerrar ?? 0) - turno.resultado : caja,
       tomados,
       pedidosAbiertos: abiertos,
+    };
+  }
+
+  /** Comprobante del turno, estilo ticket: el resumen y cada pedido que se acreditó o pagó en él. */
+  async comprobante(id: string, actor: UsuarioAutenticado) {
+    const resumen = await this.resumen(id, actor);
+    const pedidos = await this.prisma.pedido.findMany({
+      where: { turnoId: id, estado: { in: ['acreditado', 'pagado'] } },
+      orderBy: { ejecutadoEn: 'asc' },
+      select: {
+        id: true, tipo: true, canal: true, monto: true, montoPagado: true, ganancia: true, impuesto: true, ejecutadoEn: true,
+        jugador: { select: { nombreUsuario: true, telefono: true } },
+        telefono: true,
+      },
+    });
+    return {
+      ...resumen,
+      pedidos: pedidos.map(({ jugador, telefono, ...p }) => ({ ...p, jugador: jugador?.nombreUsuario ?? jugador?.telefono ?? telefono })),
     };
   }
 
@@ -217,7 +235,8 @@ export class CajaService {
     const desde = ultima?.hasta ?? null;
     const b = await balance(tx, { ejecutadoEn: { ...(desde ? { gt: desde } : {}), lte: hasta } });
     const arrastre = ultima ? ultima.correspondia - ultima.rendido : 0;
-    return { desde, hasta, cargasNetas: b.cargasNetas, premios: b.premios, comision: b.comision, cantidadPedidos: b.cantidadCargas + b.cantidadRetiros, arrastre, correspondia: b.cargasNetas - b.premios + arrastre };
+    // Se rinde en fichas: lo cargado en la plataforma menos lo que salió por extracciones.
+    return { desde, hasta, cargasNetas: b.cargasNetas, premios: b.retirosFichas, comision: b.comision, cantidadPedidos: b.cantidadCargas + b.cantidadRetiros, arrastre, correspondia: b.cargasNetas - b.retirosFichas + arrastre };
   }
 
   async rendiciones() {

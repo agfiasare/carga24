@@ -178,4 +178,38 @@ describe('Turnos, caja y rendiciones', () => {
       expect(pedido.turnoId).toBeNull();
     });
   });
+
+  describe('comisión de retiro y comprobante del turno', () => {
+    it('cobra la comisión solo a quien no cargó, y el comprobante lista cada movimiento', async () => {
+      await admin.put(`${API}/configuracion`).send({ retiro: { comisionPb: 150, diasSinCarga: 0 } }).expect(200);
+      try {
+        const { body: nuevo } = await admin.post(`${API}/jugadores`).send({ usuarioPlataforma: 'nuevo1', telefono: '11 6666 1234', nombreUsuario: 'nuevo' }).expect(201);
+        const { body: turno } = await laura.post(`${API}/turnos`).expect(201);
+
+        const conComision = await laura.post(`${API}/pedidos`).send({ tipo: 'retiro', jugadorId: nuevo.jugador.id, plataformaId, monto: 1_000_000, medioPago: 'efectivo' }).expect(201);
+        expect(conComision.body).toMatchObject({ montoPagado: 1_000_000, monto: 985_000, ganancia: 15_000, comisionPb: 150 });
+        expect(conComision.body.eventos[0].nota).toContain('Comisión de retiro 1,5 %');
+        const sinComision = await laura.post(`${API}/pedidos`).send({ tipo: 'retiro', jugadorId, plataformaId, monto: 500_000, medioPago: 'efectivo' }).expect(201);
+        expect(sinComision.body).toMatchObject({ montoPagado: null, monto: 500_000, ganancia: 0 });
+
+        for (const id of [conComision.body.id, sinComision.body.id]) {
+          await laura.post(`${API}/pedidos/${id}/tomar`).expect(200);
+          await laura.post(`${API}/pedidos/${id}/verificar`).send({}).expect(200);
+          await laura.post(`${API}/pedidos/${id}/pagar`).expect(200);
+        }
+        const { body } = await laura.get(`${API}/turnos/${turno.turno.id}/comprobante`).expect(200);
+        expect(body).toMatchObject({ cantidadRetiros: 2, premios: 1_485_000, retirosFichas: 1_500_000, comision: 15_000, resultado: -1_485_000 });
+        expect(body.pedidos.map((p: { id: number; jugador: string }) => [p.id, p.jugador])).toEqual([
+          [conComision.body.id, 'nuevo'],
+          [sinComision.body.id, 'ana'],
+        ]);
+        await sofi.get(`${API}/turnos/${turno.turno.id}/comprobante`).expect(404);
+        // Se rinde en fichas: sale lo pedido, no lo transferido.
+        const rendiciones = (await admin.get(`${API}/rendiciones`).expect(200)).body;
+        expect(rendiciones.pendiente.premios).toBe(1_500_000);
+      } finally {
+        await admin.put(`${API}/configuracion`).send({ retiro: { comisionPb: 0, diasSinCarga: 0 } }).expect(200);
+      }
+    });
+  });
 });

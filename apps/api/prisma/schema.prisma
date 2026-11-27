@@ -236,6 +236,8 @@ model Pedido {
   /// Lo que se acredita (cargas) o se transfiere (retiros).
   monto                 Int
   ganancia              Int           @default(0)
+  /// Impuesto que retiene la plataforma sobre lo transferido (cargas), según la configuración.
+  impuesto              Int           @default(0)
   /// Foto del cálculo: porcentaje y modo con que se calculó.
   comisionPb            Int           @map("comision_pb")
   modoComision          ModoComision  @map("modo_comision")
@@ -437,6 +439,10 @@ model Turno {
   /// Fichas acreditadas.
   cargasNetas     Int       @default(0) @map("cargas_netas")
   premios         Int       @default(0)
+  /// Fichas que salieron por retiros (lo pedido, antes de la comisión de retiro).
+  retirosFichas   Int       @default(0) @map("retiros_fichas")
+  /// Impuesto de la plataforma sobre las cargas del turno.
+  impuesto        Int       @default(0)
   /// ingresos − premios.
   resultado       Int       @default(0)
   cajaAlCerrar    Int?      @map("caja_al_cerrar")

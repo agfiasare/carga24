@@ -20,6 +20,10 @@ export interface Turno {
   /** Fichas acreditadas. */
   cargasNetas: number;
   premios: number;
+  /** Fichas que salieron por retiros (lo pedido, antes de la comisión de retiro). */
+  retirosFichas: number;
+  /** Impuesto de la plataforma sobre las cargas. */
+  impuesto: number;
   /** ingresos − premios. */
   resultado: number;
 }
@@ -39,6 +43,11 @@ export interface ResumenTurno extends Turno {
   /** Pedidos que la persona tiene tomados: se liberan al cerrar. */
   tomados: { id: number; tipo: 'carga' | 'retiro'; monto: number }[];
   pedidosAbiertos: number;
+}
+
+/** Comprobante del turno (estilo ticket): el resumen y cada pedido acreditado o pagado. */
+export interface ComprobanteTurno extends ResumenTurno {
+  pedidos: { id: number; tipo: 'carga' | 'retiro'; canal: 'web' | 'manual'; monto: number; montoPagado: number | null; ganancia: number; impuesto: number; ejecutadoEn: string; jugador: string | null }[];
 }
 
 export interface MovimientoCaja {
@@ -85,6 +94,7 @@ export const caja = {
   turnoActual: () => api<TurnoActual>('GET', '/turnos/actual'),
   abrirTurno: () => api<TurnoActual>('POST', '/turnos'),
   turno: (id: string) => api<ResumenTurno>('GET', `/turnos/${id}`),
+  comprobante: (id: string) => api<ComprobanteTurno>('GET', `/turnos/${id}/comprobante`),
   cerrarTurno: (id: string, datos: { saldoInformado?: number; nota?: string }) => api<ResumenTurno>('POST', `/turnos/${id}/cierre`, datos),
   estado: () => api<EstadoCaja>('GET', '/caja'),
   liquidar: (datos: { monto: number; nota?: string }) => api<EstadoCaja>('POST', '/caja/liquidaciones', datos),

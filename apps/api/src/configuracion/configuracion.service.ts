@@ -7,6 +7,8 @@ export interface ParametrosPedidos {
   comision: { modo: ModoComision; porcentajePb: number; impuestoPb: number };
   montos: { cargaMinima: number; cargaMaxima: number; retiroMinimo: number; retiroConAprobacionDesde: number };
   cuentasPendientesMaximas: number;
+  /** Comisión a quien retira sin haber cargado (en los últimos `diasSinCarga` días; 0 = nunca). */
+  retiro: { comisionPb: number; diasSinCarga: number };
 }
 
 /** Lee la configuración del negocio (tabla configuracion), con valores por defecto seguros. */
@@ -16,7 +18,7 @@ export class ConfiguracionService {
 
   async parametrosPedidos(): Promise<ParametrosPedidos> {
     const filas = await this.prisma.configuracion.findMany({
-      where: { clave: { in: ['comision.modo', 'comision.porcentaje_pb', 'comision.impuesto_pb', 'montos.carga_minima', 'montos.carga_maxima', 'montos.retiro_minimo', 'montos.retiro_con_aprobacion_desde', 'cuentas.pendientes_maximas'] } },
+      where: { clave: { in: ['comision.modo', 'comision.porcentaje_pb', 'comision.impuesto_pb', 'montos.carga_minima', 'montos.carga_maxima', 'montos.retiro_minimo', 'montos.retiro_con_aprobacion_desde', 'cuentas.pendientes_maximas', 'retiro.comision_pb', 'retiro.dias_sin_carga'] } },
     });
     const valor = new Map(filas.map((f) => [f.clave, f.valor as unknown]));
     const numero = (clave: string, defecto: number) => {
@@ -36,6 +38,7 @@ export class ConfiguracionService {
         retiroConAprobacionDesde: numero('montos.retiro_con_aprobacion_desde', Number.MAX_SAFE_INTEGER),
       },
       cuentasPendientesMaximas: numero('cuentas.pendientes_maximas', 3),
+      retiro: { comisionPb: numero('retiro.comision_pb', 0), diasSinCarga: numero('retiro.dias_sin_carga', 0) },
     };
   }
 }

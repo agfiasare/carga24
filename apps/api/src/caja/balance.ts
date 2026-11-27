@@ -8,11 +8,16 @@ export interface Balance {
   cantidadRetiros: number;
   /** Lo que transfirieron los jugadores. */
   ingresos: number;
-  /** Parte de los ingresos que es ganancia. */
+  /** Ganancia: comisión de las cargas (sobre el neto de impuesto) + comisión de retiros. */
   comision: number;
   /** Fichas acreditadas. */
   cargasNetas: number;
+  /** Lo que se les transfirió a los jugadores por retiros. */
   premios: number;
+  /** Fichas que salieron por retiros (lo pedido, antes de la comisión de retiro). */
+  retirosFichas: number;
+  /** Impuesto de la plataforma sobre las cargas. */
+  impuesto: number;
   /** ingresos − premios. */
   resultado: number;
 }
@@ -23,7 +28,7 @@ export async function balance(tx: Pick<Tx, 'pedido'>, donde: Prisma.PedidoWhereI
     by: ['tipo'],
     where: { ...donde, estado: { in: ['acreditado', 'pagado'] } },
     _count: { _all: true },
-    _sum: { monto: true, montoPagado: true, ganancia: true },
+    _sum: { monto: true, montoPagado: true, ganancia: true, impuesto: true },
   });
   const carga = grupos.find((g) => g.tipo === 'carga');
   const retiro = grupos.find((g) => g.tipo === 'retiro');
@@ -33,9 +38,12 @@ export async function balance(tx: Pick<Tx, 'pedido'>, donde: Prisma.PedidoWhereI
     cantidadCargas: carga?._count._all ?? 0,
     cantidadRetiros: retiro?._count._all ?? 0,
     ingresos,
-    comision: carga?._sum.ganancia ?? 0,
+    comision: (carga?._sum.ganancia ?? 0) + (retiro?._sum.ganancia ?? 0),
     cargasNetas: carga?._sum.monto ?? 0,
     premios,
+    // En un retiro, lo pedido = lo transferido + la comisión de retiro.
+    retirosFichas: premios + (retiro?._sum.ganancia ?? 0),
+    impuesto: carga?._sum.impuesto ?? 0,
     resultado: ingresos - premios,
   };
 }

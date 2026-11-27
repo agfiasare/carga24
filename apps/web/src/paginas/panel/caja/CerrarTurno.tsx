@@ -78,7 +78,8 @@ export function CerrarTurno() {
         <>
           <p className={panel.explicacion}>
             {turno.usuario.nombre} · {formatearFecha(turno.abiertoEn)} de {formatearHora(turno.abiertoEn)} a {turno.cerradoEn ? formatearHora(turno.cerradoEn) : 'ahora'} ({formatearDuracion(turno.abiertoEn, turno.cerradoEn ?? Date.now())})
-            {turno.cerradoPor && turno.cerradoPor.id !== turno.usuario.id ? ` · lo cerró ${turno.cerradoPor.nombre}` : ''}
+            {turno.cerradoPor && turno.cerradoPor.id !== turno.usuario.id ? ` · lo cerró ${turno.cerradoPor.nombre}` : ''} ·{' '}
+            <Link to={`/panel/turnos/${turno.id}/comprobante`}>Ver comprobante con el detalle de movimientos</Link>
           </p>
           <div className={panel.columnas}>
             <section className={panel.tarjeta} aria-labelledby="titulo-balance">

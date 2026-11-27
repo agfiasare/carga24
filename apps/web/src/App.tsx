@@ -14,6 +14,7 @@ import { Registro } from './paginas/jugador/Registro';
 import { IngresoPanel } from './paginas/panel/IngresoPanel';
 import { Caja } from './paginas/panel/caja/Caja';
 import { CerrarTurno } from './paginas/panel/caja/CerrarTurno';
+import { ComprobanteTurno } from './paginas/panel/caja/ComprobanteTurno';
 import { Rendiciones } from './paginas/panel/caja/Rendiciones';
 import { ProveedorTurno } from './paginas/panel/caja/turno';
 import { Cola } from './paginas/panel/cola/Cola';
@@ -92,6 +93,7 @@ function RutasPanel() {
             <Route path="/panel" element={<InicioPanel />} />
             <Route path="/panel/cola" element={<Cola />} />
             <Route path="/panel/turnos/:id" element={<CerrarTurno />} />
+            <Route path="/panel/turnos/:id/comprobante" element={<ComprobanteTurno />} />
             <Route path="/panel/caja" element={<Caja />} />
             <Route path="/panel/rendiciones" element={<Rendiciones />} />
             <Route path="/panel/jugadores" element={<Jugadores />} />

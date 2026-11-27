@@ -39,6 +39,8 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
     retiroConAprobacionDesde: pesos(config.montos.retiroConAprobacionDesde),
   });
   const [pendientes, setPendientes] = useState(String(config.cuentasPendientesMaximas));
+  const [retiroPct, setRetiroPct] = useState(porcentaje(config.retiro?.comisionPb ?? 0));
+  const [retiroDias, setRetiroDias] = useState(String(config.retiro?.diasSinCarga ?? 0));
   const [pago, setPago] = useState(config.pago);
   const [horario, setHorario] = useState(config.horario);
   const [whatsapp, setWhatsapp] = useState(config.whatsapp ?? '');
@@ -48,9 +50,12 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
 
   const pb = leerPorcentaje(pct);
   const impuestoPb = leerPorcentaje(impuesto);
+  const retiroPb = leerPorcentaje(retiroPct);
+  const diasSinCarga = Number(retiroDias);
+  const diasInvalidos = !Number.isInteger(diasSinCarga) || diasSinCarga < 0 || diasSinCarga > 365;
   const montosLeidos = Object.fromEntries(Object.entries(montos).map(([k, v]) => [k, leerPesos(v)])) as Record<keyof typeof montos, number | null>;
   const cantidadPendientes = Number(pendientes);
-  const invalido = pb === null || impuestoPb === null || Object.values(montosLeidos).some((v) => v === null) || !Number.isInteger(cantidadPendientes) || cantidadPendientes < 1 || cantidadPendientes > 10;
+  const invalido = pb === null || impuestoPb === null || retiroPb === null || diasInvalidos || Object.values(montosLeidos).some((v) => v === null) || !Number.isInteger(cantidadPendientes) || cantidadPendientes < 1 || cantidadPendientes > 10;
   const cambiaComision = pb !== config.comision.porcentajePb || modo !== config.comision.modo || impuestoPb !== (config.comision.impuestoPb ?? 0);
   const ejemplo = pb !== null && impuestoPb !== null ? calcularCarga(1_000_000, pb, modo, impuestoPb) : null;
 
@@ -60,6 +65,7 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
       comision: { modo, porcentajePb: pb!, impuestoPb: impuestoPb! },
       montos: montosLeidos as Config['montos'],
       cuentasPendientesMaximas: cantidadPendientes,
+      retiro: { comisionPb: retiroPb!, diasSinCarga },
       pago,
       horario,
       whatsapp: whatsapp.replace(/\D/g, ''),
@@ -140,6 +146,27 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
             error={invalido && (cantidadPendientes < 1 || cantidadPendientes > 10 || !Number.isInteger(cantidadPendientes)) ? 'Entre 1 y 10' : undefined}
           />
         </div>
+      </section>
+
+      <section className={clases.tarjeta} aria-labelledby="t-retiro">
+        <h2 id="t-retiro">Comisión de retiro</h2>
+        <p className={clases.explicacion}>Se cobra a quien pide un retiro sin haber cargado con ustedes y se descuenta de lo que se le transfiere. Con 0 % no se cobra.</p>
+        <div className={clases.dosCampos}>
+          <CampoFormulario etiqueta="Porcentaje de retiro" inputMode="decimal" value={retiroPct} onChange={(e) => setRetiroPct(e.target.value)} error={retiroPb === null ? 'Entre 0 y 50' : undefined} />
+          <CampoFormulario
+            etiqueta="Sin cargas en los últimos (días)"
+            ayuda="0 = solo si nunca cargó con ustedes."
+            inputMode="numeric"
+            value={retiroDias}
+            onChange={(e) => setRetiroDias(e.target.value)}
+            error={diasInvalidos ? 'Entre 0 y 365' : undefined}
+          />
+        </div>
+        {retiroPb ? (
+          <p className={clases.explicacion}>
+            Ejemplo: pide {formatearPesos(1_000_000)}, se le transfieren <strong>{formatearPesos(1_000_000 - Math.round((1_000_000 * retiroPb) / 10_000))}</strong>.
+          </p>
+        ) : null}
       </section>
 
       <section className={clases.tarjeta} aria-labelledby="t-pago">

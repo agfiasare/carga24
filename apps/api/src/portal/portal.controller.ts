@@ -73,8 +73,8 @@ export class PortalController {
   ) {}
 
   @Get('parametros')
-  parametros() {
-    return this.portal.parametros();
+  parametros(@Usuario() usuario: UsuarioAutenticado) {
+    return this.portal.parametros(usuario.id);
   }
 
   @Get('cuentas')

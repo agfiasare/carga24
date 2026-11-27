@@ -81,6 +81,7 @@ const config: Config = {
   comision: { modo: 'recargo', porcentajePb: 500, impuestoPb: 0 },
   montos: { cargaMinima: 100_000, cargaMaxima: 50_000_000, retiroMinimo: 200_000, retiroConAprobacionDesde: 10_000_000 },
   cuentasPendientesMaximas: 3,
+  retiro: { comisionPb: 0, diasSinCarga: 0 },
   pago: { alias: '', titular: '', banco: '' },
   horario: '',
   whatsapp: '',

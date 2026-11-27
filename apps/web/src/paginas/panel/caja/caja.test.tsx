@@ -8,6 +8,7 @@ import { ProveedorSesionStaff } from '../../../sesion/sesion';
 import { apiFalsa, respuesta } from '../../../test/apiFalsa';
 import { Caja } from './Caja';
 import { CerrarTurno } from './CerrarTurno';
+import { ComprobanteTurno } from './ComprobanteTurno';
 import { Rendiciones } from './Rendiciones';
 
 const yo = (permisos: readonly string[] = TODOS_LOS_PERMISOS, id = 'laura') => ({ id, nombreUsuario: id, nombreVisible: 'Laura', perfil: { id: 'p', nombre: 'Admin' }, permisos });
@@ -43,6 +44,8 @@ const turno: ResumenTurno = {
   comision: 10_350_000,
   cargasNetas: 334_650_000,
   premios: 210_000_000,
+  retirosFichas: 210_000_000,
+  impuesto: 0,
   resultado: 135_000_000,
   cajaAntes: -40_000_000,
   tomados: [{ id: 1291, tipo: 'carga', monto: 2_500_000 }],
@@ -178,3 +181,38 @@ describe('Rendiciones', () => {
     expect(await screen.findByText('Rendición registrada.')).toBeInTheDocument();
   });
 });
+
+describe('Comprobante de turno', () => {
+  it('muestra el resumen como ticket y cada movimiento con su detalle', async () => {
+    apiFalsa({
+      'GET /auth/staff/yo': respuesta(200, yo()),
+      'GET /turnos/t1/comprobante': respuesta(200, {
+        ...turno,
+        cerradoEn: ahora,
+        cantidadCargas: 1,
+        cantidadRetiros: 1,
+        ingresos: 1_000_000,
+        cargasNetas: 970_000,
+        impuesto: 25_000,
+        comision: 44_250,
+        premios: 985_000,
+        retirosFichas: 1_000_000,
+        resultado: 15_000,
+        pedidos: [
+          { id: 11, tipo: 'carga', canal: 'web', monto: 970_000, montoPagado: 1_000_000, ganancia: 29_250, impuesto: 25_000, ejecutadoEn: ahora, jugador: 'ana' },
+          { id: 12, tipo: 'retiro', canal: 'manual', monto: 985_000, montoPagado: 1_000_000, ganancia: 15_000, impuesto: 0, ejecutadoEn: ahora, jugador: 'nuevo' },
+        ],
+      }),
+    });
+    montar('/panel/turnos/t1/comprobante', '/panel/turnos/:id/comprobante', <ComprobanteTurno />);
+    const ticket = await screen.findByRole('article', { name: 'Comprobante' });
+    expect(within(ticket).getByText('1 CARGAS:').nextSibling).toHaveTextContent('$ 10.000');
+    expect(within(ticket).getByText('impuesto plataforma').nextSibling).toHaveTextContent('$ 250');
+    expect(within(ticket).getByText('comisión de retiro').nextSibling).toHaveTextContent('$ 150');
+    expect(within(ticket).getByText('RDO NETO (plataforma):').nextSibling).toHaveTextContent('−$ 300');
+    expect(within(ticket).getByText('DETALLE DE MOVIMIENTOS (2)')).toBeInTheDocument();
+    expect(within(ticket).getByText(/#12 RETIRO/)).toBeInTheDocument();
+    expect(within(ticket).getByText('nuevo · WhatsApp')).toBeInTheDocument();
+  });
+});
+

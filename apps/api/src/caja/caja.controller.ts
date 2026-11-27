@@ -34,6 +34,11 @@ export class CajaController {
     return this.caja.resumen(id, actor);
   }
 
+  @Get('turnos/:id/comprobante')
+  comprobante(@Param('id', ParseUUIDPipe) id: string, @Usuario() actor: UsuarioAutenticado) {
+    return this.caja.comprobante(id, actor);
+  }
+
   @Post('turnos/:id/cierre')
   @HttpCode(200)
   cerrar(@Param('id', ParseUUIDPipe) id: string, @Body(new Validar(esquemaCierre)) datos: DatosCierre, @Usuario() actor: UsuarioAutenticado, @Req() peticion: Peticion) {

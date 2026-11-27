@@ -45,6 +45,8 @@ const turno: Turno = {
   comision: 10_350_000,
   cargasNetas: 334_650_000,
   premios: 210_000_000,
+  retirosFichas: 210_000_000,
+  impuesto: 0,
   resultado: 135_000_000,
 };
 const conTurno: TurnoActual = { turno, requiereTurno: true, caja: -40_000_000, ultimoCierre: { usuario: 'Martín', cerradoEn: ahora } };
