@@ -92,7 +92,7 @@ function DatosJugador({ jugador, alGuardar }: { jugador: JugadorPanel; alGuardar
           <dd>{formatearFecha(jugador.creadoEn)}</dd>
         </dl>
         {editable ? (
-          <div className={clases.filaBotones}>
+          <div className={clases.acciones}>
             <Boton type="submit" cargando={cargando} disabled={Object.keys(cambios).length === 0}>
               Guardar cambios
             </Boton>

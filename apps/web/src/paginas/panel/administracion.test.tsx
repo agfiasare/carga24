@@ -100,8 +100,12 @@ describe('Configuración', () => {
     await userEvent.clear(pct);
     await userEvent.type(pct, '7,5');
     expect(screen.getByText(/Ejemplo con/)).toHaveTextContent('transfiere $ 10.750');
+    // Cada parte está en su submenú; lo escrito no se pierde al cambiar.
+    await userEvent.click(screen.getByRole('button', { name: 'Montos y cuentas' }));
+    expect(screen.queryByLabelText('Porcentaje')).not.toBeInTheDocument();
     await userEvent.clear(screen.getByLabelText('Carga mínima'));
     await userEvent.type(screen.getByLabelText('Carga mínima'), '2.000');
+    await userEvent.click(screen.getByRole('button', { name: 'Pagos y atención' }));
     await userEvent.type(screen.getByLabelText('Alias o CBU'), 'carga24.pagos');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar configuración' }));
     const modal = screen.getByRole('dialog', { name: '¿Cambiás la comisión?' });

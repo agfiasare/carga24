@@ -1,6 +1,7 @@
 import { calcularCarga, formatearPesos } from '@carga24/shared';
 import { Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { useSearchParams } from 'react-router';
 import { administracion, type Configuracion as Config, type Plataforma } from '../../api/administracion';
 import { useAccion } from '../../api/useAccion';
 import { useConsulta } from '../../api/useConsulta';
@@ -16,19 +17,40 @@ const leerPorcentaje = (texto: string): number | null => {
   return texto.trim() !== '' && Number.isFinite(n) && n >= 0 && n <= 50 ? Math.round(n * 100) : null;
 };
 
+type Seccion = 'comisiones' | 'montos' | 'atencion' | 'plataformas';
+
+const SECCIONES: { clave: Seccion; texto: string; permiso: 'configuracion.editar' | 'plataformas.gestionar' }[] = [
+  { clave: 'comisiones', texto: 'Comisiones', permiso: 'configuracion.editar' },
+  { clave: 'montos', texto: 'Montos y cuentas', permiso: 'configuracion.editar' },
+  { clave: 'atencion', texto: 'Pagos y atención', permiso: 'configuracion.editar' },
+  { clave: 'plataformas', texto: 'Plataformas', permiso: 'plataformas.gestionar' },
+];
+
+/** Configuración en submenús; la sección elegida queda en la dirección (?seccion=…). */
 export function Configuracion() {
   const { tiene } = usePermisos();
   const { datos, error, setDatos } = useConsulta(administracion.configuracion, []);
+  const [parametros, setParametros] = useSearchParams();
+  const visibles = SECCIONES.filter((s) => tiene(s.permiso));
+  const seccion = (visibles.find((s) => s.clave === parametros.get('seccion')) ?? visibles[0])?.clave;
   return (
     <PaginaPanel titulo="Configuración" requiere={['configuracion.editar', 'plataformas.gestionar']}>
+      <nav className={clases.pestanas} aria-label="Secciones de la configuración">
+        {visibles.map((s) => (
+          <button key={s.clave} type="button" className={clases.pestana} aria-current={s.clave === seccion ? 'page' : undefined} onClick={() => setParametros({ seccion: s.clave }, { replace: true })}>
+            {s.texto}
+          </button>
+        ))}
+      </nav>
       {error ? <Aviso tipo="error">{error.message}</Aviso> : null}
-      {datos && tiene('configuracion.editar') ? <Formulario config={datos} alGuardar={setDatos} /> : null}
-      {tiene('plataformas.gestionar') ? <Plataformas /> : null}
+      {/* El formulario queda montado entre pestañas: lo escrito no se pierde al cambiar. */}
+      {datos && tiene('configuracion.editar') ? <Formulario config={datos} alGuardar={setDatos} seccion={seccion} /> : null}
+      {seccion === 'plataformas' ? <Plataformas /> : null}
     </PaginaPanel>
   );
 }
 
-function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Config) => void }) {
+function Formulario({ config, alGuardar, seccion }: { config: Config; alGuardar: (c: Config) => void; seccion: Seccion | undefined }) {
   const [modo, setModo] = useState(config.comision.modo);
   const [pct, setPct] = useState(porcentaje(config.comision.porcentajePb));
   const [impuesto, setImpuesto] = useState(porcentaje(config.comision.impuestoPb ?? 0));
@@ -96,10 +118,12 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
   );
 
   return (
-    <form className={clases.pila} onSubmit={alEnviar} noValidate>
+    <form className={clases.pila} onSubmit={alEnviar} noValidate hidden={seccion === 'plataformas'}>
       {guardar.error ? <Aviso tipo="error">{guardar.error.message}</Aviso> : null}
       {guardado ? <Aviso tipo="ok">Configuración guardada. Los pedidos nuevos ya usan estos valores.</Aviso> : null}
 
+      {seccion === 'comisiones' ? (
+        <>
       <section className={clases.tarjeta} aria-labelledby="t-comision">
         <h2 id="t-comision">Comisión a jugadores</h2>
         <p className={clases.explicacion}>Cambiarla no modifica los pedidos ya creados: cada uno guarda la comisión con la que se calculó.</p>
@@ -131,23 +155,6 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
         ) : null}
       </section>
 
-      <section className={clases.tarjeta} aria-labelledby="t-montos">
-        <h2 id="t-montos">Montos (en pesos)</h2>
-        <div className={clases.dosCampos}>
-          {campoMonto('cargaMinima', 'Carga mínima')}
-          {campoMonto('cargaMaxima', 'Carga máxima')}
-          {campoMonto('retiroMinimo', 'Retiro mínimo')}
-          {campoMonto('retiroConAprobacionDesde', 'Retiros con aprobación desde', 'Desde este monto, un supervisor tiene que aprobarlo.')}
-          <CampoFormulario
-            etiqueta="Cuentas sin verificar por jugador"
-            inputMode="numeric"
-            value={pendientes}
-            onChange={(e) => setPendientes(e.target.value)}
-            error={invalido && (cantidadPendientes < 1 || cantidadPendientes > 10 || !Number.isInteger(cantidadPendientes)) ? 'Entre 1 y 10' : undefined}
-          />
-        </div>
-      </section>
-
       <section className={clases.tarjeta} aria-labelledby="t-retiro">
         <h2 id="t-retiro">Comisión de retiro</h2>
         <p className={clases.explicacion}>Se cobra a quien pide un retiro sin haber cargado con ustedes y se descuenta de lo que se le transfiere. Con 0 % no se cobra.</p>
@@ -169,6 +176,30 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
         ) : null}
       </section>
 
+        </>
+      ) : null}
+
+      {seccion === 'montos' ? (
+      <section className={clases.tarjeta} aria-labelledby="t-montos">
+        <h2 id="t-montos">Montos (en pesos)</h2>
+        <div className={clases.dosCampos}>
+          {campoMonto('cargaMinima', 'Carga mínima')}
+          {campoMonto('cargaMaxima', 'Carga máxima')}
+          {campoMonto('retiroMinimo', 'Retiro mínimo')}
+          {campoMonto('retiroConAprobacionDesde', 'Retiros con aprobación desde', 'Desde este monto, un supervisor tiene que aprobarlo.')}
+          <CampoFormulario
+            etiqueta="Cuentas sin verificar por jugador"
+            inputMode="numeric"
+            value={pendientes}
+            onChange={(e) => setPendientes(e.target.value)}
+            error={invalido && (cantidadPendientes < 1 || cantidadPendientes > 10 || !Number.isInteger(cantidadPendientes)) ? 'Entre 1 y 10' : undefined}
+          />
+        </div>
+      </section>
+
+      ) : null}
+
+      {seccion === 'atencion' ? (
       <section className={clases.tarjeta} aria-labelledby="t-pago">
         <h2 id="t-pago">Datos para transferir y atención</h2>
         <p className={clases.explicacion}>Los ve el jugador al pedir una carga y en la landing.</p>
@@ -189,15 +220,17 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
         </div>
       </section>
 
-      <div className={clases.barra}>
-        <Boton type="submit" tamano="lg" cargando={guardar.cargando} disabled={invalido}>
-          Guardar configuración
-        </Boton>
+      ) : null}
+
+      <div className={clases.acciones}>
         {config.actualizadoEn ? (
           <span className={clases.total}>
             Último cambio: {formatearFecha(config.actualizadoEn)} {formatearHora(config.actualizadoEn)}
           </span>
         ) : null}
+        <Boton type="submit" tamano="lg" cargando={guardar.cargando} disabled={invalido}>
+          Guardar configuración
+        </Boton>
       </div>
       {confirmar ? (
         <ModalConfirmacion titulo="¿Cambiás la comisión?" textoConfirmar="Sí, cambiar" cargando={guardar.cargando} alConfirmar={() => void enviar()} alCerrar={() => setConfirmar(false)}>

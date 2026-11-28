@@ -115,7 +115,7 @@ function DatosStaff({ persona, perfiles: lista, esUnoMismo, alGuardar }: Seccion
           <dt>Alta</dt>
           <dd>{formatearFecha(persona.creadoEn)}</dd>
         </dl>
-        <div className={clases.filaBotones}>
+        <div className={clases.acciones}>
           <Boton type="submit" cargando={cargando} disabled={Object.keys(cambios).length === 0 || comisionInvalida}>
             Guardar cambios
           </Boton>

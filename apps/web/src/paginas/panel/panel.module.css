@@ -329,3 +329,42 @@
     transition: none;
   }
 }
+
+/* Fila de botones de un formulario: siempre a la derecha. */
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+
+/* Submenú de una página (pestañas). */
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.pestana {
+  min-height: var(--tamano-tactil);
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--color-texto-secundario);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pestana:hover {
+  color: var(--color-texto);
+}
+
+.pestana[aria-current='page'] {
+  border-bottom-color: var(--color-texto);
+  color: var(--color-texto);
+}
