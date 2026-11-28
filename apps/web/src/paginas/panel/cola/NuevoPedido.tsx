@@ -80,7 +80,7 @@ export function NuevoPedido({ alCerrar, alCrear }: { alCerrar: () => void; alCre
 
   const monto = leerPesos(montoTexto);
   const cuentasValidas = cuentas.filter((c) => (tipo === 'retiro' ? c.estado === 'verificada' : c.estado !== 'rechazada'));
-  const calculo = tipo === 'carga' && monto && parametros ? calcularCarga(monto, parametros.comision.porcentajePb, parametros.comision.modo) : null;
+  const calculo = tipo === 'carga' && monto && parametros ? calcularCarga(monto, parametros.comision.porcentajePb, parametros.comision.modo, parametros.comision.impuestoPb) : null;
   const etiquetaMonto =
     tipo === 'retiro' ? 'Monto a retirar' : parametros?.comision.modo === 'descuento' ? 'Monto que transfiere' : 'Monto a cargar';
 
@@ -201,6 +201,12 @@ export function NuevoPedido({ alCerrar, alCrear }: { alCerrar: () => void; alCre
           <p className={clases.calculo} aria-live="polite">
             Transfiere <strong>{formatearPesos(calculo.pagado)}</strong> · se acreditan <strong>{formatearPesos(calculo.acreditado)}</strong> · comisión{' '}
             {formatearPesos(calculo.ganancia)} ({parametros.comision.porcentajePb / 100} % {parametros.comision.modo})
+          </p>
+        ) : null}
+        {tipo === 'retiro' && parametros?.retiro && parametros.retiro.comisionPb > 0 ? (
+          <p className={clases.calculo}>
+            Si el jugador no cargó con nosotros{parametros.retiro.diasSinCarga ? ` en los últimos ${parametros.retiro.diasSinCarga} días` : ''}, se descuenta una comisión del{' '}
+            {String(parametros.retiro.comisionPb / 100).replace('.', ',')} % de lo que se le transfiere. El detalle del pedido lo muestra.
           </p>
         ) : null}
 

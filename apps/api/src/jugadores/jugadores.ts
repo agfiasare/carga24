@@ -86,6 +86,36 @@ export class JugadoresService {
     return jugador;
   }
 
+  /** Historial del jugador para su ficha: totales y sus últimos pedidos, incluidos los rechazados. */
+  async pedidos(id: string) {
+    await this.obtener(id);
+    const [grupos, pedidos] = await Promise.all([
+      this.prisma.pedido.groupBy({ by: ['tipo', 'estado'], where: { jugadorId: id }, _count: { _all: true }, _sum: { monto: true, ganancia: true } }),
+      this.prisma.pedido.findMany({
+        where: { jugadorId: id },
+        orderBy: { id: 'desc' },
+        take: 200,
+        select: {
+          id: true, tipo: true, estado: true, canal: true, monto: true, montoPagado: true, ganancia: true, motivoRechazo: true, creadoEn: true, ejecutadoEn: true,
+          tomadoPor: { select: { nombreVisible: true, nombreUsuario: true } },
+        },
+      }),
+    ]);
+    const suma = (tipo: 'carga' | 'retiro', estado: string) => grupos.find((g) => g.tipo === tipo && g.estado === estado);
+    const cuenta = (filtro: (g: (typeof grupos)[number]) => boolean) => grupos.filter(filtro).reduce((n, g) => n + g._count._all, 0);
+    return {
+      totales: {
+        cargas: { cantidad: suma('carga', 'acreditado')?._count._all ?? 0, monto: suma('carga', 'acreditado')?._sum.monto ?? 0 },
+        retiros: { cantidad: suma('retiro', 'pagado')?._count._all ?? 0, monto: suma('retiro', 'pagado')?._sum.monto ?? 0 },
+        ganancia: grupos.filter((g) => g.estado === 'acreditado' || g.estado === 'pagado').reduce((n, g) => n + (g._sum.ganancia ?? 0), 0),
+        rechazados: cuenta((g) => g.estado === 'rechazado'),
+        enCurso: cuenta((g) => !['acreditado', 'pagado', 'rechazado'].includes(g.estado)),
+        pedidos: cuenta(() => true),
+      },
+      pedidos: pedidos.map(({ tomadoPor, ...p }) => ({ ...p, operador: tomadoPor ? (tomadoPor.nombreVisible ?? tomadoPor.nombreUsuario) : null })),
+    };
+  }
+
   /** Cuentas bancarias del jugador (para elegir origen o destino al registrar un pedido). */
   async cuentas(id: string) {
     await this.obtener(id);
@@ -184,6 +214,12 @@ export class JugadoresController {
   @RequierePermisos('jugadores.ver')
   obtener(@Param('id', ParseUUIDPipe) id: string) {
     return this.jugadores.obtener(id);
+  }
+
+  @Get(':id/pedidos')
+  @RequierePermisos('jugadores.ver', 'pedidos.ver')
+  pedidos(@Param('id', ParseUUIDPipe) id: string) {
+    return this.jugadores.pedidos(id);
   }
 
   @Get(':id/cuentas')

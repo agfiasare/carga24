@@ -15,9 +15,21 @@ const texto = (max: number) => z.string().trim().max(max);
 
 const esquemaConfiguracion = z
   .object({
-    comision: z.object({ modo: z.enum(['recargo', 'descuento']), porcentajePb: z.number().int().min(0).max(5_000, 'La comisión no puede superar el 50 %') }).partial(),
+    comision: z
+      .object({
+        modo: z.enum(['recargo', 'descuento']),
+        porcentajePb: z.number().int().min(0).max(5_000, 'La comisión no puede superar el 50 %'),
+        impuestoPb: z.number().int().min(0).max(5_000, 'El impuesto no puede superar el 50 %'),
+      })
+      .partial(),
     montos: z.object({ cargaMinima: centavos, cargaMaxima: centavos, retiroMinimo: centavos, retiroConAprobacionDesde: centavos }).partial(),
     cuentasPendientesMaximas: z.number().int().min(1).max(10),
+    retiro: z
+      .object({
+        comisionPb: z.number().int().min(0).max(5_000, 'La comisión no puede superar el 50 %'),
+        diasSinCarga: z.number().int().min(0).max(365, 'Hasta 365 días'),
+      })
+      .partial(),
     pago: z.object({ alias: texto(40), titular: texto(80), banco: texto(60) }).partial(),
     horario: texto(120),
     whatsapp: z.string().trim().regex(/^(\d{10,15})?$/, 'El WhatsApp va con código de país, solo números (ej.: 5491155550000)'),
@@ -35,11 +47,14 @@ type DatosEditarPlataforma = z.infer<typeof esquemaEditarPlataforma>;
 const CLAVES = {
   'comision.modo': ['comision', 'modo'],
   'comision.porcentaje_pb': ['comision', 'porcentajePb'],
+  'comision.impuesto_pb': ['comision', 'impuestoPb'],
   'montos.carga_minima': ['montos', 'cargaMinima'],
   'montos.carga_maxima': ['montos', 'cargaMaxima'],
   'montos.retiro_minimo': ['montos', 'retiroMinimo'],
   'montos.retiro_con_aprobacion_desde': ['montos', 'retiroConAprobacionDesde'],
   'cuentas.pendientes_maximas': ['cuentasPendientesMaximas'],
+  'retiro.comision_pb': ['retiro', 'comisionPb'],
+  'retiro.dias_sin_carga': ['retiro', 'diasSinCarga'],
   'pago.alias': ['pago', 'alias'],
   'pago.titular': ['pago', 'titular'],
   'pago.banco': ['pago', 'banco'],

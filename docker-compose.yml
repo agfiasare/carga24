@@ -55,6 +55,8 @@ services:
       # Cifra los secretos de 2FA del staff. Si se pierde, todo el staff tiene que volver a configurar el 2FA.
       CLAVE_CIFRADO: ${CLAVE_CIFRADO:?Falta CLAVE_CIFRADO en .env}
       DIRECTORIO_ARCHIVOS: /datos/archivos
+      # "no" desactiva el código de verificación del staff (solo para pruebas).
+      DOS_FACTORES: ${DOS_FACTORES:-si}
     volumes:
       # Comprobantes (fotos y PDF). Entran en el backup diario.
       - archivos:/datos/archivos

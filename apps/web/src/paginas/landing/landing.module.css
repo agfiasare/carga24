@@ -1,0 +1,276 @@
+/* Landing: tema oscuro de marca, encabezado, cierre, pie y lo que comparten las secciones
+   (contenedor, botones, títulos). Los colores propios de las ilustraciones se definen acá una sola vez. */
+.pagina {
+  --texto-suave: #c9dccf;
+  --borde-fuerte: #3d7a61;
+  --verde-hondo: #0b2e21;
+  --verde-sello: #0b6b45;
+  --papel: #f3ead3;
+  --papel-oscuro: #e5dcc3;
+  --carta: #f6efdc;
+  --tinta: #3d4a3a;
+  --tinta-cafe: #4a3b1a;
+  --tinta-ocre: #7a6a45;
+  --chat-burbuja: #d6f0c9;
+  --chat-texto: #1c2b16;
+  --chat-hora: #5d6b55;
+  --palo-rojo: #b8322a;
+  --oro-claro: #f0c766;
+
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  overflow-x: hidden;
+}
+
+.contenedor {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 96px 24px;
+  box-sizing: border-box;
+}
+
+.cabecera {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 28px;
+}
+
+.logoNombre {
+  height: 38px;
+  width: auto;
+}
+
+.secciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-size: 15px;
+}
+
+.secciones a {
+  color: var(--texto-suave);
+  text-decoration: none;
+}
+
+.secciones a:hover {
+  color: var(--color-primario);
+}
+
+.accesos {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.botonOro,
+.botonLinea,
+.botonVerde {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radio-pill);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.botonOro {
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
+}
+
+.botonOro:hover {
+  filter: brightness(1.08);
+}
+
+.botonLinea {
+  border: 1px solid var(--borde-fuerte);
+  color: var(--color-texto);
+  font-weight: 600;
+}
+
+.botonLinea:hover {
+  border-color: var(--color-primario);
+}
+
+.botonVerde {
+  height: 48px;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}
+
+.grande {
+  height: 56px;
+  padding: 0 28px;
+  font-size: 17px;
+}
+
+.botonOro.grande {
+  box-shadow: 0 10px 30px rgb(233 185 73 / 0.25);
+}
+
+.mediano {
+  height: 52px;
+  padding: 0 26px;
+  font-size: 16px;
+}
+
+.titulo,
+.tituloSeccion {
+  margin: 0;
+  font-family: var(--fuente-display);
+  font-style: italic;
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.titulo {
+  font-size: clamp(44px, 6.4vw, 84px);
+}
+
+.tituloSeccion {
+  font-size: clamp(38px, 5.4vw, 76px);
+}
+
+.oro {
+  color: var(--color-primario);
+}
+
+.verde {
+  color: var(--color-ok);
+}
+
+.bajada {
+  margin: 0;
+  max-width: 520px;
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--texto-suave);
+}
+
+.botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ---------- Cierre y pie ---------- */
+.cierre {
+  border-top: 1px solid var(--color-borde);
+  overflow: hidden;
+}
+
+.marquesina {
+  padding: 28px 0 0;
+  overflow: hidden;
+  font-family: var(--fuente-display);
+  font-style: italic;
+  font-weight: 900;
+  font-size: clamp(48px, 9vw, 120px);
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--borde-fuerte);
+}
+
+/* La pista mide dos copias; moverla la mitad hace que el texto pase sin cortes. */
+.marquesinaPista {
+  display: flex;
+  width: max-content;
+  animation: desplazar 28s linear infinite;
+}
+
+.marquesinaTexto {
+  white-space: nowrap;
+  padding-right: 0.3em;
+}
+
+@keyframes desplazar {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.cierreContenido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 40px;
+}
+
+.cierreTexto {
+  max-width: 520px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.pie {
+  border-top: 1px solid var(--color-borde);
+}
+
+.contenedorPie {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 28px;
+  font-size: 14px;
+  color: var(--color-texto-secundario);
+}
+
+.contenedorPie a {
+  margin-left: auto;
+  color: var(--color-primario);
+}
+
+.logoPie {
+  height: 28px;
+  width: auto;
+}
+
+.edad {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mas18 {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--color-texto-secundario);
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .secciones {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Quien pide menos movimiento ve la franja quieta. */
+  .marquesinaPista {
+    animation: none;
+  }
+}

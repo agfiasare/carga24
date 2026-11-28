@@ -29,6 +29,13 @@ export const PERMISOS = {
   'reportes.exportar': { grupo: 'Reportes y comisiones', descripcion: 'Exportar a Excel' },
   'comisiones.ver_propias': { grupo: 'Reportes y comisiones', descripcion: 'Ver sus propias comisiones' },
   'liquidaciones.gestionar': { grupo: 'Reportes y comisiones', descripcion: 'Cerrar y pagar liquidaciones' },
+  // Caja y turnos
+  'turnos.opcional': { grupo: 'Caja y turnos', descripcion: 'Operar pedidos sin abrir turno (lo que acredita o paga va directo a la caja)' },
+  'turnos.cerrar_ajenos': { grupo: 'Caja y turnos', descripcion: 'Cerrar turnos de otras personas' },
+  'caja.ver': { grupo: 'Caja y turnos', descripcion: 'Ver la caja, los turnos y las rendiciones' },
+  'caja.liquidar': { grupo: 'Caja y turnos', descripcion: 'Registrar liquidaciones de la caja' },
+  'caja.ajustar': { grupo: 'Caja y turnos', descripcion: 'Cargar ajustes en la caja' },
+  'rendiciones.registrar': { grupo: 'Caja y turnos', descripcion: 'Registrar rendiciones' },
   // Contenido y promociones
   'novedades.publicar': { grupo: 'Contenido y promociones', descripcion: 'Publicar novedades' },
   'avisos.enviar': { grupo: 'Contenido y promociones', descripcion: 'Enviar avisos a jugadores' },
@@ -81,6 +88,8 @@ export const PERFILES_INICIALES: Record<string, Permiso[]> = {
     'novedades.publicar',
     'avisos.enviar',
     'promos.gestionar',
+    'turnos.cerrar_ajenos',
+    'caja.ver',
   ],
   Admin: TODOS_LOS_PERMISOS,
 };

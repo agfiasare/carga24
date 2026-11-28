@@ -1,0 +1,92 @@
+/* ---------- Preguntas ---------- */
+.preguntas {
+  border-top: 1px solid var(--color-borde);
+}
+
+.preguntasContenido {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px;
+}
+
+.preguntasContenido .titulo {
+  flex: 1 1 320px;
+  align-self: flex-start;
+  font-size: clamp(36px, 4.6vw, 60px);
+}
+
+.lista {
+  flex: 2 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.pregunta {
+  border-top: 1px solid var(--color-borde);
+}
+
+.pregunta button {
+  width: 100%;
+  min-height: 72px;
+  padding: 18px 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border: 0;
+  background: transparent;
+  color: var(--color-texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.numero {
+  width: 28px;
+  flex-shrink: 0;
+  font-family: var(--fuente-display);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--color-primario);
+}
+
+.textoPregunta {
+  flex: 1;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.mas {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--borde-fuerte);
+  color: var(--color-primario);
+  font-size: 24px;
+  transition: transform 0.2s;
+}
+
+.masAbierto {
+  border-color: var(--color-primario);
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
+  transform: rotate(45deg);
+}
+
+.respuesta {
+  margin: 0;
+  padding: 0 54px 22px 46px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--texto-suave);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mas {
+    transition: none;
+  }
+}

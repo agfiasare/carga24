@@ -53,6 +53,23 @@ describe('Ingreso al panel', () => {
     expect(await screen.findByText('Panel adentro')).toBeInTheDocument();
   });
 
+  it('sin 2FA en el servidor (DOS_FACTORES=no) entra con la contraseña', async () => {
+    let adentro = false;
+    apiFalsa({
+      'GET /auth/staff/yo': () => (adentro ? respuesta(200, staff) : respuesta(401, { mensaje: 'Tenés que iniciar sesión' })),
+      'GET /auth/staff/estado': respuesta(401, { mensaje: 'Tenés que iniciar sesión' }),
+      'POST /auth/staff/ingreso': () => {
+        adentro = true;
+        return respuesta(200, { siguientePaso: 'listo' });
+      },
+    });
+    montar();
+    await userEvent.type(await screen.findByLabelText('Usuario'), 'laura');
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'clave-de-laura');
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(await screen.findByText('Panel adentro')).toBeInTheDocument();
+  });
+
   it('avisa si las contraseñas no coinciden', async () => {
     apiFalsa({
       'GET /auth/staff/yo': respuesta(401, {}),

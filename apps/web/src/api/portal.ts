@@ -34,9 +34,11 @@ export interface PedidoJugador {
 export type PedidoJugadorDetalle = PedidoJugador & { historial: { a: EstadoPedido; creadoEn: string }[] };
 
 export interface ParametrosPortal {
-  comision: { modo: ModoComision; porcentajePb: number };
+  comision: { modo: ModoComision; porcentajePb: number; impuestoPb: number };
   montos: { cargaMinima: number; cargaMaxima: number; retiroMinimo: number; retiroConAprobacionDesde: number };
   cuentasPendientesMaximas: number;
+  /** Comisión de retiro y si le corresponde a este jugador (no cargó con nosotros). */
+  retiro?: { comisionPb: number; aplica: boolean };
   datosPago: { alias: string; titular: string; banco: string };
   horario: string;
   whatsapp: string;

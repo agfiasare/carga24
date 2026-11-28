@@ -62,7 +62,7 @@
 }
 
 .indicadorValor {
-  font-family: var(--fuente-titulos);
+  font-family: var(--fuente-numeros, var(--fuente-titulos));
   font-size: 24px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -112,4 +112,11 @@
   .filtros {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* Pedidos de una fila abierta en un desglose. */
+.detalleFila {
+  padding: 12px !important;
+  white-space: normal !important;
+  background: var(--color-fondo);
 }

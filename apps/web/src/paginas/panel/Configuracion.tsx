@@ -1,6 +1,7 @@
 import { calcularCarga, formatearPesos } from '@carga24/shared';
 import { Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { useSearchParams } from 'react-router';
 import { administracion, type Configuracion as Config, type Plataforma } from '../../api/administracion';
 import { useAccion } from '../../api/useAccion';
 import { useConsulta } from '../../api/useConsulta';
@@ -16,21 +17,43 @@ const leerPorcentaje = (texto: string): number | null => {
   return texto.trim() !== '' && Number.isFinite(n) && n >= 0 && n <= 50 ? Math.round(n * 100) : null;
 };
 
+type Seccion = 'comisiones' | 'montos' | 'atencion' | 'plataformas';
+
+const SECCIONES: { clave: Seccion; texto: string; permiso: 'configuracion.editar' | 'plataformas.gestionar' }[] = [
+  { clave: 'comisiones', texto: 'Comisiones', permiso: 'configuracion.editar' },
+  { clave: 'montos', texto: 'Montos y cuentas', permiso: 'configuracion.editar' },
+  { clave: 'atencion', texto: 'Pagos y atención', permiso: 'configuracion.editar' },
+  { clave: 'plataformas', texto: 'Plataformas', permiso: 'plataformas.gestionar' },
+];
+
+/** Configuración en submenús; la sección elegida queda en la dirección (?seccion=…). */
 export function Configuracion() {
   const { tiene } = usePermisos();
   const { datos, error, setDatos } = useConsulta(administracion.configuracion, []);
+  const [parametros, setParametros] = useSearchParams();
+  const visibles = SECCIONES.filter((s) => tiene(s.permiso));
+  const seccion = (visibles.find((s) => s.clave === parametros.get('seccion')) ?? visibles[0])?.clave;
   return (
     <PaginaPanel titulo="Configuración" requiere={['configuracion.editar', 'plataformas.gestionar']}>
+      <nav className={clases.pestanas} aria-label="Secciones de la configuración">
+        {visibles.map((s) => (
+          <button key={s.clave} type="button" className={clases.pestana} aria-current={s.clave === seccion ? 'page' : undefined} onClick={() => setParametros({ seccion: s.clave }, { replace: true })}>
+            {s.texto}
+          </button>
+        ))}
+      </nav>
       {error ? <Aviso tipo="error">{error.message}</Aviso> : null}
-      {datos && tiene('configuracion.editar') ? <Formulario config={datos} alGuardar={setDatos} /> : null}
-      {tiene('plataformas.gestionar') ? <Plataformas /> : null}
+      {/* El formulario queda montado entre pestañas: lo escrito no se pierde al cambiar. */}
+      {datos && tiene('configuracion.editar') ? <Formulario config={datos} alGuardar={setDatos} seccion={seccion} /> : null}
+      {seccion === 'plataformas' ? <Plataformas /> : null}
     </PaginaPanel>
   );
 }
 
-function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Config) => void }) {
+function Formulario({ config, alGuardar, seccion }: { config: Config; alGuardar: (c: Config) => void; seccion: Seccion | undefined }) {
   const [modo, setModo] = useState(config.comision.modo);
   const [pct, setPct] = useState(porcentaje(config.comision.porcentajePb));
+  const [impuesto, setImpuesto] = useState(porcentaje(config.comision.impuestoPb ?? 0));
   const [montos, setMontos] = useState({
     cargaMinima: pesos(config.montos.cargaMinima),
     cargaMaxima: pesos(config.montos.cargaMaxima),
@@ -38,6 +61,8 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
     retiroConAprobacionDesde: pesos(config.montos.retiroConAprobacionDesde),
   });
   const [pendientes, setPendientes] = useState(String(config.cuentasPendientesMaximas));
+  const [retiroPct, setRetiroPct] = useState(porcentaje(config.retiro?.comisionPb ?? 0));
+  const [retiroDias, setRetiroDias] = useState(String(config.retiro?.diasSinCarga ?? 0));
   const [pago, setPago] = useState(config.pago);
   const [horario, setHorario] = useState(config.horario);
   const [whatsapp, setWhatsapp] = useState(config.whatsapp ?? '');
@@ -46,18 +71,23 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
   const guardar = useAccion(administracion.guardarConfiguracion);
 
   const pb = leerPorcentaje(pct);
+  const impuestoPb = leerPorcentaje(impuesto);
+  const retiroPb = leerPorcentaje(retiroPct);
+  const diasSinCarga = Number(retiroDias);
+  const diasInvalidos = !Number.isInteger(diasSinCarga) || diasSinCarga < 0 || diasSinCarga > 365;
   const montosLeidos = Object.fromEntries(Object.entries(montos).map(([k, v]) => [k, leerPesos(v)])) as Record<keyof typeof montos, number | null>;
   const cantidadPendientes = Number(pendientes);
-  const invalido = pb === null || Object.values(montosLeidos).some((v) => v === null) || !Number.isInteger(cantidadPendientes) || cantidadPendientes < 1 || cantidadPendientes > 10;
-  const cambiaComision = pb !== config.comision.porcentajePb || modo !== config.comision.modo;
-  const ejemplo = pb !== null ? calcularCarga(1_000_000, pb, modo) : null;
+  const invalido = pb === null || impuestoPb === null || retiroPb === null || diasInvalidos || Object.values(montosLeidos).some((v) => v === null) || !Number.isInteger(cantidadPendientes) || cantidadPendientes < 1 || cantidadPendientes > 10;
+  const cambiaComision = pb !== config.comision.porcentajePb || modo !== config.comision.modo || impuestoPb !== (config.comision.impuestoPb ?? 0);
+  const ejemplo = pb !== null && impuestoPb !== null ? calcularCarga(1_000_000, pb, modo, impuestoPb) : null;
 
   async function enviar() {
     if (invalido) return;
     const resultado = await guardar.ejecutar({
-      comision: { modo, porcentajePb: pb! },
+      comision: { modo, porcentajePb: pb!, impuestoPb: impuestoPb! },
       montos: montosLeidos as Config['montos'],
       cuentasPendientesMaximas: cantidadPendientes,
+      retiro: { comisionPb: retiroPb!, diasSinCarga },
       pago,
       horario,
       whatsapp: whatsapp.replace(/\D/g, ''),
@@ -88,10 +118,12 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
   );
 
   return (
-    <form className={clases.pila} onSubmit={alEnviar} noValidate>
+    <form className={clases.pila} onSubmit={alEnviar} noValidate hidden={seccion === 'plataformas'}>
       {guardar.error ? <Aviso tipo="error">{guardar.error.message}</Aviso> : null}
       {guardado ? <Aviso tipo="ok">Configuración guardada. Los pedidos nuevos ya usan estos valores.</Aviso> : null}
 
+      {seccion === 'comisiones' ? (
+        <>
       <section className={clases.tarjeta} aria-labelledby="t-comision">
         <h2 id="t-comision">Comisión a jugadores</h2>
         <p className={clases.explicacion}>Cambiarla no modifica los pedidos ya creados: cada uno guarda la comisión con la que se calculó.</p>
@@ -106,15 +138,48 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
             onChange={(e) => setModo(e.target.value as Config['comision']['modo'])}
           />
           <CampoFormulario etiqueta="Porcentaje" inputMode="decimal" value={pct} onChange={(e) => setPct(e.target.value)} error={pb === null ? 'Entre 0 y 50' : undefined} />
+          <CampoFormulario
+            etiqueta="Impuesto de la plataforma (%)"
+            ayuda="El que retiene la plataforma (por ejemplo, ley 27.346: 2,5). La ganancia es el porcentaje de arriba sobre lo transferido menos este impuesto."
+            inputMode="decimal"
+            value={impuesto}
+            onChange={(e) => setImpuesto(e.target.value)}
+            error={impuestoPb === null ? 'Entre 0 y 50' : undefined}
+          />
         </div>
         {ejemplo ? (
           <p className={clases.explicacion}>
-            Ejemplo con {formatearPesos(1_000_000)}: transfiere <strong>{formatearPesos(ejemplo.pagado)}</strong>, se acreditan <strong>{formatearPesos(ejemplo.acreditado)}</strong>, ganancia{' '}
-            {formatearPesos(ejemplo.ganancia)}.
+            Ejemplo con {formatearPesos(1_000_000)}: transfiere <strong>{formatearPesos(ejemplo.pagado)}</strong>, se acreditan <strong>{formatearPesos(ejemplo.acreditado)}</strong>
+            {ejemplo.impuesto > 0 ? `, impuesto ${formatearPesos(ejemplo.impuesto)}` : ''}, ganancia <strong>{formatearPesos(ejemplo.ganancia)}</strong>.
           </p>
         ) : null}
       </section>
 
+      <section className={clases.tarjeta} aria-labelledby="t-retiro">
+        <h2 id="t-retiro">Comisión de retiro</h2>
+        <p className={clases.explicacion}>Se cobra a quien pide un retiro sin haber cargado con ustedes y se descuenta de lo que se le transfiere. Con 0 % no se cobra.</p>
+        <div className={clases.dosCampos}>
+          <CampoFormulario etiqueta="Porcentaje de retiro" inputMode="decimal" value={retiroPct} onChange={(e) => setRetiroPct(e.target.value)} error={retiroPb === null ? 'Entre 0 y 50' : undefined} />
+          <CampoFormulario
+            etiqueta="Sin cargas en los últimos (días)"
+            ayuda="0 = solo si nunca cargó con ustedes."
+            inputMode="numeric"
+            value={retiroDias}
+            onChange={(e) => setRetiroDias(e.target.value)}
+            error={diasInvalidos ? 'Entre 0 y 365' : undefined}
+          />
+        </div>
+        {retiroPb ? (
+          <p className={clases.explicacion}>
+            Ejemplo: pide {formatearPesos(1_000_000)}, se le transfieren <strong>{formatearPesos(1_000_000 - Math.round((1_000_000 * retiroPb) / 10_000))}</strong>.
+          </p>
+        ) : null}
+      </section>
+
+        </>
+      ) : null}
+
+      {seccion === 'montos' ? (
       <section className={clases.tarjeta} aria-labelledby="t-montos">
         <h2 id="t-montos">Montos (en pesos)</h2>
         <div className={clases.dosCampos}>
@@ -132,6 +197,9 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
         </div>
       </section>
 
+      ) : null}
+
+      {seccion === 'atencion' ? (
       <section className={clases.tarjeta} aria-labelledby="t-pago">
         <h2 id="t-pago">Datos para transferir y atención</h2>
         <p className={clases.explicacion}>Los ve el jugador al pedir una carga y en la landing.</p>
@@ -152,20 +220,26 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
         </div>
       </section>
 
-      <div className={clases.barra}>
-        <Boton type="submit" tamano="lg" cargando={guardar.cargando} disabled={invalido}>
-          Guardar configuración
-        </Boton>
+      ) : null}
+
+      <div className={clases.acciones}>
         {config.actualizadoEn ? (
           <span className={clases.total}>
             Último cambio: {formatearFecha(config.actualizadoEn)} {formatearHora(config.actualizadoEn)}
           </span>
         ) : null}
+        <Boton type="submit" tamano="lg" cargando={guardar.cargando} disabled={invalido}>
+          Guardar configuración
+        </Boton>
       </div>
       {confirmar ? (
         <ModalConfirmacion titulo="¿Cambiás la comisión?" textoConfirmar="Sí, cambiar" cargando={guardar.cargando} alConfirmar={() => void enviar()} alCerrar={() => setConfirmar(false)}>
           <p>
-            Pasa de {porcentaje(config.comision.porcentajePb)} % ({config.comision.modo}) a <strong>{pct} % ({modo})</strong>. Aplica a los pedidos nuevos desde ahora; los anteriores no cambian.
+            Pasa de {porcentaje(config.comision.porcentajePb)} % ({config.comision.modo}, impuesto {porcentaje(config.comision.impuestoPb ?? 0)} %) a{' '}
+            <strong>
+              {pct} % ({modo}, impuesto {impuesto} %)
+            </strong>
+            . Aplica a los pedidos nuevos desde ahora; los anteriores no cambian.
           </p>
         </ModalConfirmacion>
       ) : null}

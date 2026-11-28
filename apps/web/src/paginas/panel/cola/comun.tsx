@@ -35,6 +35,14 @@ export function ResumenPedido({ pedido }: { pedido: Pedido }) {
           <dd className={clases.importe}>{formatearPesos(pedido.montoPagado)}</dd>
         </>
       ) : null}
+      {!carga && pedido.montoPagado !== null ? (
+        <>
+          <dt>Pide (fichas)</dt>
+          <dd>{formatearPesos(pedido.montoPagado)}</dd>
+          <dt>Comisión de retiro</dt>
+          <dd>{formatearPesos(pedido.ganancia)}</dd>
+        </>
+      ) : null}
       <dt>{carga ? 'Se acredita' : 'Se transfiere'}</dt>
       <dd className={clases.importe}>{formatearPesos(pedido.monto)}</dd>
       <dt>Medio</dt>

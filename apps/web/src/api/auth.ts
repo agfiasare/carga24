@@ -16,7 +16,7 @@ export interface StaffYo {
   permisos: string[];
 }
 
-export type PasoIngresoStaff = 'cambiar_contrasena' | 'configurar_2fa' | 'verificar_2fa';
+export type PasoIngresoStaff = 'cambiar_contrasena' | 'configurar_2fa' | 'verificar_2fa' | 'listo';
 
 export interface DatosRegistro {
   usuarioPlataforma: string;

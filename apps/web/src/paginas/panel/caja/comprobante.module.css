@@ -1,0 +1,131 @@
+/* El ticket y, al lado, la tabla de movimientos. */
+.disposicion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.movimientosLado {
+  flex: 999 1 520px;
+  min-width: 0;
+}
+
+/* Comprobante con formato de ticket de impresora (papel de 80 mm). */
+.ticket {
+  flex: 1 1 320px;
+  max-width: 380px;
+  box-sizing: border-box;
+  padding: 22px 20px 26px;
+  background: #ffffff;
+  color: #111111;
+  border: 1px solid var(--color-borde);
+  box-shadow: 0 2px 12px rgb(13 31 23 / 0.08);
+  font-family: var(--fuente-numeros, ui-monospace, monospace);
+  font-size: 13px;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.cabecera {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.logo {
+  /* El logo no es cuadrado: alto fijo y ancho proporcional. */
+  height: 64px;
+  width: auto;
+  margin-bottom: 6px;
+}
+
+.estrellas {
+  letter-spacing: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.titulo {
+  margin: 0;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #777777;
+}
+
+.fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fila > span:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fuerte {
+  font-weight: 700;
+}
+
+.sangria {
+  padding-left: 14px;
+  text-transform: none;
+  color: #444444;
+}
+
+
+
+
+.nota {
+  margin: 6px 0 0;
+  text-transform: none;
+}
+
+
+.pie {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed #777777;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.firma {
+  margin-top: 18px;
+}
+
+/* Al imprimir sale solo el ticket. */
+@media print {
+  :global(body) * {
+    visibility: hidden;
+  }
+
+  .ticket,
+  .ticket * {
+    visibility: visible;
+  }
+
+  .ticket {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: 80mm;
+    border: 0;
+    box-shadow: none;
+  }
+}

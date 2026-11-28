@@ -37,12 +37,25 @@
 
 /* Tema claro del panel del staff (tokens.color.staff). */
 [data-tema='staff'] {
-  --color-fondo: #f4f6f9;
+  /* Estilo "consola de operaciones": denso, esquinas casi rectas, separadores finos. */
+  --color-fondo: #eef0ec;
   --color-superficie: #ffffff;
-  --color-borde: #e3e8ef;
-  --color-texto: #08251b;
-  --color-texto-secundario: #56665f;
-  --color-primario: #0e3326;
+  --color-borde: #d5dad3;
+  --color-texto: #0d1f17;
+  --color-texto-secundario: #5a6b62;
+  --color-primario: #0d1f17;
+  --radio-sm: 3px;
+  --radio-md: 3px;
+  --radio-lg: 4px;
+  --radio-pill: 3px;
+  --tamano-tactil: 36px;
+  --fuente-texto: 'IBM Plex Sans', system-ui, sans-serif;
+  --fuente-titulos: 'IBM Plex Sans', system-ui, sans-serif;
+  --fuente-numeros: 'IBM Plex Mono', ui-monospace, monospace;
+
+  font-family: var(--fuente-texto);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
   --color-sobre-primario: #ffffff;
   --color-ok: #137a48;
   --color-ok-fondo: #e3f5eb;

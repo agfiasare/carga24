@@ -28,7 +28,7 @@ class FuenteFalsa {
 
 const jugador = { id: 'j1', nombreUsuario: 'ana', telefono: '5491144441234', usuarioPlataforma: 'ana99', debeCambiarContrasena: false };
 const parametros: ParametrosPortal = {
-  comision: { modo: 'recargo', porcentajePb: 500 },
+  comision: { modo: 'recargo', porcentajePb: 500, impuestoPb: 0 },
   montos: { cargaMinima: 100_000, cargaMaxima: 50_000_000, retiroMinimo: 200_000, retiroConAprobacionDesde: 10_000_000 },
   cuentasPendientesMaximas: 3,
   datosPago: { alias: 'carga24.pagos', titular: 'Carga24 SRL', banco: 'Galicia' },

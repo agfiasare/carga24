@@ -1,10 +1,11 @@
 import type { Permiso } from '@carga24/shared';
-import { BarChart3, FileClock, House, KeyRound, ListTodo, Megaphone, Settings, Shield, Ticket, UserCog, Users } from 'lucide-react';
+import { BarChart3, FileClock, HandCoins, House, KeyRound, ListTodo, Megaphone, Settings, Shield, Ticket, UserCog, Users, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { authStaff } from '../../api/auth';
 import { Aviso, PlantillaPanel, type ItemMenu } from '../../componentes';
 import { useSesionStaff } from '../../sesion/sesion';
+import { BarraTurno } from './caja/BarraTurno';
 
 /** Permisos efectivos de quien está en el panel. */
 export function usePermisos() {
@@ -21,6 +22,8 @@ const SECCIONES: (ItemMenu & { permisos?: Permiso[]; sinPermisos?: Permiso[] })[
   { a: '/panel', texto: 'Inicio', icono: <House size={18} />, sinPermisos: ['pedidos.ver'] },
   { a: '/panel/cola', texto: 'Cola', icono: <ListTodo size={18} />, permisos: ['pedidos.ver'] },
   { a: '/panel/jugadores', texto: 'Jugadores', icono: <Users size={18} />, permisos: ['jugadores.ver'] },
+  { a: '/panel/caja', texto: 'Caja', icono: <Wallet size={18} />, permisos: ['caja.ver'] },
+  { a: '/panel/rendiciones', texto: 'Rendiciones', icono: <HandCoins size={18} />, permisos: ['caja.ver', 'rendiciones.registrar'] },
   { a: '/panel/reportes', texto: 'Reportes', icono: <BarChart3 size={18} />, permisos: ['reportes.ver'] },
   { a: '/panel/promociones', texto: 'Promociones', icono: <Ticket size={18} />, permisos: ['promos.gestionar'] },
   { a: '/panel/novedades', texto: 'Novedades', icono: <Megaphone size={18} />, permisos: ['novedades.publicar'] },
@@ -68,6 +71,7 @@ export function PaginaPanel({ titulo, volver, acciones, requiere, children }: Pa
       titulo={permitido ? titulo : 'Sin acceso'}
       volver={volver}
       acciones={permitido ? acciones : undefined}
+      barraSuperior={<BarraTurno />}
     >
       {permitido ? children : <Aviso tipo="info">No tenés permiso para ver esta sección. Si lo necesitás, pedíselo a quien administra el staff.</Aviso>}
     </PlantillaPanel>

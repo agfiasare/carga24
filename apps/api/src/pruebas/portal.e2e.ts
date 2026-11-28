@@ -2,7 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { PrismaService } from '../prisma/prisma.service.js';
-import { agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
+import { abrirTurno, agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
 
 const API = '/api/v1';
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(32, 2)]);
@@ -25,11 +25,13 @@ describe('Portal del jugador', () => {
     ({ app, prisma } = await crearAppDePrueba());
     const admin = agente(app);
     await primerIngresoStaff(admin, 'admin', CONTRASENA_ADMIN, 'admin-nueva-segura');
+    await abrirTurno(admin);
     const perfiles = Object.fromEntries((await prisma.perfil.findMany()).map((p) => [p.nombre, p.id]));
     const alta = async (usuario: string, perfil: string) => {
       const { body } = await admin.post(`${API}/staff`).send({ nombreUsuario: usuario, nombreVisible: usuario, perfilId: perfiles[perfil] }).expect(201);
       const cliente = agente(app);
       await primerIngresoStaff(cliente, usuario, body.contrasenaTemporal, `${usuario}-clave-propia`);
+      await abrirTurno(cliente);
       return cliente;
     };
     operador = await alta('laura', 'Operador');

@@ -2,9 +2,11 @@ import type { EstadoPedido, ModoComision, TipoPedido } from '@carga24/shared';
 import { api } from './cliente';
 
 export interface Configuracion {
-  comision: { modo: ModoComision; porcentajePb: number };
+  comision: { modo: ModoComision; porcentajePb: number; impuestoPb: number };
   montos: { cargaMinima: number; cargaMaxima: number; retiroMinimo: number; retiroConAprobacionDesde: number };
   cuentasPendientesMaximas: number;
+  /** Comisión a quien retira sin haber cargado (en los últimos `diasSinCarga` días; 0 = nunca). */
+  retiro: { comisionPb: number; diasSinCarga: number } | null;
   pago: { alias: string; titular: string; banco: string };
   horario: string;
   whatsapp: string;
@@ -29,10 +31,11 @@ export interface Resumen {
     rechazados: number;
     enCurso: number;
   };
-  porCanal: { canal: 'web' | 'manual'; cargas: number; retiros: number; ganancia: number; pedidos: number }[];
-  porOperador: { id: string | null; nombre: string; pedidos: number; acreditado: number; pagado: number; ganancia: number }[];
-  porJugador: { jugador: string; pedidos: number; cargado: number; retirado: number }[];
-  porDia: { fecha: string; cargas: number; retiros: number; ganancia: number }[];
+  /** En cada desglose, `pedidos` y los montos cuentan solo los cerrados con éxito; `rechazados` va aparte. */
+  porCanal: { canal: 'web' | 'manual'; cargas: number; retiros: number; ganancia: number; pedidos: number; rechazados: number }[];
+  porOperador: { id: string | null; nombre: string; pedidos: number; acreditado: number; pagado: number; ganancia: number; rechazados: number }[];
+  porJugador: { id: string | null; telefono: string | null; jugador: string; pedidos: number; cargado: number; retirado: number; rechazados: number }[];
+  porDia: { fecha: string; pedidos: number; cargas: number; retiros: number; ganancia: number; rechazados: number }[];
 }
 
 export interface FiltrosPedidos {
@@ -41,6 +44,8 @@ export interface FiltrosPedidos {
   estado?: EstadoPedido | '';
   tipo?: TipoPedido | '';
   canal?: 'web' | 'manual' | '';
+  operadorId?: string;
+  jugadorId?: string;
   buscar?: string;
   pagina?: number;
 }

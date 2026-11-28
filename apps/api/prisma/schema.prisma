@@ -123,6 +123,10 @@ model Usuario {
   notificaciones   Notificacion[]
   sesiones         Sesion[]
   liquidaciones    Liquidacion[]
+  turnos           Turno[]          @relation("TurnosDeUsuario")
+  turnosCerrados   Turno[]          @relation("TurnosCerradosPor")
+  movimientosCaja  MovimientoCaja[]
+  rendiciones      Rendicion[]
 
   @@index([tipo])
   @@map("usuarios")
@@ -232,6 +236,8 @@ model Pedido {
   /// Lo que se acredita (cargas) o se transfiere (retiros).
   monto                 Int
   ganancia              Int           @default(0)
+  /// Impuesto que retiene la plataforma sobre lo transferido (cargas), según la configuración.
+  impuesto              Int           @default(0)
   /// Foto del cálculo: porcentaje y modo con que se calculó.
   comisionPb            Int           @map("comision_pb")
   modoComision          ModoComision  @map("modo_comision")
@@ -252,6 +258,8 @@ model Pedido {
   ejecutadoPorId        String?       @map("ejecutado_por_id")
   ejecutadoEn           DateTime?     @map("ejecutado_en")
   liquidacionId         String?       @map("liquidacion_id")
+  /// Turno en el que se acreditó o pagó: ahí cuenta para la caja.
+  turnoId               String?       @map("turno_id")
   /// Control de concurrencia: "tomar" es atómico.
   version               Int           @default(0)
   creadoEn              DateTime      @default(now()) @map("creado_en")
@@ -265,12 +273,16 @@ model Pedido {
   cuenta       CuentaBancaria? @relation(fields: [cuentaId], references: [id])
   promocion    Promocion?     @relation(fields: [promocionId], references: [id])
   liquidacion  Liquidacion?   @relation(fields: [liquidacionId], references: [id])
+  turno        Turno?         @relation(fields: [turnoId], references: [id])
+  movimientoCaja MovimientoCaja?
   eventos      EventoPedido[]
   comprobantes Comprobante[]
 
   @@index([estado, creadoEn])
   @@index([jugadorId])
   @@index([telefono])
+  @@index([turnoId])
+  @@index([ejecutadoEn])
   @@map("pedidos")
 }
 
@@ -397,4 +409,95 @@ model Auditoria {
   @@index([entidad, entidadId])
   @@index([actorId, creadoEn])
   @@map("auditoria")
+}
+
+enum TipoMovimientoCaja {
+  cierre_turno
+  liquidacion
+  ajuste
+  /// Pedido acreditado o pagado por alguien que opera sin turno (permiso turnos.opcional).
+  pedido_sin_turno
+}
+
+/// Turno de trabajo de una persona del staff. Sin turno abierto no se operan pedidos.
+/// Un turno abierto por persona (índice parcial en la migración).
+model Turno {
+  id              String    @id @default(uuid())
+  usuarioId       String    @map("usuario_id")
+  abiertoEn       DateTime  @default(now()) @map("abierto_en")
+  /// Saldo de la caja sin liquidar al abrir (informativo).
+  cajaAlAbrir     Int       @default(0) @map("caja_al_abrir")
+  cerradoEn       DateTime? @map("cerrado_en")
+  cerradoPorId    String?   @map("cerrado_por_id")
+  /// Foto del balance al cerrar (centavos).
+  cantidadCargas  Int       @default(0) @map("cantidad_cargas")
+  cantidadRetiros Int       @default(0) @map("cantidad_retiros")
+  /// Lo que transfirieron los jugadores.
+  ingresos        Int       @default(0)
+  /// Parte de los ingresos que es ganancia.
+  comision        Int       @default(0)
+  /// Fichas acreditadas.
+  cargasNetas     Int       @default(0) @map("cargas_netas")
+  premios         Int       @default(0)
+  /// Fichas que salieron por retiros (lo pedido, antes de la comisión de retiro).
+  retirosFichas   Int       @default(0) @map("retiros_fichas")
+  /// Impuesto de la plataforma sobre las cargas del turno.
+  impuesto        Int       @default(0)
+  /// ingresos − premios.
+  resultado       Int       @default(0)
+  cajaAlCerrar    Int?      @map("caja_al_cerrar")
+  /// Control opcional: lo que quien cierra dice que hay.
+  saldoInformado  Int?      @map("saldo_informado")
+  nota            String?
+
+  usuario   Usuario         @relation("TurnosDeUsuario", fields: [usuarioId], references: [id])
+  cerradoPor Usuario?       @relation("TurnosCerradosPor", fields: [cerradoPorId], references: [id])
+  pedidos   Pedido[]
+  movimiento MovimientoCaja?
+
+  @@index([abiertoEn])
+  @@index([cerradoEn])
+  @@map("turnos")
+}
+
+/// Libro de la caja: el saldo sin liquidar es la suma de los montos.
+model MovimientoCaja {
+  id             String             @id @default(uuid())
+  tipo           TipoMovimientoCaja
+  /// Con signo: + entra a la caja, − sale.
+  monto          Int
+  saldoPosterior Int                @map("saldo_posterior")
+  nota           String?
+  turnoId        String?            @unique @map("turno_id")
+  pedidoId       Int?               @unique @map("pedido_id")
+  creadoPorId    String             @map("creado_por_id")
+  creadoEn       DateTime           @default(now()) @map("creado_en")
+
+  turno     Turno?  @relation(fields: [turnoId], references: [id])
+  pedido    Pedido? @relation(fields: [pedidoId], references: [id])
+  creadoPor Usuario @relation(fields: [creadoPorId], references: [id])
+
+  @@index([creadoEn])
+  @@map("movimientos_caja")
+}
+
+/// Lo que la agencia le rinde a la plataforma: cargas netas − premios del período.
+model Rendicion {
+  id           String   @id @default(uuid())
+  desde        DateTime
+  hasta        DateTime
+  cargasNetas  Int      @map("cargas_netas")
+  premios      Int
+  /// Diferencia que quedó de la rendición anterior (correspondía − rendido).
+  arrastre     Int      @default(0)
+  correspondia Int
+  rendido      Int
+  nota         String?
+  creadoPorId  String   @map("creado_por_id")
+  creadoEn     DateTime @default(now()) @map("creado_en")
+
+  creadoPor Usuario @relation(fields: [creadoPorId], references: [id])
+
+  @@index([creadoEn])
+  @@map("rendiciones")
 }

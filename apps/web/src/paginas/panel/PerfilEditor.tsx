@@ -74,7 +74,7 @@ function Formulario({ perfil }: { perfil?: Perfil }) {
         <SelectorPermisos valor={permisos} onCambiar={setPermisos} deshabilitado={esElPropio} />
       </section>
       {!esElPropio ? (
-        <div className={clases.barra}>
+        <div className={clases.acciones}>
           <Boton type="submit" tamano="lg" cargando={guardado.cargando} disabled={!nombre.trim()}>
             {perfil ? 'Guardar perfil' : 'Crear perfil'}
           </Boton>

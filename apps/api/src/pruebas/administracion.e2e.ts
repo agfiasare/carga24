@@ -3,7 +3,7 @@ import ExcelJS from 'exceljs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fechaArgentina } from '../reportes/fechas.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
-import { agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
+import { abrirTurno, agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
 
 const API = '/api/v1';
 
@@ -20,11 +20,13 @@ describe('Configuración, auditoría, reportes y exportación', () => {
     ({ app, prisma } = await crearAppDePrueba());
     admin = agente(app);
     await primerIngresoStaff(admin, 'admin', CONTRASENA_ADMIN, 'admin-nueva-segura');
+    await abrirTurno(admin);
     const operador = (await prisma.perfil.findUniqueOrThrow({ where: { nombre: 'Operador' } })).id;
     const { body } = await admin.post(`${API}/staff`).send({ nombreUsuario: 'laura', nombreVisible: 'Laura', perfilId: operador }).expect(201);
     lauraId = body.staff.id;
     laura = agente(app);
     await primerIngresoStaff(laura, 'laura', body.contrasenaTemporal, 'laura-clave-propia');
+    await abrirTurno(laura);
     plataformaId = (await prisma.plataforma.findFirstOrThrow()).id;
   });
   afterAll(async () => {
@@ -105,8 +107,13 @@ describe('Configuración, auditoría, reportes y exportación', () => {
       expect(suma(body.porCanal)).toBe(body.totales.ganancia);
       expect(suma(body.porOperador)).toBe(body.totales.ganancia);
       expect(suma(body.porDia)).toBe(body.totales.ganancia);
-      expect(body.porOperador).toEqual([expect.objectContaining({ id: lauraId, nombre: 'Laura', pedidos: 4, acreditado: 3_500_000, pagado: 800_000 })]);
-      expect(body.porDia).toEqual([{ fecha: hoy, cargas: 3_500_000, retiros: 800_000, ganancia: 175_000 }]);
+      expect(body.porOperador).toContainEqual(expect.objectContaining({ id: lauraId, nombre: 'Laura', pedidos: 4, acreditado: 3_500_000, pagado: 800_000 }));
+      expect(body.porDia).toEqual([{ fecha: hoy, pedidos: 4, cargas: 3_500_000, retiros: 800_000, ganancia: 175_000, rechazados: 2 }]);
+      // Los rechazados se cuentan en cada desglose, sin sumar montos.
+      const rechazados = (filas: { rechazados: number }[]) => filas.reduce((t, f) => t + f.rechazados, 0);
+      expect(rechazados(body.porCanal)).toBe(2);
+      expect(rechazados(body.porOperador)).toBe(2);
+      expect(rechazados(body.porJugador)).toBe(2);
       const db = await prisma.pedido.aggregate({ where: { estado: { in: ['acreditado', 'pagado'] } }, _sum: { ganancia: true } });
       expect(db._sum.ganancia).toBe(body.totales.ganancia);
     });
@@ -139,6 +146,20 @@ describe('Configuración, auditoría, reportes y exportación', () => {
       const montos = [2, 3, 4].map((r) => hoja.getRow(r).getCell('K').value as number);
       expect(montos.reduce((a, b) => a + b, 0)).toBe(35_000);
       expect(hoja.getRow(2).getCell('N').value).toBe('Laura');
+    });
+  });
+
+  describe('impuesto de la plataforma', () => {
+    it('la ganancia es el % sobre lo transferido menos el impuesto; al jugador se le descuenta el % entero', async () => {
+      const antes = (await admin.get(`${API}/configuracion`).expect(200)).body.comision;
+      await admin.put(`${API}/configuracion`).send({ comision: { modo: 'descuento', porcentajePb: 300, impuestoPb: 250 } }).expect(200);
+      try {
+        const { body } = await laura.post(`${API}/pedidos`).send({ tipo: 'carga', telefono: '11 7777 0000', plataformaId, monto: 1_000_000, medioPago: 'efectivo' }).expect(201);
+        expect(body).toMatchObject({ montoPagado: 1_000_000, monto: 970_000, ganancia: 29_250 });
+        await laura.post(`${API}/pedidos/${body.id}/rechazar`).send({ motivo: 'otro' }).expect(200);
+      } finally {
+        await admin.put(`${API}/configuracion`).send({ comision: { modo: antes.modo, porcentajePb: antes.porcentajePb, impuestoPb: antes.impuestoPb ?? 0 } }).expect(200);
+      }
     });
   });
 

@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { generarCodigo } from '../comun/totp.js';
 import { EventosPedidos, type EventoCola } from '../pedidos/eventos.service.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
-import { agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
+import { abrirTurno, agente, CONTRASENA_ADMIN, crearAppDePrueba, primerIngresoStaff, type Agente } from './app-de-prueba.js';
 
 const API = '/api/v1';
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64, 1)]);
@@ -25,6 +25,7 @@ describe('Pedidos: alta manual, cola y cambios de estado', () => {
     const { body } = await admin.post(`${API}/staff`).send({ nombreUsuario: usuario, nombreVisible: usuario[0]!.toUpperCase() + usuario.slice(1), perfilId: perfiles[perfil] }).expect(201);
     staff[usuario] = agente(app);
     secretos[usuario] = await primerIngresoStaff(staff[usuario]!, usuario, body.contrasenaTemporal, `${usuario}-clave-propia`);
+    await abrirTurno(staff[usuario]!);
   }
 
   const nuevaCarga = (extra: object = {}) => ({ tipo: 'carga', jugadorId, plataformaId, monto: 1_000_000, medioPago: 'otra_cuenta', ...extra });
@@ -35,6 +36,7 @@ describe('Pedidos: alta manual, cola y cambios de estado', () => {
     const perfiles = Object.fromEntries((await prisma.perfil.findMany()).map((p) => [p.nombre, p.id]));
     staff.admin = agente(app);
     await primerIngresoStaff(staff.admin, 'admin', CONTRASENA_ADMIN, 'admin-nueva-segura');
+    await abrirTurno(staff.admin);
     await alta(staff.admin, 'laura', 'Operador', perfiles);
     await alta(staff.admin, 'pablo', 'Operador', perfiles);
     await alta(staff.admin, 'caja', 'Pagos', perfiles);
@@ -209,6 +211,20 @@ describe('Pedidos: alta manual, cola y cambios de estado', () => {
       expect(grande.body.mensaje).toBe('El archivo supera los 10 MB');
       await staff.laura!.post(`${API}/pedidos/${id}/comprobantes`).expect(400);
     });
+  });
+
+  it('la ficha del jugador trae sus pedidos (también los rechazados) y sus totales', async () => {
+    const { body } = await staff.laura!.get(`${API}/jugadores/${jugadorId}/pedidos`).expect(200);
+    const enBase = await prisma.pedido.findMany({ where: { jugadorId } });
+    expect(body.pedidos).toHaveLength(enBase.length);
+    expect(body.pedidos[0].id).toBe(Math.max(...enBase.map((p) => p.id)));
+    expect(body.totales).toMatchObject({
+      pedidos: enBase.length,
+      rechazados: enBase.filter((p) => p.estado === 'rechazado').length,
+      cargas: { cantidad: enBase.filter((p) => p.estado === 'acreditado').length, monto: enBase.filter((p) => p.estado === 'acreditado').reduce((t, p) => t + p.monto, 0) },
+    });
+    expect(body.totales.rechazados).toBeGreaterThan(0);
+    expect(body.pedidos.find((p: { estado: string }) => p.estado === 'rechazado').motivoRechazo).toBeTruthy();
   });
 
   it('la cola en vivo avisa por Server-Sent Events', async () => {
